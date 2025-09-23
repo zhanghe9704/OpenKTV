@@ -1,0 +1,36 @@
+{
+  "AppEnvironment": {
+    "EnvironmentName": "Development",
+    "ConfigurationRoot": "config",
+    "AssetsRoot": "assets"
+  },
+  "Library": {
+    "DefaultPriority": 2,
+    "DefaultChannel": "Stereo",
+    "DatabasePath": "data/library.db",
+    "Roots": [
+      {
+        "Name": "SampleLibraryA",
+        "Path": "assets/sample/libraryA",
+        "DefaultPriority": 2
+      },
+      {
+        "Name": "SampleLibraryB",
+        "Path": "assets/sample/libraryB",
+        "DefaultPriority": 1
+      }
+    ],
+    "SupportedExtensions": [
+      ".mp3",
+      ".wav",
+      ".mp4",
+      ".mkv"
+    ]
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Karaoke": "Debug"
+    }
+  }
+}

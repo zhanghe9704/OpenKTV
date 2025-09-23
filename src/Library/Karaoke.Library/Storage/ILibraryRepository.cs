@@ -1,0 +1,14 @@
+using Karaoke.Library.Storage.Models;
+
+namespace Karaoke.Library.Storage;
+
+public interface ILibraryRepository
+{
+    Task InitializeAsync(CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<SongRecord>> GetSongsAsync(CancellationToken cancellationToken);
+
+    Task UpsertSongAsync(SongRecord song, CancellationToken cancellationToken);
+
+    Task DeleteAllSongsAsync(CancellationToken cancellationToken);
+}
