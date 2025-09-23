@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Karaoke.Common;
 using Karaoke.Common.Models;
 using Karaoke.Library.Configuration;

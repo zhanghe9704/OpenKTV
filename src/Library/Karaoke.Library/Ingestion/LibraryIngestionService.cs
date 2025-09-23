@@ -98,7 +98,7 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
                     continue;
                 }
 
-                var songDto = ToSongDto(root.Name, parsedMetadata);
+                var songDto = ToSongDto(root, resolvedRoot, parsedMetadata);
                 await _libraryService.UpsertAsync(songDto, cancellationToken).ConfigureAwait(false);
                 processed++;
             }
@@ -107,18 +107,26 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
         return new LibraryIngestionResult(processed, skipped);
     }
 
-    private static SongDto ToSongDto(string rootName, ParsedSongMetadata metadata)
+    private SongDto ToSongDto(LibraryRootOptions rootOptions, string resolvedRootPath, ParsedSongMetadata metadata)
     {
         var sanitizedTitle = Sanitize(metadata.Title);
         var sanitizedArtist = Sanitize(metadata.Artist);
+        var mediaPath = ResolveMediaPath(resolvedRootPath, metadata.RelativePath);
+        var rootName = rootOptions.Name;
 
         return new SongDto(
             CreateSongId(rootName, metadata.RelativePath),
             sanitizedTitle,
             sanitizedArtist,
-            metadata.MediaPath,
+            mediaPath,
             metadata.ChannelConfiguration,
             metadata.Priority);
+    }
+
+    private static string ResolveMediaPath(string rootPath, string relativePath)
+    {
+        var normalized = relativePath.Replace('/', Path.DirectorySeparatorChar);
+        return Path.GetFullPath(Path.Combine(rootPath, normalized));
     }
 
     private bool TryParse(MediaFileContext context, out ParsedSongMetadata metadata)

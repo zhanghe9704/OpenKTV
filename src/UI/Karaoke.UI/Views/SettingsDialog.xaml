@@ -13,7 +13,10 @@
     Width="640">
     <StackPanel Spacing="12">
         <TextBlock Text="Configure library roots and drive overrides." />
-        <ListView ItemsSource="{x:Bind ViewModel.Roots, Mode=OneWay}" MinHeight="240">
+        <ListView
+            MinHeight="240"
+            ItemsSource="{x:Bind ViewModel.Roots, Mode=OneWay}"
+            SelectedItem="{x:Bind ViewModel.SelectedRoot, Mode=TwoWay}" >
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="settings:LibraryRootItemViewModel">
                     <StackPanel Spacing="8" Padding="12" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4">
@@ -39,5 +42,12 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
+        <StackPanel Orientation="Horizontal" Spacing="12">
+            <Button Content="Add Root" Command="{x:Bind ViewModel.AddRootCommand}" />
+            <Button Content="Remove Selected" Command="{x:Bind ViewModel.RemoveSelectedRootCommand}" />
+        </StackPanel>
+        <CheckBox
+            Content="Rescan after saving"
+            IsChecked="{x:Bind ViewModel.RescanAfterSave, Mode=TwoWay}" />
     </StackPanel>
 </ContentDialog>

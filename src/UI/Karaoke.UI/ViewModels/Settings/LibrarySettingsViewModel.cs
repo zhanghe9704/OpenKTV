@@ -16,6 +16,9 @@ public partial class LibrarySettingsViewModel : ObservableObject
         Roots = new ObservableCollection<LibraryRootItemViewModel>();
         LoadCommand = new AsyncRelayCommand(LoadAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
+        AddRootCommand = new RelayCommand(AddRoot);
+        RemoveSelectedRootCommand = new RelayCommand(RemoveSelectedRoot, () => SelectedRoot is not null);
+        RescanAfterSave = true;
     }
 
     public ObservableCollection<LibraryRootItemViewModel> Roots { get; }
@@ -23,6 +26,21 @@ public partial class LibrarySettingsViewModel : ObservableObject
     public IAsyncRelayCommand LoadCommand { get; }
 
     public IAsyncRelayCommand SaveCommand { get; }
+
+    public IRelayCommand AddRootCommand { get; }
+
+    public IRelayCommand RemoveSelectedRootCommand { get; }
+
+    [ObservableProperty]
+    private LibraryRootItemViewModel? _selectedRoot;
+
+    partial void OnSelectedRootChanged(LibraryRootItemViewModel? value)
+    {
+        RemoveSelectedRootCommand.NotifyCanExecuteChanged();
+    }
+
+    [ObservableProperty]
+    private bool _rescanAfterSave;
 
     public event EventHandler? SettingsSaved;
 
@@ -35,6 +53,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
         {
             Roots.Add(new LibraryRootItemViewModel(root.Name, root.Path, root.DefaultPriority, root.DefaultChannel, root.DriveOverride));
         }
+        RescanAfterSave = true;
     }
 
     public async Task SaveAsync()
@@ -52,5 +71,22 @@ public partial class LibrarySettingsViewModel : ObservableObject
 
         await _configurationManager.SaveRootsAsync(updatedRoots, CancellationToken.None).ConfigureAwait(false);
         SettingsSaved?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void AddRoot()
+    {
+        Roots.Add(new LibraryRootItemViewModel("NewRoot", "", defaultPriority: 2, defaultChannel: "Stereo", driveOverride: null));
+        SelectedRoot = Roots.Last();
+    }
+
+    private void RemoveSelectedRoot()
+    {
+        if (SelectedRoot is null)
+        {
+            return;
+        }
+
+        Roots.Remove(SelectedRoot);
+        SelectedRoot = null;
     }
 }

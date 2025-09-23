@@ -38,7 +38,6 @@ public sealed class DirectoryStructureParser : IMediaPathParser
             NormalizeRelativePath(relativePath),
             title,
             artist,
-            Path.GetFullPath(context.FilePath),
             channel,
             priority);
 

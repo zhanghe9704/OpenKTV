@@ -41,7 +41,7 @@ public sealed partial class MainWindow : Window
 
     private async void OnRescanClicked(object sender, RoutedEventArgs e)
     {
-        await _viewModel.ReloadAsync(CancellationToken.None);
+        await _viewModel.ReloadAsync(rescan: true, CancellationToken.None);
     }
 
     private async void OnSettingsClicked(object sender, RoutedEventArgs e)
@@ -56,7 +56,7 @@ public sealed partial class MainWindow : Window
         var result = await dialog.ShowAsync();
         if (result == ContentDialogResult.Primary)
         {
-            await _viewModel.ReloadAsync(CancellationToken.None);
+            await _viewModel.ReloadAsync(_settingsViewModel.RescanAfterSave, CancellationToken.None);
         }
     }
 }

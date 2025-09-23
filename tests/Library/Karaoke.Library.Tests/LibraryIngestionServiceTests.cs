@@ -191,7 +191,6 @@ public class LibraryIngestionServiceTests
                 "temp.mp3",
                 "<script>Sanitized Title</script>\r\n",
                 "<b>alert('x')</b>",
-                context.FilePath,
                 "Stereo",
                 2);
             return true;

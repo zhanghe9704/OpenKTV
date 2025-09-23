@@ -33,7 +33,7 @@ public partial class MainViewModel : ObservableObject
 
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
-        await ReloadAsync(cancellationToken).ConfigureAwait(false);
+        await ReloadAsync(rescan: true, cancellationToken).ConfigureAwait(false);
     }
 
     public Task QueueSongAsync(SongDto song, CancellationToken cancellationToken)
@@ -41,12 +41,15 @@ public partial class MainViewModel : ObservableObject
         return _playbackService.QueueAsync(song, cancellationToken);
     }
 
-    public async Task ReloadAsync(CancellationToken cancellationToken)
+    public async Task ReloadAsync(bool rescan, CancellationToken cancellationToken)
     {
         try
         {
             IsLoading = true;
-            await _ingestionService.ScanAsync(cancellationToken).ConfigureAwait(false);
+            if (rescan)
+            {
+                await _ingestionService.ScanAsync(cancellationToken).ConfigureAwait(false);
+            }
             Songs = await _libraryService.GetAllSongsAsync(cancellationToken).ConfigureAwait(false);
         }
         finally

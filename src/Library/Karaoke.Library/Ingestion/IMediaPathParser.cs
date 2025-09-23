@@ -18,6 +18,5 @@ public sealed record ParsedSongMetadata(
     string RelativePath,
     string Title,
     string Artist,
-    string MediaPath,
     string ChannelConfiguration,
     int Priority);

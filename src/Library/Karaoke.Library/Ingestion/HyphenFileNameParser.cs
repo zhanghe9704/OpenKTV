@@ -41,7 +41,6 @@ public sealed class HyphenFileNameParser : IMediaPathParser
             NormalizeRelativePath(relativePath),
             title,
             artist,
-            Path.GetFullPath(context.FilePath),
             channel,
             priority);
 
