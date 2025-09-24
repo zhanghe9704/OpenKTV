@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -18,14 +19,40 @@ public partial class MainViewModel : ObservableObject
 {
     private const int PageSize = 20;
 
+    private static readonly Encoding Gb2312Encoding;
+    private static readonly int[] PinyinCodeThresholds =
+    {
+        0xB0A1, 0xB0C5, 0xB2C1, 0xB4EE, 0xB6EA,
+        0xB7A2, 0xB8C1, 0xB9FE, 0xBBF7, 0xBFA6,
+        0xC0AC, 0xC2E8, 0xC4C3, 0xC5B6, 0xC5BE,
+        0xC6DA, 0xC8BB, 0xC8F6, 0xCBFA, 0xCDDA,
+        0xCEF4, 0xD1B9, 0xD4D1, 0xD7FA
+    };
+
+    private static readonly char[] PinyinInitials =
+    {
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+        'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+        'R', 'S', 'T', 'W', 'X', 'Y', 'Z'
+    };
+
+    static MainViewModel()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        Gb2312Encoding = Encoding.GetEncoding("GB2312");
+    }
+
     private readonly ILibraryService _libraryService;
     private readonly IPlaybackService _playbackService;
     private readonly ILibraryIngestionService _ingestionService;
 
     private List<SongDto> _allSongs = new();
     private List<string> _allArtists = new();
+    private List<string> _filteredArtistsSource = new();
     private List<SongDto> _filteredSongsSource = new();
     private readonly List<SongDto> _queueItems = new();
+
+    private readonly Dictionary<string, string> _artistInitials = new(StringComparer.OrdinalIgnoreCase);
 
     private int _artistsPageIndex;
     private int _songsPageIndex;
@@ -53,6 +80,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private SongDto? _selectedQueuedSong;
 
+    [ObservableProperty]
+    private string? _artistSearchText;
+
     public ObservableCollection<string> Artists { get; } = new();
 
     public ObservableCollection<SongDto> FilteredSongs { get; } = new();
@@ -70,6 +100,7 @@ public partial class MainViewModel : ObservableObject
 
         AddToQueueCommand = new AsyncRelayCommand(AddToQueueAsync, CanAddToQueue);
         RemoveFromQueueCommand = new RelayCommand(RemoveFromQueue, CanRemoveFromQueue);
+        SearchArtistsCommand = new RelayCommand(() => ApplyArtistSearch(resetPage: true));
 
         _artistsPreviousPageCommand = new RelayCommand(() => MoveArtistsPage(-1), () => _artistsPageIndex > 0);
         _artistsNextPageCommand = new RelayCommand(() => MoveArtistsPage(1), CanMoveArtistsForward);
@@ -99,6 +130,8 @@ public partial class MainViewModel : ObservableObject
 
     public IRelayCommand QueueNextPageCommand => _queueNextPageCommand;
 
+    public IRelayCommand SearchArtistsCommand { get; }
+
     public double ArtistsPageNumber
     {
         get => _artistsPageIndex + 1;
@@ -117,13 +150,13 @@ public partial class MainViewModel : ObservableObject
         set => SetQueuePageFromInput(value);
     }
 
-    public int ArtistsTotalPages => CalculateTotalPages(_allArtists.Count);
+    public int ArtistsTotalPages => CalculateTotalPages(_filteredArtistsSource.Count);
 
     public int SongsTotalPages => CalculateTotalPages(_filteredSongsSource.Count);
 
     public int QueueTotalPages => CalculateTotalPages(_queueItems.Count);
 
-    public string ArtistsPageSummary => FormatPageSummary(_artistsPageIndex, _allArtists.Count, Artists.Count);
+    public string ArtistsPageSummary => FormatPageSummary(_artistsPageIndex, _filteredArtistsSource.Count, Artists.Count);
 
     public string SongsPageSummary => FormatPageSummary(_songsPageIndex, _filteredSongsSource.Count, FilteredSongs.Count);
 
@@ -205,6 +238,11 @@ public partial class MainViewModel : ObservableObject
         UpdateFilteredSongs();
     }
 
+    partial void OnArtistSearchTextChanged(string? value)
+    {
+        ApplyArtistSearch(resetPage: true);
+    }
+
     private void UpdateArtists()
     {
         _allArtists = _allSongs
@@ -214,8 +252,57 @@ public partial class MainViewModel : ObservableObject
             .OrderBy(artist => artist, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        EnsurePageIndex(ref _artistsPageIndex, _allArtists.Count);
+        _artistInitials.Clear();
+        foreach (var artist in _allArtists)
+        {
+            _artistInitials[artist] = BuildInitials(artist);
+        }
+
+        ApplyArtistSearch(resetPage: true);
+    }
+
+    private void ApplyArtistSearch(bool resetPage)
+    {
+        IEnumerable<string> source = _allArtists;
+        var term = ArtistSearchText?.Trim();
+        if (!string.IsNullOrEmpty(term))
+        {
+            var upper = term.ToUpperInvariant();
+            source = source.Where(artist =>
+                artist.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
+                (_artistInitials.TryGetValue(artist, out var initials) && initials.Contains(upper, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        _filteredArtistsSource = source.ToList();
+
+        if (resetPage)
+        {
+            _artistsPageIndex = 0;
+        }
+
+        EnsurePageIndex(ref _artistsPageIndex, _filteredArtistsSource.Count);
         UpdateArtistsPage();
+    }
+
+    private void UpdateArtistsPage()
+    {
+        Artists.Clear();
+
+        foreach (var artist in GetPageItems(_filteredArtistsSource, _artistsPageIndex))
+        {
+            Artists.Add(artist);
+        }
+
+        if (Artists.Count > 0 && (SelectedArtist is null || !Artists.Contains(SelectedArtist)))
+        {
+            SelectedArtist = Artists.First();
+        }
+        else if (Artists.Count == 0)
+        {
+            SelectedArtist = null;
+        }
+
+        RaiseArtistsPagingNotifications();
     }
 
     private void UpdateFilteredSongs()
@@ -234,27 +321,6 @@ public partial class MainViewModel : ObservableObject
 
         EnsurePageIndex(ref _songsPageIndex, _filteredSongsSource.Count);
         UpdateSongsPage();
-    }
-
-    private void UpdateArtistsPage()
-    {
-        Artists.Clear();
-
-        foreach (var artist in GetPageItems(_allArtists, _artistsPageIndex))
-        {
-            Artists.Add(artist);
-        }
-
-        if (Artists.Count > 0 && (SelectedArtist is null || !Artists.Contains(SelectedArtist)))
-        {
-            SelectedArtist = Artists.First();
-        }
-        else if (Artists.Count == 0)
-        {
-            SelectedArtist = null;
-        }
-
-        RaiseArtistsPagingNotifications();
     }
 
     private void UpdateSongsPage()
@@ -386,18 +452,27 @@ public partial class MainViewModel : ObservableObject
         return clamped - 1;
     }
 
-    private static IEnumerable<T> GetPageItems<T>(IReadOnlyList<T> source, int pageIndex)
+    private static IReadOnlyList<T> GetPageItems<T>(IReadOnlyList<T> source, int pageIndex)
     {
         if (source.Count == 0)
         {
-            yield break;
+            return Array.Empty<T>();
         }
 
         var start = pageIndex * PageSize;
-        for (var i = start; i < Math.Min(source.Count, start + PageSize); i++)
+        var end = Math.Min(source.Count, start + PageSize);
+        if (start >= end)
         {
-            yield return source[i];
+            return Array.Empty<T>();
         }
+
+        var buffer = new T[end - start];
+        for (var i = start; i < end; i++)
+        {
+            buffer[i - start] = source[i];
+        }
+
+        return buffer;
     }
 
     private static void EnsurePageIndex(ref int pageIndex, int totalCount)
@@ -436,7 +511,7 @@ public partial class MainViewModel : ObservableObject
 
     private bool CanMoveArtistsForward()
     {
-        return (_artistsPageIndex + 1) * PageSize < _allArtists.Count;
+        return (_artistsPageIndex + 1) * PageSize < _filteredArtistsSource.Count;
     }
 
     private bool CanMoveSongsForward()
@@ -480,4 +555,64 @@ public partial class MainViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(LoadingVisibility));
     }
+
+    private static string BuildInitials(string text)
+    {
+        var builder = new StringBuilder(text.Length);
+
+        foreach (var ch in text)
+        {
+            if (char.IsLetter(ch))
+            {
+                builder.Append(char.ToUpperInvariant(ch));
+            }
+            else if (char.IsDigit(ch))
+            {
+                builder.Append(ch);
+            }
+            else
+            {
+                var initial = GetChineseInitial(ch);
+                if (initial != '\0')
+                {
+                    builder.Append(initial);
+                }
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    private static char GetChineseInitial(char ch)
+    {
+        try
+        {
+            var bytes = Gb2312Encoding.GetBytes(new[] { ch });
+            if (bytes.Length != 2)
+            {
+                return '\0';
+            }
+
+            var code = (bytes[0] << 8) + bytes[1];
+            for (var i = 0; i < PinyinInitials.Length; i++)
+            {
+                var lower = PinyinCodeThresholds[i];
+                var upper = i == PinyinInitials.Length - 1 ? 0xD7FF : PinyinCodeThresholds[i + 1];
+                if (code >= lower && code < upper)
+                {
+                    return PinyinInitials[i];
+                }
+            }
+        }
+        catch (EncoderFallbackException)
+        {
+        }
+
+        return '\0';
+    }
 }
+
+
+
+
+

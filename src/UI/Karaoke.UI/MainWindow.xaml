@@ -35,16 +35,30 @@
             <Grid Grid.Column="0" RowSpacing="8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Text="Artists" FontWeight="SemiBold" />
+                <Grid Grid.Row="1" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox
+                        Grid.Column="0"
+                        Text="{x:Bind ViewModel.ArtistSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        PlaceholderText="Search artists" />
+                    <Button Grid.Column="1" Command="{x:Bind ViewModel.SearchArtistsCommand}" Padding="12,0">
+                        <SymbolIcon Symbol="Find" />
+                    </Button>
+                </Grid>
                 <ListView
-                    Grid.Row="1"
+                    Grid.Row="2"
                     ItemsSource="{x:Bind ViewModel.Artists, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedArtist, Mode=TwoWay}"
                     SelectionMode="Single" />
-                <Grid Grid.Row="2" ColumnSpacing="8">
+                <Grid Grid.Row="3" ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
@@ -66,7 +80,6 @@
                     </Button>
                     <TextBlock
                         Grid.Column="3"
-                        HorizontalAlignment="Left"
                         Text="{x:Bind ViewModel.ArtistsPageSummary, Mode=OneWay}"
                         VerticalAlignment="Center" />
                 </Grid>
@@ -176,4 +189,3 @@
         </Grid>
     </Grid>
 </Window>
-
