@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Karaoke.UI.ViewModels;
 using Karaoke.UI.ViewModels.Settings;
@@ -28,7 +27,6 @@ public sealed partial class MainWindow : Window
 
     public MainViewModel ViewModel => _viewModel;
 
-    [SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait", Justification = "View model initialization must resume on the UI thread")]
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement element)
@@ -36,17 +34,17 @@ public sealed partial class MainWindow : Window
             element.Loaded -= OnLoaded;
         }
 
-        await _viewModel.InitializeAsync(CancellationToken.None);
+        await _viewModel.InitializeAsync(CancellationToken.None).ConfigureAwait(true);
     }
 
     private async void OnRescanClicked(object sender, RoutedEventArgs e)
     {
-        await _viewModel.ReloadAsync(rescan: true, CancellationToken.None);
+        await _viewModel.ReloadAsync(rescan: true, CancellationToken.None).ConfigureAwait(false);
     }
 
     private async void OnSettingsClicked(object sender, RoutedEventArgs e)
     {
-        await _settingsViewModel.LoadAsync();
+        await _settingsViewModel.LoadAsync().ConfigureAwait(true);
 
         var dialog = new SettingsDialog(_settingsViewModel)
         {
@@ -56,7 +54,7 @@ public sealed partial class MainWindow : Window
         var result = await dialog.ShowAsync();
         if (result == ContentDialogResult.Primary)
         {
-            await _viewModel.ReloadAsync(_settingsViewModel.RescanAfterSave, CancellationToken.None);
+            await _viewModel.ReloadAsync(_settingsViewModel.RescanAfterSave, CancellationToken.None).ConfigureAwait(false);
         }
     }
 }

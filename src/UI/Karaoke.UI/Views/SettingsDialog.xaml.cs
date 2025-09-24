@@ -1,7 +1,9 @@
 using System;
 using System.Diagnostics;
-using Karaoke.UI.ViewModels.Settings;
+using System.IO;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Karaoke.UI.ViewModels.Settings;
 
 namespace Karaoke.UI.Views;
 
@@ -19,16 +21,35 @@ public sealed partial class SettingsDialog : ContentDialog
 
     private async void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
-        args.Cancel = true;
+        var deferral = args.GetDeferral();
         try
         {
-            await ViewModel.SaveAsync();
+            await ViewModel.SaveAsync().ConfigureAwait(true);
             args.Cancel = false;
         }
-        catch (Exception ex)
+        catch (IOException ex)
         {
-            Debug.WriteLine($"Settings save failed: {ex}");
             args.Cancel = true;
+            HandleSaveError(ex);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            args.Cancel = true;
+            HandleSaveError(ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            args.Cancel = true;
+            HandleSaveError(ex);
+        }
+        finally
+        {
+            deferral.Complete();
+        }
+    }
+
+    private static void HandleSaveError(Exception ex)
+    {
+        Debug.WriteLine($"Settings save failed: {ex}");
     }
 }
