@@ -44,30 +44,37 @@
                     ItemsSource="{x:Bind ViewModel.Artists, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedArtist, Mode=TwoWay}"
                     SelectionMode="Single" />
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                    <Button Command="{x:Bind ViewModel.ArtistsPreviousPageCommand}">
+                <Grid Grid.Row="2" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Command="{x:Bind ViewModel.ArtistsPreviousPageCommand}">
                         <SymbolIcon Symbol="Back" />
                     </Button>
                     <NumberBox
+                        Grid.Column="1"
                         Width="80"
                         Minimum="1"
                         Maximum="{x:Bind ViewModel.ArtistsTotalPages, Mode=OneWay}"
                         Value="{x:Bind ViewModel.ArtistsPageNumber, Mode=TwoWay}"
                         SpinButtonPlacementMode="Hidden" />
-                    <Button Command="{x:Bind ViewModel.ArtistsNextPageCommand}">
+                    <Button Grid.Column="2" Command="{x:Bind ViewModel.ArtistsNextPageCommand}">
                         <SymbolIcon Symbol="Forward" />
                     </Button>
                     <TextBlock
+                        Grid.Column="3"
+                        HorizontalAlignment="Left"
                         Text="{x:Bind ViewModel.ArtistsPageSummary, Mode=OneWay}"
-                        Margin="8,0,0,0"
                         VerticalAlignment="Center" />
-                </StackPanel>
+                </Grid>
             </Grid>
             <Grid Grid.Column="1" RowSpacing="8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Text="Songs" FontWeight="SemiBold" />
@@ -89,33 +96,38 @@
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                    <Button Command="{x:Bind ViewModel.SongsPreviousPageCommand}">
+                <Grid Grid.Row="2" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Command="{x:Bind ViewModel.SongsPreviousPageCommand}">
                         <SymbolIcon Symbol="Back" />
                     </Button>
                     <NumberBox
+                        Grid.Column="1"
                         Width="80"
                         Minimum="1"
                         Maximum="{x:Bind ViewModel.SongsTotalPages, Mode=OneWay}"
                         Value="{x:Bind ViewModel.SongsPageNumber, Mode=TwoWay}"
                         SpinButtonPlacementMode="Hidden" />
-                    <Button Command="{x:Bind ViewModel.SongsNextPageCommand}">
+                    <Button Grid.Column="2" Command="{x:Bind ViewModel.SongsNextPageCommand}">
                         <SymbolIcon Symbol="Forward" />
                     </Button>
                     <TextBlock
+                        Grid.Column="3"
                         Text="{x:Bind ViewModel.SongsPageSummary, Mode=OneWay}"
-                        Margin="8,0,0,0"
                         VerticalAlignment="Center" />
-                </StackPanel>
-                <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
-                    <Button Content="Add to Queue" Command="{x:Bind ViewModel.AddToQueueCommand}" />
-                </StackPanel>
+                    <Button Grid.Column="4" Content="Add to Queue" Command="{x:Bind ViewModel.AddToQueueCommand}" />
+                </Grid>
             </Grid>
             <Grid Grid.Column="2" RowSpacing="8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Text="Queue" FontWeight="SemiBold" />
@@ -133,28 +145,35 @@
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                    <Button Command="{x:Bind ViewModel.QueuePreviousPageCommand}">
+                <Grid Grid.Row="2" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Command="{x:Bind ViewModel.QueuePreviousPageCommand}">
                         <SymbolIcon Symbol="Back" />
                     </Button>
                     <NumberBox
+                        Grid.Column="1"
                         Width="80"
                         Minimum="1"
                         Maximum="{x:Bind ViewModel.QueueTotalPages, Mode=OneWay}"
                         Value="{x:Bind ViewModel.QueuePageNumber, Mode=TwoWay}"
                         SpinButtonPlacementMode="Hidden" />
-                    <Button Command="{x:Bind ViewModel.QueueNextPageCommand}">
+                    <Button Grid.Column="2" Command="{x:Bind ViewModel.QueueNextPageCommand}">
                         <SymbolIcon Symbol="Forward" />
                     </Button>
                     <TextBlock
+                        Grid.Column="3"
                         Text="{x:Bind ViewModel.QueuePageSummary, Mode=OneWay}"
-                        Margin="8,0,0,0"
                         VerticalAlignment="Center" />
-                </StackPanel>
-                <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
-                    <Button Content="Remove" Command="{x:Bind ViewModel.RemoveFromQueueCommand}" />
-                </StackPanel>
+                    <Button Grid.Column="4" Content="Remove" Command="{x:Bind ViewModel.RemoveFromQueueCommand}" />
+                </Grid>
             </Grid>
         </Grid>
     </Grid>
 </Window>
+
