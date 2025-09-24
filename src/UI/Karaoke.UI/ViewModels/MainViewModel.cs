@@ -16,10 +16,27 @@ namespace Karaoke.UI.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
+    private const int PageSize = 20;
+
     private readonly ILibraryService _libraryService;
     private readonly IPlaybackService _playbackService;
     private readonly ILibraryIngestionService _ingestionService;
+
     private List<SongDto> _allSongs = new();
+    private List<string> _allArtists = new();
+    private List<SongDto> _filteredSongsSource = new();
+    private readonly List<SongDto> _queueItems = new();
+
+    private int _artistsPageIndex;
+    private int _songsPageIndex;
+    private int _queuePageIndex;
+
+    private readonly RelayCommand _artistsPreviousPageCommand;
+    private readonly RelayCommand _artistsNextPageCommand;
+    private readonly RelayCommand _songsPreviousPageCommand;
+    private readonly RelayCommand _songsNextPageCommand;
+    private readonly RelayCommand _queuePreviousPageCommand;
+    private readonly RelayCommand _queueNextPageCommand;
 
     [ObservableProperty]
     private IReadOnlyList<SongDto> _songs = Array.Empty<SongDto>();
@@ -53,6 +70,15 @@ public partial class MainViewModel : ObservableObject
 
         AddToQueueCommand = new AsyncRelayCommand(AddToQueueAsync, CanAddToQueue);
         RemoveFromQueueCommand = new RelayCommand(RemoveFromQueue, CanRemoveFromQueue);
+
+        _artistsPreviousPageCommand = new RelayCommand(() => MoveArtistsPage(-1), () => _artistsPageIndex > 0);
+        _artistsNextPageCommand = new RelayCommand(() => MoveArtistsPage(1), CanMoveArtistsForward);
+        _songsPreviousPageCommand = new RelayCommand(() => MoveSongsPage(-1), () => _songsPageIndex > 0);
+        _songsNextPageCommand = new RelayCommand(() => MoveSongsPage(1), CanMoveSongsForward);
+        _queuePreviousPageCommand = new RelayCommand(() => MoveQueuePage(-1), () => _queuePageIndex > 0);
+        _queueNextPageCommand = new RelayCommand(() => MoveQueuePage(1), CanMoveQueueForward);
+
+        UpdateQueuePage();
     }
 
     public Visibility LoadingVisibility => IsLoading ? Visibility.Visible : Visibility.Collapsed;
@@ -61,6 +87,47 @@ public partial class MainViewModel : ObservableObject
 
     public IRelayCommand RemoveFromQueueCommand { get; }
 
+    public IRelayCommand ArtistsPreviousPageCommand => _artistsPreviousPageCommand;
+
+    public IRelayCommand ArtistsNextPageCommand => _artistsNextPageCommand;
+
+    public IRelayCommand SongsPreviousPageCommand => _songsPreviousPageCommand;
+
+    public IRelayCommand SongsNextPageCommand => _songsNextPageCommand;
+
+    public IRelayCommand QueuePreviousPageCommand => _queuePreviousPageCommand;
+
+    public IRelayCommand QueueNextPageCommand => _queueNextPageCommand;
+
+    public double ArtistsPageNumber
+    {
+        get => _artistsPageIndex + 1;
+        set => SetArtistsPageFromInput(value);
+    }
+
+    public double SongsPageNumber
+    {
+        get => _songsPageIndex + 1;
+        set => SetSongsPageFromInput(value);
+    }
+
+    public double QueuePageNumber
+    {
+        get => _queuePageIndex + 1;
+        set => SetQueuePageFromInput(value);
+    }
+
+    public int ArtistsTotalPages => CalculateTotalPages(_allArtists.Count);
+
+    public int SongsTotalPages => CalculateTotalPages(_filteredSongsSource.Count);
+
+    public int QueueTotalPages => CalculateTotalPages(_queueItems.Count);
+
+    public string ArtistsPageSummary => FormatPageSummary(_artistsPageIndex, _allArtists.Count, Artists.Count);
+
+    public string SongsPageSummary => FormatPageSummary(_songsPageIndex, _filteredSongsSource.Count, FilteredSongs.Count);
+
+    public string QueuePageSummary => FormatPageSummary(_queuePageIndex, _queueItems.Count, Queue.Count);
 
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
@@ -102,8 +169,9 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        Queue.Add(SelectedSong);
+        _queueItems.Add(SelectedSong);
         await _playbackService.QueueAsync(SelectedSong, CancellationToken.None).ConfigureAwait(false);
+        UpdateQueuePage();
     }
 
     private bool CanAddToQueue() => SelectedSong is not null;
@@ -115,8 +183,9 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        Queue.Remove(SelectedQueuedSong);
+        _queueItems.Remove(SelectedQueuedSong);
         SelectedQueuedSong = null;
+        UpdateQueuePage();
     }
 
     private bool CanRemoveFromQueue() => SelectedQueuedSong is not null;
@@ -138,15 +207,40 @@ public partial class MainViewModel : ObservableObject
 
     private void UpdateArtists()
     {
-        var distinctArtists = _allSongs
+        _allArtists = _allSongs
             .Select(song => song.Artist)
             .Where(artist => !string.IsNullOrWhiteSpace(artist))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(artist => artist, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        EnsurePageIndex(ref _artistsPageIndex, _allArtists.Count);
+        UpdateArtistsPage();
+    }
+
+    private void UpdateFilteredSongs()
+    {
+        IEnumerable<SongDto> songs = _allSongs;
+
+        if (!string.IsNullOrWhiteSpace(SelectedArtist))
+        {
+            songs = songs.Where(song => string.Equals(song.Artist, SelectedArtist, StringComparison.OrdinalIgnoreCase));
+        }
+
+        _filteredSongsSource = songs
+            .OrderBy(song => song.Priority)
+            .ThenBy(song => song.Title, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        EnsurePageIndex(ref _songsPageIndex, _filteredSongsSource.Count);
+        UpdateSongsPage();
+    }
+
+    private void UpdateArtistsPage()
+    {
         Artists.Clear();
-        foreach (var artist in distinctArtists)
+
+        foreach (var artist in GetPageItems(_allArtists, _artistsPageIndex))
         {
             Artists.Add(artist);
         }
@@ -159,32 +253,227 @@ public partial class MainViewModel : ObservableObject
         {
             SelectedArtist = null;
         }
+
+        RaiseArtistsPagingNotifications();
     }
 
-    private void UpdateFilteredSongs()
+    private void UpdateSongsPage()
     {
-        IEnumerable<SongDto> songs = _allSongs;
-
-        if (!string.IsNullOrWhiteSpace(SelectedArtist))
-        {
-            songs = songs.Where(song => string.Equals(song.Artist, SelectedArtist, StringComparison.OrdinalIgnoreCase));
-        }
-
-        var ordered = songs
-            .OrderBy(song => song.Priority)
-            .ThenBy(song => song.Title, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
         FilteredSongs.Clear();
-        foreach (var song in ordered)
+
+        foreach (var song in GetPageItems(_filteredSongsSource, _songsPageIndex))
         {
             FilteredSongs.Add(song);
         }
 
-        if (SelectedSong is null || !FilteredSongs.Contains(SelectedSong))
+        if (FilteredSongs.Count > 0 && (SelectedSong is null || !FilteredSongs.Contains(SelectedSong)))
         {
-            SelectedSong = FilteredSongs.FirstOrDefault();
+            SelectedSong = FilteredSongs.First();
         }
+        else if (FilteredSongs.Count == 0)
+        {
+            SelectedSong = null;
+        }
+
+        RaiseSongsPagingNotifications();
+    }
+
+    private void UpdateQueuePage()
+    {
+        EnsurePageIndex(ref _queuePageIndex, _queueItems.Count);
+
+        Queue.Clear();
+        foreach (var song in GetPageItems(_queueItems, _queuePageIndex))
+        {
+            Queue.Add(song);
+        }
+
+        if (Queue.Count > 0 && (SelectedQueuedSong is null || !Queue.Contains(SelectedQueuedSong)))
+        {
+            SelectedQueuedSong = Queue.First();
+        }
+        else if (Queue.Count == 0)
+        {
+            SelectedQueuedSong = null;
+        }
+
+        RaiseQueuePagingNotifications();
+    }
+
+    private void MoveArtistsPage(int delta)
+    {
+        var newIndex = Math.Clamp(_artistsPageIndex + delta, 0, Math.Max(0, ArtistsTotalPages - 1));
+        if (newIndex == _artistsPageIndex)
+        {
+            return;
+        }
+
+        _artistsPageIndex = newIndex;
+        UpdateArtistsPage();
+    }
+
+    private void MoveSongsPage(int delta)
+    {
+        var newIndex = Math.Clamp(_songsPageIndex + delta, 0, Math.Max(0, SongsTotalPages - 1));
+        if (newIndex == _songsPageIndex)
+        {
+            return;
+        }
+
+        _songsPageIndex = newIndex;
+        UpdateSongsPage();
+    }
+
+    private void MoveQueuePage(int delta)
+    {
+        var newIndex = Math.Clamp(_queuePageIndex + delta, 0, Math.Max(0, QueueTotalPages - 1));
+        if (newIndex == _queuePageIndex)
+        {
+            return;
+        }
+
+        _queuePageIndex = newIndex;
+        UpdateQueuePage();
+    }
+
+    private void SetArtistsPageFromInput(double value)
+    {
+        var newIndex = ConvertToPageIndex(value, ArtistsTotalPages);
+        if (newIndex == _artistsPageIndex)
+        {
+            OnPropertyChanged(nameof(ArtistsPageNumber));
+            return;
+        }
+
+        _artistsPageIndex = newIndex;
+        UpdateArtistsPage();
+    }
+
+    private void SetSongsPageFromInput(double value)
+    {
+        var newIndex = ConvertToPageIndex(value, SongsTotalPages);
+        if (newIndex == _songsPageIndex)
+        {
+            OnPropertyChanged(nameof(SongsPageNumber));
+            return;
+        }
+
+        _songsPageIndex = newIndex;
+        UpdateSongsPage();
+    }
+
+    private void SetQueuePageFromInput(double value)
+    {
+        var newIndex = ConvertToPageIndex(value, QueueTotalPages);
+        if (newIndex == _queuePageIndex)
+        {
+            OnPropertyChanged(nameof(QueuePageNumber));
+            return;
+        }
+
+        _queuePageIndex = newIndex;
+        UpdateQueuePage();
+    }
+
+    private static int ConvertToPageIndex(double value, int totalPages)
+    {
+        if (totalPages <= 0)
+        {
+            return 0;
+        }
+
+        var clamped = Math.Clamp((int)Math.Round(value), 1, totalPages);
+        return clamped - 1;
+    }
+
+    private static IEnumerable<T> GetPageItems<T>(IReadOnlyList<T> source, int pageIndex)
+    {
+        if (source.Count == 0)
+        {
+            yield break;
+        }
+
+        var start = pageIndex * PageSize;
+        for (var i = start; i < Math.Min(source.Count, start + PageSize); i++)
+        {
+            yield return source[i];
+        }
+    }
+
+    private static void EnsurePageIndex(ref int pageIndex, int totalCount)
+    {
+        if (totalCount == 0)
+        {
+            pageIndex = 0;
+            return;
+        }
+
+        var maxIndex = (totalCount - 1) / PageSize;
+        pageIndex = Math.Clamp(pageIndex, 0, maxIndex);
+    }
+
+    private static int CalculateTotalPages(int totalCount)
+    {
+        return totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)PageSize);
+    }
+
+    private static string FormatPageSummary(int pageIndex, int totalCount, int itemsOnPage)
+    {
+        if (totalCount == 0)
+        {
+            return "0/0";
+        }
+
+        var start = pageIndex * PageSize;
+        var endExclusive = start + Math.Max(itemsOnPage, 0);
+        if (itemsOnPage == 0)
+        {
+            endExclusive = Math.Min(totalCount, start + PageSize);
+        }
+
+        return $"{start + 1}-{Math.Min(totalCount, endExclusive)}/{totalCount}";
+    }
+
+    private bool CanMoveArtistsForward()
+    {
+        return (_artistsPageIndex + 1) * PageSize < _allArtists.Count;
+    }
+
+    private bool CanMoveSongsForward()
+    {
+        return (_songsPageIndex + 1) * PageSize < _filteredSongsSource.Count;
+    }
+
+    private bool CanMoveQueueForward()
+    {
+        return (_queuePageIndex + 1) * PageSize < _queueItems.Count;
+    }
+
+    private void RaiseArtistsPagingNotifications()
+    {
+        OnPropertyChanged(nameof(ArtistsPageSummary));
+        OnPropertyChanged(nameof(ArtistsPageNumber));
+        OnPropertyChanged(nameof(ArtistsTotalPages));
+        _artistsPreviousPageCommand.NotifyCanExecuteChanged();
+        _artistsNextPageCommand.NotifyCanExecuteChanged();
+    }
+
+    private void RaiseSongsPagingNotifications()
+    {
+        OnPropertyChanged(nameof(SongsPageSummary));
+        OnPropertyChanged(nameof(SongsPageNumber));
+        OnPropertyChanged(nameof(SongsTotalPages));
+        _songsPreviousPageCommand.NotifyCanExecuteChanged();
+        _songsNextPageCommand.NotifyCanExecuteChanged();
+    }
+
+    private void RaiseQueuePagingNotifications()
+    {
+        OnPropertyChanged(nameof(QueuePageSummary));
+        OnPropertyChanged(nameof(QueuePageNumber));
+        OnPropertyChanged(nameof(QueueTotalPages));
+        _queuePreviousPageCommand.NotifyCanExecuteChanged();
+        _queueNextPageCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnIsLoadingChanged(bool value)
@@ -192,6 +481,3 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(LoadingVisibility));
     }
 }
-
-
-
