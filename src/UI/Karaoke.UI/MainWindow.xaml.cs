@@ -1,4 +1,5 @@
 using System.Threading;
+using Karaoke.Common.Models;
 using Karaoke.UI.ViewModels;
 using Karaoke.UI.ViewModels.Settings;
 using Karaoke.UI.Views;
@@ -35,6 +36,21 @@ public sealed partial class MainWindow : Window
         }
 
         await _viewModel.InitializeAsync(CancellationToken.None).ConfigureAwait(true);
+    }
+
+    private async void OnSongItemClick(object sender, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is not SongDto clickedSong)
+        {
+            return;
+        }
+
+        ViewModel.SelectedSong = clickedSong;
+
+        if (ViewModel.AddToQueueCommand.CanExecute(null))
+        {
+            await ViewModel.AddToQueueCommand.ExecuteAsync(null).ConfigureAwait(true);
+        }
     }
 
     private async void OnRescanClicked(object sender, RoutedEventArgs e)

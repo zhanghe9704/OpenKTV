@@ -87,12 +87,28 @@
             <Grid Grid.Column="1" RowSpacing="8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Text="Songs" FontWeight="SemiBold" />
+                <Grid Grid.Row="1" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox
+                        Grid.Column="0"
+                        Text="{x:Bind ViewModel.SongSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        PlaceholderText="Search songs" />
+                    <Button Grid.Column="1" Command="{x:Bind ViewModel.SearchSongsCommand}" Padding="12,0">
+                        <SymbolIcon Symbol="Find" />
+                    </Button>
+                </Grid>
                 <ListView
-                    Grid.Row="1"
+                    Grid.Row="2"
+                    IsItemClickEnabled="True"
+                    ItemClick="OnSongItemClick"
                     ItemsSource="{x:Bind ViewModel.FilteredSongs, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedSong, Mode=TwoWay}"
                     SelectionMode="Single">
@@ -109,7 +125,7 @@
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
-                <Grid Grid.Row="2" ColumnSpacing="8">
+                <Grid Grid.Row="3" ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />

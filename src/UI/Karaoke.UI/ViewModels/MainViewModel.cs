@@ -53,6 +53,7 @@ public partial class MainViewModel : ObservableObject
     private readonly List<SongDto> _queueItems = new();
 
     private readonly Dictionary<string, string> _artistInitials = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, (string TitleInitials, string ArtistInitials)> _songInitialsById = new();
 
     private int _artistsPageIndex;
     private int _songsPageIndex;
@@ -83,6 +84,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string? _artistSearchText;
 
+    [ObservableProperty]
+    private string? _songSearchText;
+
     public ObservableCollection<string> Artists { get; } = new();
 
     public ObservableCollection<SongDto> FilteredSongs { get; } = new();
@@ -101,6 +105,7 @@ public partial class MainViewModel : ObservableObject
         AddToQueueCommand = new AsyncRelayCommand(AddToQueueAsync, CanAddToQueue);
         RemoveFromQueueCommand = new RelayCommand(RemoveFromQueue, CanRemoveFromQueue);
         SearchArtistsCommand = new RelayCommand(() => ApplyArtistSearch(resetPage: true));
+        SearchSongsCommand = new RelayCommand(() => UpdateFilteredSongs(resetPage: true));
 
         _artistsPreviousPageCommand = new RelayCommand(() => MoveArtistsPage(-1), () => _artistsPageIndex > 0);
         _artistsNextPageCommand = new RelayCommand(() => MoveArtistsPage(1), CanMoveArtistsForward);
@@ -131,6 +136,8 @@ public partial class MainViewModel : ObservableObject
     public IRelayCommand QueueNextPageCommand => _queueNextPageCommand;
 
     public IRelayCommand SearchArtistsCommand { get; }
+
+    public IRelayCommand SearchSongsCommand { get; }
 
     public double ArtistsPageNumber
     {
@@ -186,8 +193,9 @@ public partial class MainViewModel : ObservableObject
             _allSongs = songs.ToList();
             Songs = songs;
 
+            RebuildSongInitials();
             UpdateArtists();
-            UpdateFilteredSongs();
+            UpdateFilteredSongs(resetPage: true);
         }
         finally
         {
@@ -235,12 +243,17 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSelectedArtistChanged(string? value)
     {
-        UpdateFilteredSongs();
+        UpdateFilteredSongs(resetPage: true);
     }
 
     partial void OnArtistSearchTextChanged(string? value)
     {
         ApplyArtistSearch(resetPage: true);
+    }
+
+    partial void OnSongSearchTextChanged(string? value)
+    {
+        UpdateFilteredSongs(resetPage: true);
     }
 
     private void UpdateArtists()
@@ -268,7 +281,7 @@ public partial class MainViewModel : ObservableObject
         if (!string.IsNullOrEmpty(term))
         {
             var upper = term.ToUpperInvariant();
-            var initialsQuery = upper.Replace(" ", string.Empty);
+            var initialsQuery = upper.Replace(" ", string.Empty, StringComparison.Ordinal);
             source = source.Where(artist =>
                 artist.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
                 (_artistInitials.TryGetValue(artist, out var initials) &&
@@ -307,11 +320,34 @@ public partial class MainViewModel : ObservableObject
         RaiseArtistsPagingNotifications();
     }
 
-    private void UpdateFilteredSongs()
+    private void UpdateFilteredSongs(bool resetPage = false)
     {
         IEnumerable<SongDto> songs = _allSongs;
 
-        if (!string.IsNullOrWhiteSpace(SelectedArtist))
+        var term = SongSearchText?.Trim();
+        if (!string.IsNullOrEmpty(term))
+        {
+            var upper = term.ToUpperInvariant();
+            var initialsQuery = upper.Replace(" ", string.Empty, StringComparison.Ordinal);
+
+            songs = songs.Where(song =>
+            {
+                if (song.Title.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
+                    song.Artist.Contains(term, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (!_songInitialsById.TryGetValue(song.Id, out var initials))
+                {
+                    return false;
+                }
+
+                return initials.TitleInitials.StartsWith(initialsQuery, StringComparison.OrdinalIgnoreCase) ||
+                       initials.ArtistInitials.StartsWith(initialsQuery, StringComparison.OrdinalIgnoreCase);
+            });
+        }
+        else if (!string.IsNullOrWhiteSpace(SelectedArtist))
         {
             songs = songs.Where(song => string.Equals(song.Artist, SelectedArtist, StringComparison.OrdinalIgnoreCase));
         }
@@ -321,7 +357,13 @@ public partial class MainViewModel : ObservableObject
             .ThenBy(song => song.Title, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        if (resetPage)
+        {
+            _songsPageIndex = 0;
+        }
+
         EnsurePageIndex(ref _songsPageIndex, _filteredSongsSource.Count);
+
         UpdateSongsPage();
     }
 
@@ -344,6 +386,16 @@ public partial class MainViewModel : ObservableObject
         }
 
         RaiseSongsPagingNotifications();
+    }
+
+    private void RebuildSongInitials()
+    {
+        _songInitialsById.Clear();
+
+        foreach (var song in _allSongs)
+        {
+            _songInitialsById[song.Id] = (BuildInitials(song.Title), BuildInitials(song.Artist));
+        }
     }
 
     private void UpdateQueuePage()
