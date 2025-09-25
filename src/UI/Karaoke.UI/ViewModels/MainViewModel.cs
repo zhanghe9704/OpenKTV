@@ -268,9 +268,11 @@ public partial class MainViewModel : ObservableObject
         if (!string.IsNullOrEmpty(term))
         {
             var upper = term.ToUpperInvariant();
+            var initialsQuery = upper.Replace(" ", string.Empty);
             source = source.Where(artist =>
                 artist.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
-                (_artistInitials.TryGetValue(artist, out var initials) && initials.Contains(upper, StringComparison.OrdinalIgnoreCase)));
+                (_artistInitials.TryGetValue(artist, out var initials) &&
+                 initials.StartsWith(initialsQuery, StringComparison.OrdinalIgnoreCase)));
         }
 
         _filteredArtistsSource = source.ToList();
@@ -562,7 +564,7 @@ public partial class MainViewModel : ObservableObject
 
         foreach (var ch in text)
         {
-            if (char.IsLetter(ch))
+            if (IsAsciiLetter(ch))
             {
                 builder.Append(char.ToUpperInvariant(ch));
             }
@@ -583,8 +585,18 @@ public partial class MainViewModel : ObservableObject
         return builder.ToString();
     }
 
+    private static bool IsAsciiLetter(char ch)
+    {
+        return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
+    }
+
     private static char GetChineseInitial(char ch)
     {
+        if (IsAsciiLetter(ch))
+        {
+            return char.ToUpperInvariant(ch);
+        }
+
         try
         {
             var bytes = Gb2312Encoding.GetBytes(new[] { ch });
@@ -611,6 +623,9 @@ public partial class MainViewModel : ObservableObject
         return '\0';
     }
 }
+
+
+
 
 
 

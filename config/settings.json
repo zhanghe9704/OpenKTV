@@ -7,29 +7,33 @@
   "Library": {
     "DefaultPriority": 2,
     "DefaultChannel": "Stereo",
-    "DatabasePath": "data/library.db",
+    "DatabasePath": "d:/Work/Code/karaoke/data/library.db",
     "Roots": [
       {
-        "Name": "SampleLibraryA",
-        "Path": "assets/sample/libraryA",
-        "DefaultPriority": 2
-      },
-      {
-        "Name": "SampleLibraryB",
-        "Path": "assets/sample/libraryB",
-        "DefaultPriority": 1
+        "Name": "ktv_old",
+        "Path": "F:/ktv/ktv_old",
+        "DefaultPriority": 2,
+        "DefaultChannel": "Stereo",
+        "DriveOverride": null
       }
     ],
     "SupportedExtensions": [
       ".mp3",
       ".wav",
       ".mp4",
-      ".mkv"
+      ".mkv",
+      ".dat",
+      ".avi",
+      ".mpg",
+      ".rmvb",
+      ".rm",
+      ".mpeg"
     ]
   },
   "Logging": {
     "LogLevel": {
       "Default": "Information",
+      "Karaoke.Library.Ingestion": "Information",
       "Karaoke": "Debug"
     }
   }
