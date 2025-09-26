@@ -11,6 +11,7 @@ using Karaoke.Common.Models;
 using Karaoke.Library.Configuration;
 using Karaoke.Library.Services;
 using Karaoke.Library.Storage;
+using Karaoke.Library.Storage.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -29,7 +30,6 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
         "Skipped media file '{File}' in root '{RootName}'");
 
     private readonly IEnumerable<IMediaPathParser> _parsers;
-    private readonly ILibraryService _libraryService;
     private readonly LibraryOptions _options;
     private readonly IAppEnvironment _appEnvironment;
     private readonly ILogger<LibraryIngestionService> _logger;
@@ -38,21 +38,18 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
 
     public LibraryIngestionService(
         IEnumerable<IMediaPathParser> parsers,
-        ILibraryService libraryService,
         ILibraryRepository repository,
         IOptions<LibraryOptions> options,
         IAppEnvironment appEnvironment,
         ILogger<LibraryIngestionService> logger)
     {
         ArgumentNullException.ThrowIfNull(parsers);
-        ArgumentNullException.ThrowIfNull(libraryService);
         ArgumentNullException.ThrowIfNull(repository);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(appEnvironment);
         ArgumentNullException.ThrowIfNull(logger);
 
         _parsers = parsers;
-        _libraryService = libraryService;
         _repository = repository;
         _options = options.Value;
         _appEnvironment = appEnvironment;
@@ -99,7 +96,8 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
                 }
 
                 var songDto = ToSongDto(root, resolvedRoot, parsedMetadata);
-                await _libraryService.UpsertAsync(songDto, cancellationToken).ConfigureAwait(false);
+                var songRecord = ToSongRecord(songDto);
+                await _repository.UpsertSongAsync(songRecord, cancellationToken).ConfigureAwait(false);
                 processed++;
             }
         }
@@ -193,4 +191,22 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
     }
 
     private static readonly Regex HtmlTagRegex = new("<[^>]+>", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    private static SongRecord ToSongRecord(SongDto song)
+    {
+        // Root name and relative path are encoded in the SongId as "Root:relative".
+        var separatorIndex = song.Id.IndexOf(':', StringComparison.Ordinal);
+        var rootName = separatorIndex > 0 ? song.Id[..separatorIndex] : string.Empty;
+        var relativePath = separatorIndex > 0 ? song.Id[(separatorIndex + 1)..] : song.Id;
+
+        return new SongRecord(
+            song.Id,
+            rootName,
+            relativePath,
+            song.Title,
+            song.Artist,
+            song.ChannelConfiguration,
+            song.Priority,
+            DateTimeOffset.UtcNow);
+    }
 }

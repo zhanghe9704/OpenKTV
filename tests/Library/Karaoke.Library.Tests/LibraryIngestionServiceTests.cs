@@ -130,7 +130,6 @@ public class LibraryIngestionServiceTests
 
         return new LibraryIngestionService(
             parsers,
-            libraryService,
             repository,
             options,
             appEnvironment,

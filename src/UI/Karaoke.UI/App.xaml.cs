@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Karaoke.Common;
 using Karaoke.Library;
+using Karaoke.Library.Storage;
 using Karaoke.Player;
 using Karaoke.UI.ViewModels;
 using Karaoke.UI.ViewModels.Settings;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
+using System.Threading;
 
 namespace Karaoke.UI;
 
@@ -30,6 +32,10 @@ public partial class App : Application
 
         _host = CreateHostBuilder(args.Arguments).Build();
         _host.Start();
+
+        // Ensure the database is created before the UI tries to access it.
+        var library = _host.Services.GetRequiredService<ILibraryRepository>();
+        library.InitializeAsync(CancellationToken.None).GetAwaiter().GetResult();
 
         var window = _host.Services.GetRequiredService<MainWindow>();
         window.Activate();
