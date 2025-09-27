@@ -7,7 +7,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddKaraokePlayer(this IServiceCollection services)
     {
-        services.AddSingleton<IPlaybackService, InMemoryPlaybackService>();
+        services.AddSingleton<IPlaybackService, VlcPlaybackService>();
         return services;
     }
 }

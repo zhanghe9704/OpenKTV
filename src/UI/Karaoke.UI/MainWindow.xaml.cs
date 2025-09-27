@@ -1,5 +1,6 @@
 using System.Threading;
 using Karaoke.Common.Models;
+using Karaoke.Player.Playback;
 using Karaoke.UI.ViewModels;
 using Karaoke.UI.ViewModels.Settings;
 using Karaoke.UI.Views;
@@ -12,12 +13,14 @@ public sealed partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly LibrarySettingsViewModel _settingsViewModel;
+    private readonly IPlaybackService _playbackService;
 
-    public MainWindow(MainViewModel viewModel, LibrarySettingsViewModel settingsViewModel)
+    public MainWindow(MainViewModel viewModel, LibrarySettingsViewModel settingsViewModel, IPlaybackService playbackService)
     {
         InitializeComponent();
         _viewModel = viewModel;
         _settingsViewModel = settingsViewModel;
+        _playbackService = playbackService;
 
         if (Content is FrameworkElement element)
         {
@@ -71,6 +74,45 @@ public sealed partial class MainWindow : Window
         if (result == ContentDialogResult.Primary)
         {
             await _viewModel.ReloadAsync(_settingsViewModel.RescanAfterSave, CancellationToken.None).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnPlayClicked(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _playbackService.PlayAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // TODO: Show error dialog to user
+            System.Diagnostics.Debug.WriteLine($"Playback error: {ex.Message}");
+        }
+    }
+
+    private async void OnPauseClicked(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _playbackService.PauseAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // TODO: Show error dialog to user
+            System.Diagnostics.Debug.WriteLine($"Pause error: {ex.Message}");
+        }
+    }
+
+    private async void OnStopClicked(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _playbackService.StopAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // TODO: Show error dialog to user
+            System.Diagnostics.Debug.WriteLine($"Stop error: {ex.Message}");
         }
     }
 }

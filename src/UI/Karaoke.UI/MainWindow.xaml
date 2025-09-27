@@ -18,6 +18,10 @@
             <CommandBar DefaultLabelPosition="Right" IsOpen="False">
                 <AppBarButton Icon="Refresh" Label="Rescan" Click="OnRescanClicked" />
                 <AppBarButton Icon="Setting" Label="Settings" Click="OnSettingsClicked" />
+                <AppBarSeparator />
+                <AppBarButton Icon="Play" Label="Play" Click="OnPlayClicked" />
+                <AppBarButton Icon="Pause" Label="Pause" Click="OnPauseClicked" />
+                <AppBarButton Icon="Stop" Label="Stop" Click="OnStopClicked" />
             </CommandBar>
             <ProgressRing
                 HorizontalAlignment="Right"
