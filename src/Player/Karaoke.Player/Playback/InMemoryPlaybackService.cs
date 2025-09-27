@@ -99,6 +99,22 @@ public sealed class InMemoryPlaybackService : IPlaybackService
         return Task.FromResult(false);
     }
 
+    public Task RestartCurrentSongAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // For in-memory service, we can't actually restart playback
+        // but we can simulate the action for testing
+        if (_current != null)
+        {
+            // Just ensure we're in playing state if we have a current song
+            _state = PlaybackState.Playing;
+            StateChanged?.Invoke(this, _state);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public Task<SongDto?> GetCurrentAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

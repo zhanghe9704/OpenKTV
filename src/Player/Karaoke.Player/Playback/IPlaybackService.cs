@@ -19,6 +19,8 @@ public interface IPlaybackService
 
     Task<bool> CancelCurrentSongAsync(SongDto song, CancellationToken cancellationToken);
 
+    Task RestartCurrentSongAsync(CancellationToken cancellationToken);
+
     Task<SongDto?> GetCurrentAsync(CancellationToken cancellationToken);
 
     Task<SongDto?> MoveNextAsync(CancellationToken cancellationToken);

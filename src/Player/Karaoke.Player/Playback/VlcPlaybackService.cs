@@ -216,6 +216,40 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         }
     }
 
+    public async Task RestartCurrentSongAsync(CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!_vlcInitialized)
+        {
+            _logger.LogWarning("VLC not initialized - cannot restart current song");
+            return;
+        }
+
+        await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_mediaPlayer != null && _currentSong != null)
+            {
+                _logger.LogInformation("Restarting current song {SongId}", _currentSong.Id);
+                
+                // Set position to beginning and start playing
+                _mediaPlayer.Position = 0.0f;
+                _mediaPlayer.Play();
+                await SetStateAsync(PlaybackState.Playing).ConfigureAwait(false);
+            }
+            else
+            {
+                _logger.LogInformation("No current song to restart");
+            }
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
     public async Task<SongDto?> GetCurrentAsync(CancellationToken cancellationToken)
     {
         ThrowIfDisposed();

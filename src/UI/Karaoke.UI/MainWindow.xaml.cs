@@ -128,4 +128,17 @@ public sealed partial class MainWindow : Window
             System.Diagnostics.Debug.WriteLine($"Next error: {ex.Message}");
         }
     }
+
+    private async void OnRepeatClicked(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _playbackService.RestartCurrentSongAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // TODO: Show error dialog to user
+            System.Diagnostics.Debug.WriteLine($"Repeat error: {ex.Message}");
+        }
+    }
 }

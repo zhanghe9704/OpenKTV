@@ -23,6 +23,7 @@
                 <AppBarButton Icon="Pause" Label="Pause" Click="OnPauseClicked" />
                 <AppBarButton Icon="Stop" Label="Stop" Click="OnStopClicked" />
                 <AppBarButton Icon="Next" Label="Next" Click="OnNextClicked" />
+                <AppBarButton Icon="RepeatOne" Label="Repeat" Click="OnRepeatClicked" />
             </CommandBar>
             <ProgressRing
                 HorizontalAlignment="Right"
