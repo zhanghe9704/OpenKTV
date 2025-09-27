@@ -147,7 +147,7 @@ public partial class MainViewModel : ObservableObject
     private List<string> _allArtists = new();
     private List<string> _filteredArtistsSource = new();
     private List<SongDto> _filteredSongsSource = new();
-    private readonly List<SongDto> _queueItems = new();
+    private readonly ObservableCollection<SongDto> _queueItems = new();
 
     private readonly Dictionary<string, string> _artistInitials = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, (string TitleInitials, string ArtistInitials)> _songInitialsById = new();
@@ -356,6 +356,174 @@ public partial class MainViewModel : ObservableObject
     }
 
     private bool CanRemoveFromQueue() => SelectedQueuedSong is not null;
+
+    public async Task MoveQueuedSongUpAsync()
+    {
+        if (SelectedQueuedSong is null) return;
+        
+        var currentIndex = _queueItems.IndexOf(SelectedQueuedSong);
+        if (currentIndex > 0)
+        {
+            var newPosition = currentIndex - 1;
+            
+            // Move in UI queue
+            _queueItems.Move(currentIndex, newPosition);
+            
+            // Calculate and move in playback queue
+            var playbackPosition = await CalculatePlaybackPositionAsync(newPosition);
+            await _playbackService.MoveInQueueAsync(SelectedQueuedSong, playbackPosition, CancellationToken.None).ConfigureAwait(false);
+            
+            UpdateQueuePage();
+        }
+    }
+
+    public async Task MoveQueuedSongToTopAsync()
+    {
+        if (SelectedQueuedSong is null) return;
+        
+        var currentIndex = _queueItems.IndexOf(SelectedQueuedSong);
+        if (currentIndex <= 0) return;
+
+        try
+        {
+            // Get the currently playing song to determine the correct "next" position
+            var currentSong = await _playbackService.GetCurrentAsync(CancellationToken.None).ConfigureAwait(false);
+            
+            int uiTargetPosition = 0;
+            
+            if (currentSong != null)
+            {
+                // Find the currently playing song in our UI queue
+                var currentSongIndex = -1;
+                for (int i = 0; i < _queueItems.Count; i++)
+                {
+                    if (_queueItems[i].Id == currentSong.Id)
+                    {
+                        currentSongIndex = i;
+                        break;
+                    }
+                }
+                
+                // Move to position after the current song (or beginning if not found)
+                uiTargetPosition = currentSongIndex >= 0 ? currentSongIndex + 1 : 0;
+            }
+            
+            // Don't move if already at target position
+            if (uiTargetPosition == currentIndex) return;
+            
+            // Adjust UI target position if moving from later in the queue
+            if (currentIndex < uiTargetPosition)
+            {
+                uiTargetPosition--;
+            }
+            
+            // Move in UI queue first
+            _queueItems.Move(currentIndex, uiTargetPosition);
+            
+            // Calculate playback queue position: it's the position relative to songs that come after current
+            var playbackQueuePosition = await CalculatePlaybackPositionAsync(uiTargetPosition);
+            
+            // Move in playback queue
+            await _playbackService.MoveInQueueAsync(SelectedQueuedSong, playbackQueuePosition, CancellationToken.None).ConfigureAwait(false);
+            
+            UpdateQueuePage();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error moving song to next position: {ex.Message}");
+        }
+    }
+
+    public async Task MoveQueuedSongDownAsync()
+    {
+        if (SelectedQueuedSong is null) return;
+        
+        var currentIndex = _queueItems.IndexOf(SelectedQueuedSong);
+        if (currentIndex >= 0 && currentIndex < _queueItems.Count - 1)
+        {
+            var newPosition = currentIndex + 1;
+            
+            // Move in UI queue
+            _queueItems.Move(currentIndex, newPosition);
+            
+            // Calculate and move in playback queue
+            var playbackPosition = await CalculatePlaybackPositionAsync(newPosition);
+            await _playbackService.MoveInQueueAsync(SelectedQueuedSong, playbackPosition, CancellationToken.None).ConfigureAwait(false);
+            
+            UpdateQueuePage();
+        }
+    }
+
+    public async Task MoveQueuedSongToBottomAsync()
+    {
+        if (SelectedQueuedSong is null) return;
+        
+        var currentIndex = _queueItems.IndexOf(SelectedQueuedSong);
+        if (currentIndex >= 0 && currentIndex < _queueItems.Count - 1)
+        {
+            var newPosition = _queueItems.Count - 1;
+            
+            // Move in UI queue
+            _queueItems.Move(currentIndex, newPosition);
+            
+            // Calculate and move in playback queue
+            var playbackPosition = await CalculatePlaybackPositionAsync(newPosition);
+            await _playbackService.MoveInQueueAsync(SelectedQueuedSong, playbackPosition, CancellationToken.None).ConfigureAwait(false);
+            
+            UpdateQueuePage();
+        }
+    }
+
+    public bool CanMoveQueuedSongUp() => SelectedQueuedSong is not null && _queueItems.IndexOf(SelectedQueuedSong) > 0;
+
+    public bool CanMoveQueuedSongToTop() => SelectedQueuedSong is not null && _queueItems.IndexOf(SelectedQueuedSong) > 0;
+
+    public bool CanMoveQueuedSongDown() => SelectedQueuedSong is not null && _queueItems.IndexOf(SelectedQueuedSong) >= 0 && _queueItems.IndexOf(SelectedQueuedSong) < _queueItems.Count - 1;
+
+    public bool CanMoveQueuedSongToBottom() => SelectedQueuedSong is not null && _queueItems.IndexOf(SelectedQueuedSong) >= 0 && _queueItems.IndexOf(SelectedQueuedSong) < _queueItems.Count - 1;
+
+    private async Task<int> CalculatePlaybackPositionAsync(int uiPosition)
+    {
+        try
+        {
+            // Get the currently playing song
+            var currentSong = await _playbackService.GetCurrentAsync(CancellationToken.None).ConfigureAwait(false);
+            
+            if (currentSong == null)
+            {
+                // No current song, playback queue matches UI queue
+                return uiPosition;
+            }
+            
+            // Find the currently playing song in UI queue
+            var currentSongIndex = -1;
+            for (int i = 0; i < _queueItems.Count; i++)
+            {
+                if (_queueItems[i].Id == currentSong.Id)
+                {
+                    currentSongIndex = i;
+                    break;
+                }
+            }
+            
+            if (currentSongIndex < 0)
+            {
+                // Current song not found in UI queue, assume it's at beginning
+                return Math.Max(0, uiPosition);
+            }
+            
+            // Playback queue starts after the current song
+            // So UI position N maps to playback position (N - currentSongIndex - 1)
+            var playbackPosition = uiPosition - currentSongIndex - 1;
+            return Math.Max(0, playbackPosition);
+        }
+        catch
+        {
+            // Fallback to UI position if anything goes wrong
+            return uiPosition;
+        }
+    }
+
 
     partial void OnSelectedSongChanged(SongDto? value)
     {

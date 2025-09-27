@@ -154,4 +154,24 @@ public sealed partial class MainWindow : Window
             System.Diagnostics.Debug.WriteLine($"Full Screen error: {ex.Message}");
         }
     }
+
+    private void OnMoveUpClicked(object sender, RoutedEventArgs e)
+    {
+        _ = _viewModel.MoveQueuedSongUpAsync();
+    }
+
+    private void OnMoveTopClicked(object sender, RoutedEventArgs e)
+    {
+        _ = _viewModel.MoveQueuedSongToTopAsync();
+    }
+
+    private void OnMoveDownClicked(object sender, RoutedEventArgs e)
+    {
+        _ = _viewModel.MoveQueuedSongDownAsync();
+    }
+
+    private void OnMoveBottomClicked(object sender, RoutedEventArgs e)
+    {
+        _ = _viewModel.MoveQueuedSongToBottomAsync();
+    }
 }

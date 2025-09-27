@@ -187,6 +187,53 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         }
     }
 
+    public async Task MoveInQueueAsync(SongDto song, int newPosition, CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(song);
+
+        await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Convert queue to list, move the song, and rebuild queue
+            var queueList = new List<SongDto>();
+            while (_queue.TryDequeue(out var queuedSong))
+            {
+                queueList.Add(queuedSong);
+            }
+
+            // Find the song to move
+            var songIndex = queueList.FindIndex(s => s.Id == song.Id);
+            if (songIndex >= 0)
+            {
+                // Remove song from current position
+                queueList.RemoveAt(songIndex);
+                
+                // Insert at new position (clamp to valid range)
+                var targetPosition = Math.Max(0, Math.Min(newPosition, queueList.Count));
+                queueList.Insert(targetPosition, song);
+                
+                _logger.LogInformation("Moved song {SongId} from position {OldPosition} to position {NewPosition}", 
+                    song.Id, songIndex, targetPosition);
+            }
+            else
+            {
+                _logger.LogWarning("Song {SongId} not found in queue for move operation", song.Id);
+            }
+
+            // Re-enqueue all songs in new order
+            foreach (var remainingSong in queueList)
+            {
+                _queue.Enqueue(remainingSong);
+            }
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
     public async Task<bool> CancelCurrentSongAsync(SongDto song, CancellationToken cancellationToken)
     {
         ThrowIfDisposed();

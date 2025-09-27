@@ -83,6 +83,39 @@ public sealed class InMemoryPlaybackService : IPlaybackService
         return Task.CompletedTask;
     }
 
+    public Task MoveInQueueAsync(SongDto song, int newPosition, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(song);
+
+        // Convert queue to list, move the song, and rebuild queue
+        var queueList = new List<SongDto>();
+        while (_queue.TryDequeue(out var queuedSong))
+        {
+            queueList.Add(queuedSong);
+        }
+
+        // Find the song to move
+        var songIndex = queueList.FindIndex(s => s.Id == song.Id);
+        if (songIndex >= 0)
+        {
+            // Remove song from current position
+            queueList.RemoveAt(songIndex);
+            
+            // Insert at new position (clamp to valid range)
+            var targetPosition = Math.Max(0, Math.Min(newPosition, queueList.Count));
+            queueList.Insert(targetPosition, song);
+        }
+
+        // Re-enqueue all songs in new order
+        foreach (var remainingSong in queueList)
+        {
+            _queue.Enqueue(remainingSong);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public Task<bool> CancelCurrentSongAsync(SongDto song, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

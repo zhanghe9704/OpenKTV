@@ -26,6 +26,11 @@
                 <AppBarButton Icon="RepeatOne" Label="Repeat" Click="OnRepeatClicked" />
                 <AppBarSeparator />
                 <AppBarButton Icon="FullScreen" Label="Full Screen" Click="OnFullScreenClicked" />
+                <AppBarSeparator />
+                <AppBarButton Icon="Up" Label="Move Up" Click="OnMoveUpClicked" />
+                <AppBarButton Icon="Previous" Label="Move Next" Click="OnMoveTopClicked" />
+                <AppBarButton Icon="Forward" Label="Move Down" Click="OnMoveDownClicked" />
+                <AppBarButton Icon="Next" Label="Move Bottom" Click="OnMoveBottomClicked" />
             </CommandBar>
             <ProgressRing
                 HorizontalAlignment="Right"

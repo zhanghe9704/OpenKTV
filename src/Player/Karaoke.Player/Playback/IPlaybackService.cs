@@ -17,6 +17,8 @@ public interface IPlaybackService
 
     Task ClearQueueAsync(CancellationToken cancellationToken);
 
+    Task MoveInQueueAsync(SongDto song, int newPosition, CancellationToken cancellationToken);
+
     Task<bool> CancelCurrentSongAsync(SongDto song, CancellationToken cancellationToken);
 
     Task RestartCurrentSongAsync(CancellationToken cancellationToken);
