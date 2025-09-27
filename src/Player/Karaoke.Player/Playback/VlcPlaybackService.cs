@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Windows.Forms;
 using Karaoke.Common.Models;
 using LibVLCSharp.Shared;
 using Microsoft.Extensions.Logging;
@@ -63,11 +64,12 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     
     private LibVLC? _libVlc;
     private MediaPlayer? _mediaPlayer;
-    private Media? _currentMedia;
     private SongDto? _currentSong;
+    private Media? _currentMedia;
     private PlaybackState _currentState = PlaybackState.Stopped;
     private bool _disposed;
     private bool _vlcInitialized;
+    private Form? _playbackForm;
 
     public event EventHandler<SongDto>? SongChanged;
     public event EventHandler<PlaybackState>? StateChanged;
@@ -78,9 +80,10 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         _logger = logger;
         
         // Log immediately with multiple methods to ensure it's visible
-        Console.WriteLine("VlcPlaybackService constructor called - Console output");
-        System.Diagnostics.Debug.WriteLine("VlcPlaybackService constructor called - Debug output");
-        _logger.LogInformation("VlcPlaybackService constructor called - Logger output");
+        var instanceId = Guid.NewGuid().ToString("N")[..8];
+        Console.WriteLine($"VlcPlaybackService constructor called - Instance ID: {instanceId}");
+        System.Diagnostics.Debug.WriteLine($"VlcPlaybackService constructor called - Instance ID: {instanceId}");
+        _logger.LogInformation("VlcPlaybackService constructor called - Instance ID: {InstanceId}", instanceId);
         
         try
         {
@@ -166,10 +169,11 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         }
         else
         {
-            _logger.LogInformation("MoveNextInternalAsync: Queue empty, stopping");
+            _logger.LogInformation("MoveNextInternalAsync: Queue empty, no more songs");
             _currentSong = null;
             QueueEmptyLog(_logger, null);
-            await SetStateAsync(PlaybackState.Stopped).ConfigureAwait(false);
+            // Don't set to Stopped - let the MediaPlayer naturally finish
+            // This prevents VLC from tearing down the window
             return null;
         }
     }
@@ -362,6 +366,28 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _mediaPlayer = new MediaPlayer(_libVlc);
             _logger.LogInformation("MediaPlayer instance created");
             
+            // Create stable playback window
+            _logger.LogInformation("Creating playback window...");
+            _playbackForm = new Form
+            {
+                Text = "Karaoke Player",
+                FormBorderStyle = FormBorderStyle.Sizable,
+                StartPosition = FormStartPosition.CenterScreen,
+                Size = new System.Drawing.Size(800, 600),
+                BackColor = System.Drawing.Color.Black
+            };
+            _playbackForm.Show();
+            _logger.LogInformation("Playback window created with handle: {Handle}", _playbackForm.Handle);
+            
+            // Pin VLC rendering to our stable window
+            _logger.LogInformation("Setting VLC render target...");
+            _mediaPlayer.Hwnd = _playbackForm.Handle;
+            _logger.LogInformation("VLC render target set");
+            
+            // Disable VLC's own input handling since we have our own window
+            _mediaPlayer.EnableKeyInput = false;
+            _mediaPlayer.EnableMouseInput = false;
+            
             // Subscribe to events
             _mediaPlayer.EndReached += OnMediaPlayerEndReached;
             _mediaPlayer.Playing += OnMediaPlayerPlaying;
@@ -369,7 +395,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _mediaPlayer.Stopped += OnMediaPlayerStopped;
             
             _vlcInitialized = true;
-            _logger.LogInformation("VLC player initialized successfully");
+            _logger.LogInformation("VLC player initialized successfully with stable window");
         }
         catch (Exception ex)
         {
@@ -385,7 +411,9 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             // Use Task.Run to avoid blocking VLC's event thread
             await Task.Run(async () =>
             {
-                await MoveNextAsync(CancellationToken.None).ConfigureAwait(false);
+                // Call internal version directly to avoid semaphore deadlock
+                // and keep MediaPlayer in continuous playback state
+                await MoveNextInternalAsync(CancellationToken.None).ConfigureAwait(false);
             }).ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -428,12 +456,17 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
         try
         {
-            // Dispose previous media
-            _currentMedia?.Dispose();
+            // Create new media
+            var newMedia = new Media(_libVlc!, _currentSong.MediaPath, FromType.FromPath);
             
-            // Create and play media directly - VLC will open its own native window
-            _currentMedia = new Media(_libVlc!, _currentSong.MediaPath, FromType.FromPath);
-            _mediaPlayer.Play(_currentMedia);
+            // Set media to player BEFORE disposing old media
+            _mediaPlayer.Media = newMedia;
+            _mediaPlayer.Play();  // Play without parameters to reuse existing window
+            
+            // Only dispose old media AFTER new one is set and playing
+            var oldMedia = _currentMedia;
+            _currentMedia = newMedia;
+            oldMedia?.Dispose();
         }
         catch (Exception ex)
         {
@@ -483,6 +516,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
             _currentMedia?.Dispose();
             _libVlc?.Dispose();
+            _playbackForm?.Dispose();
         }
         catch (Exception ex)
         {
