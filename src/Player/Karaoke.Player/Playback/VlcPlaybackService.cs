@@ -505,7 +505,8 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 FormBorderStyle = FormBorderStyle.Sizable,
                 StartPosition = FormStartPosition.CenterScreen,
                 Size = new System.Drawing.Size(800, 600),
-                BackColor = System.Drawing.Color.Black
+                BackColor = System.Drawing.Color.Black,
+                TopMost = false  // Will be set to true when playing
             };
             _playbackForm.Show();
             _logger.LogInformation("Playback window created with handle: {Handle}", _playbackForm.Handle);
@@ -612,9 +613,39 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         if (_currentState != newState)
         {
             _currentState = newState;
+            UpdateWindowTopMost(newState);
             StateChanged?.Invoke(this, newState);
         }
         await Task.CompletedTask;
+    }
+
+    private void UpdateWindowTopMost(PlaybackState state)
+    {
+        if (_playbackForm != null)
+        {
+            var shouldBeTopMost = state == PlaybackState.Playing;
+            
+            // Marshal to UI thread if needed
+            if (_playbackForm.InvokeRequired)
+            {
+                _playbackForm.Invoke(new Action(() =>
+                {
+                    if (_playbackForm.TopMost != shouldBeTopMost)
+                    {
+                        _playbackForm.TopMost = shouldBeTopMost;
+                        _logger.LogInformation("Player window TopMost set to {TopMost} (state: {State})", shouldBeTopMost, state);
+                    }
+                }));
+            }
+            else
+            {
+                if (_playbackForm.TopMost != shouldBeTopMost)
+                {
+                    _playbackForm.TopMost = shouldBeTopMost;
+                    _logger.LogInformation("Player window TopMost set to {TopMost} (state: {State})", shouldBeTopMost, state);
+                }
+            }
+        }
     }
 
     private void ThrowIfDisposed()
