@@ -141,4 +141,17 @@ public sealed partial class MainWindow : Window
             System.Diagnostics.Debug.WriteLine($"Repeat error: {ex.Message}");
         }
     }
+
+    private async void OnFullScreenClicked(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _playbackService.ToggleFullScreenAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // TODO: Show error dialog to user
+            System.Diagnostics.Debug.WriteLine($"Full Screen error: {ex.Message}");
+        }
+    }
 }

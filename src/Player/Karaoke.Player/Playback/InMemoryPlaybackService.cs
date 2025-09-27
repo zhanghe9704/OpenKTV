@@ -115,6 +115,15 @@ public sealed class InMemoryPlaybackService : IPlaybackService
         return Task.CompletedTask;
     }
 
+    public Task ToggleFullScreenAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // For in-memory service, we can't actually toggle full screen
+        // This is just a stub for testing
+        return Task.CompletedTask;
+    }
+
     public Task<SongDto?> GetCurrentAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

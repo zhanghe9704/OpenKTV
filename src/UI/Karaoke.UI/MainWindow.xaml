@@ -24,6 +24,8 @@
                 <AppBarButton Icon="Stop" Label="Stop" Click="OnStopClicked" />
                 <AppBarButton Icon="Next" Label="Next" Click="OnNextClicked" />
                 <AppBarButton Icon="RepeatOne" Label="Repeat" Click="OnRepeatClicked" />
+                <AppBarSeparator />
+                <AppBarButton Icon="FullScreen" Label="Full Screen" Click="OnFullScreenClicked" />
             </CommandBar>
             <ProgressRing
                 HorizontalAlignment="Right"

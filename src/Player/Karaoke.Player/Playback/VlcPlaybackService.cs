@@ -70,6 +70,11 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     private bool _disposed;
     private bool _vlcInitialized;
     private Form? _playbackForm;
+    private bool _isFullScreen;
+    private FormWindowState _originalWindowState;
+    private FormBorderStyle _originalBorderStyle;
+    private System.Drawing.Size _originalSize;
+    private System.Drawing.Point _originalLocation;
 
     public event EventHandler<SongDto>? SongChanged;
     public event EventHandler<PlaybackState>? StateChanged;
@@ -247,6 +252,76 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         finally
         {
             _semaphore.Release();
+        }
+    }
+
+    public async Task ToggleFullScreenAsync(CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (_playbackForm == null)
+        {
+            _logger.LogWarning("No playback window to toggle full screen");
+            return;
+        }
+
+        await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Marshal to UI thread if needed
+            if (_playbackForm.InvokeRequired)
+            {
+                _playbackForm.Invoke(new Action(() => ToggleFullScreenInternal()));
+            }
+            else
+            {
+                ToggleFullScreenInternal();
+            }
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    private void ToggleFullScreenInternal()
+    {
+        if (_playbackForm == null) return;
+
+        if (!_isFullScreen)
+        {
+            // Save current window state
+            _originalWindowState = _playbackForm.WindowState;
+            _originalBorderStyle = _playbackForm.FormBorderStyle;
+            _originalSize = _playbackForm.Size;
+            _originalLocation = _playbackForm.Location;
+
+            // Switch to full screen on the screen where the window is currently located
+            _playbackForm.WindowState = FormWindowState.Normal;
+            _playbackForm.FormBorderStyle = FormBorderStyle.None;
+            
+            // Get the screen that contains the current window
+            var currentScreen = Screen.FromControl(_playbackForm);
+            _playbackForm.Bounds = currentScreen.Bounds;
+            _playbackForm.TopMost = true; // Always on top when full screen
+
+            _isFullScreen = true;
+            _logger.LogInformation("Player window switched to full screen");
+        }
+        else
+        {
+            // Restore original window state
+            _playbackForm.FormBorderStyle = _originalBorderStyle;
+            _playbackForm.WindowState = _originalWindowState;
+            _playbackForm.Size = _originalSize;
+            _playbackForm.Location = _originalLocation;
+            
+            // Restore TopMost based on current playback state
+            UpdateWindowTopMost(_currentState);
+
+            _isFullScreen = false;
+            _logger.LogInformation("Player window restored from full screen");
         }
     }
 
@@ -506,9 +581,23 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 StartPosition = FormStartPosition.CenterScreen,
                 Size = new System.Drawing.Size(800, 600),
                 BackColor = System.Drawing.Color.Black,
-                TopMost = false  // Will be set to true when playing
+                TopMost = false,  // Will be set to true when playing
+                ControlBox = false  // Remove minimize, maximize, and close buttons
             };
+            
+            // Add ESC key handler for exiting full screen
+            _playbackForm.KeyPreview = true;
+            _playbackForm.KeyDown += OnPlaybackFormKeyDown;
+            
             _playbackForm.Show();
+            
+            // Initialize original window state for full screen toggle
+            _originalWindowState = _playbackForm.WindowState;
+            _originalBorderStyle = _playbackForm.FormBorderStyle;
+            _originalSize = _playbackForm.Size;
+            _originalLocation = _playbackForm.Location;
+            _isFullScreen = false;
+            
             _logger.LogInformation("Playback window created with handle: {Handle}", _playbackForm.Handle);
             
             // Pin VLC rendering to our stable window
@@ -648,6 +737,21 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         }
     }
 
+    private async void OnPlaybackFormKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Escape && _isFullScreen)
+        {
+            try
+            {
+                await ToggleFullScreenAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exiting full screen with ESC key");
+            }
+        }
+    }
+
     private void ThrowIfDisposed()
     {
         if (_disposed)
@@ -678,7 +782,12 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
             _currentMedia?.Dispose();
             _libVlc?.Dispose();
-            _playbackForm?.Dispose();
+            
+            if (_playbackForm != null)
+            {
+                _playbackForm.KeyDown -= OnPlaybackFormKeyDown;
+                _playbackForm.Dispose();
+            }
         }
         catch (Exception ex)
         {
