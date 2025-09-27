@@ -361,7 +361,8 @@ public partial class MainViewModel : ObservableObject
     {
         if (SelectedQueuedSong is null) return;
         
-        var currentIndex = _queueItems.IndexOf(SelectedQueuedSong);
+        var selectedSong = SelectedQueuedSong; // Preserve reference
+        var currentIndex = _queueItems.IndexOf(selectedSong);
         if (currentIndex > 0)
         {
             var newPosition = currentIndex - 1;
@@ -371,9 +372,16 @@ public partial class MainViewModel : ObservableObject
             
             // Calculate and move in playback queue
             var playbackPosition = await CalculatePlaybackPositionAsync(newPosition);
-            await _playbackService.MoveInQueueAsync(SelectedQueuedSong, playbackPosition, CancellationToken.None).ConfigureAwait(false);
+            await _playbackService.MoveInQueueAsync(selectedSong, playbackPosition, CancellationToken.None).ConfigureAwait(false);
             
             UpdateQueuePage();
+            
+            // Preserve selection using dispatcher for proper UI timing
+            var songId = selectedSong.Id;
+            Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
+            {
+                SelectedQueuedSong = _queueItems.FirstOrDefault(s => s.Id == songId);
+            });
         }
     }
 
@@ -381,7 +389,8 @@ public partial class MainViewModel : ObservableObject
     {
         if (SelectedQueuedSong is null) return;
         
-        var currentIndex = _queueItems.IndexOf(SelectedQueuedSong);
+        var selectedSong = SelectedQueuedSong; // Preserve reference
+        var currentIndex = _queueItems.IndexOf(selectedSong);
         if (currentIndex <= 0) return;
 
         try
@@ -424,9 +433,16 @@ public partial class MainViewModel : ObservableObject
             var playbackQueuePosition = await CalculatePlaybackPositionAsync(uiTargetPosition);
             
             // Move in playback queue
-            await _playbackService.MoveInQueueAsync(SelectedQueuedSong, playbackQueuePosition, CancellationToken.None).ConfigureAwait(false);
+            await _playbackService.MoveInQueueAsync(selectedSong, playbackQueuePosition, CancellationToken.None).ConfigureAwait(false);
             
             UpdateQueuePage();
+            
+            // Preserve selection using dispatcher for proper UI timing
+            var songId = selectedSong.Id;
+            Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
+            {
+                SelectedQueuedSong = _queueItems.FirstOrDefault(s => s.Id == songId);
+            });
         }
         catch (Exception ex)
         {
@@ -438,7 +454,8 @@ public partial class MainViewModel : ObservableObject
     {
         if (SelectedQueuedSong is null) return;
         
-        var currentIndex = _queueItems.IndexOf(SelectedQueuedSong);
+        var selectedSong = SelectedQueuedSong; // Preserve reference
+        var currentIndex = _queueItems.IndexOf(selectedSong);
         if (currentIndex >= 0 && currentIndex < _queueItems.Count - 1)
         {
             var newPosition = currentIndex + 1;
@@ -448,9 +465,16 @@ public partial class MainViewModel : ObservableObject
             
             // Calculate and move in playback queue
             var playbackPosition = await CalculatePlaybackPositionAsync(newPosition);
-            await _playbackService.MoveInQueueAsync(SelectedQueuedSong, playbackPosition, CancellationToken.None).ConfigureAwait(false);
+            await _playbackService.MoveInQueueAsync(selectedSong, playbackPosition, CancellationToken.None).ConfigureAwait(false);
             
             UpdateQueuePage();
+            
+            // Preserve selection using dispatcher for proper UI timing
+            var songId = selectedSong.Id;
+            Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
+            {
+                SelectedQueuedSong = _queueItems.FirstOrDefault(s => s.Id == songId);
+            });
         }
     }
 
@@ -458,7 +482,8 @@ public partial class MainViewModel : ObservableObject
     {
         if (SelectedQueuedSong is null) return;
         
-        var currentIndex = _queueItems.IndexOf(SelectedQueuedSong);
+        var selectedSong = SelectedQueuedSong; // Preserve reference
+        var currentIndex = _queueItems.IndexOf(selectedSong);
         if (currentIndex >= 0 && currentIndex < _queueItems.Count - 1)
         {
             var newPosition = _queueItems.Count - 1;
@@ -468,9 +493,16 @@ public partial class MainViewModel : ObservableObject
             
             // Calculate and move in playback queue
             var playbackPosition = await CalculatePlaybackPositionAsync(newPosition);
-            await _playbackService.MoveInQueueAsync(SelectedQueuedSong, playbackPosition, CancellationToken.None).ConfigureAwait(false);
+            await _playbackService.MoveInQueueAsync(selectedSong, playbackPosition, CancellationToken.None).ConfigureAwait(false);
             
             UpdateQueuePage();
+            
+            // Preserve selection using dispatcher for proper UI timing
+            var songId = selectedSong.Id;
+            Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
+            {
+                SelectedQueuedSong = _queueItems.FirstOrDefault(s => s.Id == songId);
+            });
         }
     }
 
