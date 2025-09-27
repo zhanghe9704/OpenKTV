@@ -115,4 +115,17 @@ public sealed partial class MainWindow : Window
             System.Diagnostics.Debug.WriteLine($"Stop error: {ex.Message}");
         }
     }
+
+    private async void OnNextClicked(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _playbackService.MoveNextAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // TODO: Show error dialog to user
+            System.Diagnostics.Debug.WriteLine($"Next error: {ex.Message}");
+        }
+    }
 }

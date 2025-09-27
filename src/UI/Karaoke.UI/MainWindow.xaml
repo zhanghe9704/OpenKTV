@@ -22,6 +22,7 @@
                 <AppBarButton Icon="Play" Label="Play" Click="OnPlayClicked" />
                 <AppBarButton Icon="Pause" Label="Pause" Click="OnPauseClicked" />
                 <AppBarButton Icon="Stop" Label="Stop" Click="OnStopClicked" />
+                <AppBarButton Icon="Next" Label="Next" Click="OnNextClicked" />
             </CommandBar>
             <ProgressRing
                 HorizontalAlignment="Right"
