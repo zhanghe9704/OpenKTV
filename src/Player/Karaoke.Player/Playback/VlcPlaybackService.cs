@@ -119,6 +119,103 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         }
     }
 
+    public async Task<bool> RemoveFromQueueAsync(SongDto song, CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(song);
+
+        await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Convert queue to list, remove the song, and rebuild queue
+            var queueList = new List<SongDto>();
+            while (_queue.TryDequeue(out var queuedSong))
+            {
+                queueList.Add(queuedSong);
+            }
+
+            var removed = queueList.Remove(song);
+            
+            // Re-enqueue remaining songs
+            foreach (var remainingSong in queueList)
+            {
+                _queue.Enqueue(remainingSong);
+            }
+
+            if (removed)
+            {
+                _logger.LogInformation("Removed song {SongId} from queue", song.Id);
+            }
+            else
+            {
+                _logger.LogInformation("Song {SongId} not found in queue", song.Id);
+            }
+
+            return removed;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    public async Task ClearQueueAsync(CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+
+        await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Clear the queue
+            while (_queue.TryDequeue(out _))
+            {
+                // Empty the queue
+            }
+            
+            _logger.LogInformation("Queue cleared");
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    public async Task<bool> CancelCurrentSongAsync(SongDto song, CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(song);
+
+        await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Check if the specified song is the current song
+            if (_currentSong != null && _currentSong.Id == song.Id)
+            {
+                _logger.LogInformation("Canceling current song {SongId}", song.Id);
+                
+                // Clear current song and move to next
+                _currentSong = null;
+                
+                // If currently playing, move to next song
+                if (_currentState == PlaybackState.Playing)
+                {
+                    await MoveNextInternalAsync(cancellationToken).ConfigureAwait(false);
+                }
+                
+                return true;
+            }
+            
+            return false;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
     public async Task<SongDto?> GetCurrentAsync(CancellationToken cancellationToken)
     {
         ThrowIfDisposed();

@@ -314,16 +314,45 @@ public partial class MainViewModel : ObservableObject
 
     private bool CanAddToQueue() => SelectedSong is not null;
 
-    private void RemoveFromQueue()
+    private async void RemoveFromQueue()
     {
         if (SelectedQueuedSong is null)
         {
             return;
         }
 
-        _queueItems.Remove(SelectedQueuedSong);
-        SelectedQueuedSong = null;
-        UpdateQueuePage();
+        try
+        {
+            var songToRemove = SelectedQueuedSong;
+            
+            // Remove from both UI queue and playback service queue
+            var removedFromQueue = await _playbackService.RemoveFromQueueAsync(songToRemove, CancellationToken.None).ConfigureAwait(false);
+            
+            // Also try to cancel if it's the current song (already dequeued but not yet played)
+            var canceledCurrent = await _playbackService.CancelCurrentSongAsync(songToRemove, CancellationToken.None).ConfigureAwait(false);
+            
+            // Always remove from UI queue regardless of playback service result
+            _queueItems.Remove(songToRemove);
+            SelectedQueuedSong = null;
+            UpdateQueuePage();
+            
+            if (canceledCurrent)
+            {
+                System.Diagnostics.Debug.WriteLine($"Canceled current song: {songToRemove.Id}");
+            }
+            else if (removedFromQueue)
+            {
+                System.Diagnostics.Debug.WriteLine($"Removed song from queue: {songToRemove.Id}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error but still remove from UI to keep UI in sync
+            System.Diagnostics.Debug.WriteLine($"Error removing song from playback queue: {ex.Message}");
+            _queueItems.Remove(SelectedQueuedSong);
+            SelectedQueuedSong = null;
+            UpdateQueuePage();
+        }
     }
 
     private bool CanRemoveFromQueue() => SelectedQueuedSong is not null;

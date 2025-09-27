@@ -13,6 +13,12 @@ public interface IPlaybackService
 {
     Task QueueAsync(SongDto song, CancellationToken cancellationToken);
 
+    Task<bool> RemoveFromQueueAsync(SongDto song, CancellationToken cancellationToken);
+
+    Task ClearQueueAsync(CancellationToken cancellationToken);
+
+    Task<bool> CancelCurrentSongAsync(SongDto song, CancellationToken cancellationToken);
+
     Task<SongDto?> GetCurrentAsync(CancellationToken cancellationToken);
 
     Task<SongDto?> MoveNextAsync(CancellationToken cancellationToken);

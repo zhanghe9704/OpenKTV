@@ -47,6 +47,58 @@ public sealed class InMemoryPlaybackService : IPlaybackService
         return Task.CompletedTask;
     }
 
+    public Task<bool> RemoveFromQueueAsync(SongDto song, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(song);
+
+        // Convert queue to list, remove the song, and rebuild queue
+        var queueList = new List<SongDto>();
+        while (_queue.TryDequeue(out var queuedSong))
+        {
+            queueList.Add(queuedSong);
+        }
+
+        var removed = queueList.Remove(song);
+        
+        // Re-enqueue remaining songs
+        foreach (var remainingSong in queueList)
+        {
+            _queue.Enqueue(remainingSong);
+        }
+
+        return Task.FromResult(removed);
+    }
+
+    public Task ClearQueueAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Clear the queue
+        while (_queue.TryDequeue(out _))
+        {
+            // Empty the queue
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> CancelCurrentSongAsync(SongDto song, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(song);
+
+        // Check if the specified song is the current song
+        if (_current != null && _current.Id == song.Id)
+        {
+            // Clear current song
+            _current = null;
+            return Task.FromResult(true);
+        }
+        
+        return Task.FromResult(false);
+    }
+
     public Task<SongDto?> GetCurrentAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
