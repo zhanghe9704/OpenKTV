@@ -184,6 +184,14 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string? _songSearchText;
 
+    [ObservableProperty]
+    private SongDto? _currentPlayingSong;
+
+    [ObservableProperty]
+    private int _currentPlayingQueueIndex = -1;
+
+    private int _nextExpectedPlayingIndex = 0;
+
     public ObservableCollection<string> Artists { get; } = new();
 
     public ObservableCollection<SongDto> FilteredSongs { get; } = new();
@@ -274,6 +282,8 @@ public partial class MainViewModel : ObservableObject
         {
             await ReloadAsync(rescan: true, cancellationToken).ConfigureAwait(false);
         }
+
+        await RefreshCurrentPlayingSongAsync().ConfigureAwait(false);
     }
 
     public async Task ReloadAsync(bool rescan, CancellationToken cancellationToken)
@@ -310,6 +320,9 @@ public partial class MainViewModel : ObservableObject
         _queueItems.Add(SelectedSong);
         await _playbackService.QueueAsync(SelectedSong, CancellationToken.None).ConfigureAwait(false);
         UpdateQueuePage();
+        
+        // Recalculate current playing index since queue has changed
+        CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
     }
 
     private bool CanAddToQueue() => SelectedSong is not null;
@@ -336,6 +349,9 @@ public partial class MainViewModel : ObservableObject
             SelectedQueuedSong = null;
             UpdateQueuePage();
             
+            // Recalculate current playing index since queue has changed
+            CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
+            
             if (canceledCurrent)
             {
                 System.Diagnostics.Debug.WriteLine($"Canceled current song: {songToRemove.Id}");
@@ -352,6 +368,9 @@ public partial class MainViewModel : ObservableObject
             _queueItems.Remove(SelectedQueuedSong);
             SelectedQueuedSong = null;
             UpdateQueuePage();
+            
+            // Recalculate current playing index since queue has changed
+            CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
         }
     }
 
@@ -363,12 +382,18 @@ public partial class MainViewModel : ObservableObject
         
         var selectedSong = SelectedQueuedSong; // Preserve reference
         var currentIndex = _queueItems.IndexOf(selectedSong);
-        if (currentIndex > 0)
+        System.Diagnostics.Debug.WriteLine($"[MoveQueuedSongUpAsync] Attempting to move '{selectedSong.Title}' from index {currentIndex}");
+        
+        if (CanMoveSong(currentIndex) && currentIndex > GetFirstMoveableIndex())
         {
             var newPosition = currentIndex - 1;
+            System.Diagnostics.Debug.WriteLine($"[MoveQueuedSongUpAsync] ✓ Moving '{selectedSong.Title}' from {currentIndex} to {newPosition}");
             
             // Move in UI queue
             _queueItems.Move(currentIndex, newPosition);
+            
+            // Adjust expected playing index to handle duplicates correctly
+            AdjustExpectedPlayingIndexAfterMove(currentIndex, newPosition);
             
             // Calculate and move in playback queue
             var playbackPosition = await CalculatePlaybackPositionAsync(newPosition);
@@ -376,12 +401,19 @@ public partial class MainViewModel : ObservableObject
             
             UpdateQueuePage();
             
+            // Recalculate current playing index since queue has changed
+            CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
+            
             // Preserve selection using dispatcher for proper UI timing
             var songId = selectedSong.Id;
             Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
             {
                 SelectedQueuedSong = _queueItems.FirstOrDefault(s => s.Id == songId);
             });
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine($"[MoveQueuedSongUpAsync] ✗ Move rejected for '{selectedSong.Title}' at index {currentIndex}");
         }
     }
 
@@ -391,7 +423,7 @@ public partial class MainViewModel : ObservableObject
         
         var selectedSong = SelectedQueuedSong; // Preserve reference
         var currentIndex = _queueItems.IndexOf(selectedSong);
-        if (currentIndex <= 0) return;
+        if (!CanMoveSong(currentIndex)) return;
 
         try
         {
@@ -429,6 +461,9 @@ public partial class MainViewModel : ObservableObject
             // Move in UI queue first
             _queueItems.Move(currentIndex, uiTargetPosition);
             
+            // Adjust expected playing index to handle duplicates correctly
+            AdjustExpectedPlayingIndexAfterMove(currentIndex, uiTargetPosition);
+            
             // Calculate playback queue position: it's the position relative to songs that come after current
             var playbackQueuePosition = await CalculatePlaybackPositionAsync(uiTargetPosition);
             
@@ -436,6 +471,9 @@ public partial class MainViewModel : ObservableObject
             await _playbackService.MoveInQueueAsync(selectedSong, playbackQueuePosition, CancellationToken.None).ConfigureAwait(false);
             
             UpdateQueuePage();
+            
+            // Recalculate current playing index since queue has changed
+            CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
             
             // Preserve selection using dispatcher for proper UI timing
             var songId = selectedSong.Id;
@@ -456,18 +494,24 @@ public partial class MainViewModel : ObservableObject
         
         var selectedSong = SelectedQueuedSong; // Preserve reference
         var currentIndex = _queueItems.IndexOf(selectedSong);
-        if (currentIndex >= 0 && currentIndex < _queueItems.Count - 1)
+        if (CanMoveSong(currentIndex) && currentIndex < _queueItems.Count - 1)
         {
             var newPosition = currentIndex + 1;
             
             // Move in UI queue
             _queueItems.Move(currentIndex, newPosition);
             
+            // Adjust expected playing index to handle duplicates correctly
+            AdjustExpectedPlayingIndexAfterMove(currentIndex, newPosition);
+            
             // Calculate and move in playback queue
             var playbackPosition = await CalculatePlaybackPositionAsync(newPosition);
             await _playbackService.MoveInQueueAsync(selectedSong, playbackPosition, CancellationToken.None).ConfigureAwait(false);
             
             UpdateQueuePage();
+            
+            // Recalculate current playing index since queue has changed
+            CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
             
             // Preserve selection using dispatcher for proper UI timing
             var songId = selectedSong.Id;
@@ -484,18 +528,24 @@ public partial class MainViewModel : ObservableObject
         
         var selectedSong = SelectedQueuedSong; // Preserve reference
         var currentIndex = _queueItems.IndexOf(selectedSong);
-        if (currentIndex >= 0 && currentIndex < _queueItems.Count - 1)
+        if (CanMoveSong(currentIndex) && currentIndex < _queueItems.Count - 1)
         {
             var newPosition = _queueItems.Count - 1;
             
             // Move in UI queue
             _queueItems.Move(currentIndex, newPosition);
             
+            // Adjust expected playing index to handle duplicates correctly
+            AdjustExpectedPlayingIndexAfterMove(currentIndex, newPosition);
+            
             // Calculate and move in playback queue
             var playbackPosition = await CalculatePlaybackPositionAsync(newPosition);
             await _playbackService.MoveInQueueAsync(selectedSong, playbackPosition, CancellationToken.None).ConfigureAwait(false);
             
             UpdateQueuePage();
+            
+            // Recalculate current playing index since queue has changed
+            CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
             
             // Preserve selection using dispatcher for proper UI timing
             var songId = selectedSong.Id;
@@ -506,13 +556,28 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    public bool CanMoveQueuedSongUp() => SelectedQueuedSong is not null && _queueItems.IndexOf(SelectedQueuedSong) > 0;
+    public bool CanMoveQueuedSongUp() => SelectedQueuedSong is not null && CanMoveSong(_queueItems.IndexOf(SelectedQueuedSong)) && _queueItems.IndexOf(SelectedQueuedSong) > GetFirstMoveableIndex();
 
-    public bool CanMoveQueuedSongToTop() => SelectedQueuedSong is not null && _queueItems.IndexOf(SelectedQueuedSong) > 0;
+    public bool CanMoveQueuedSongToTop() => SelectedQueuedSong is not null && CanMoveSong(_queueItems.IndexOf(SelectedQueuedSong));
 
-    public bool CanMoveQueuedSongDown() => SelectedQueuedSong is not null && _queueItems.IndexOf(SelectedQueuedSong) >= 0 && _queueItems.IndexOf(SelectedQueuedSong) < _queueItems.Count - 1;
+    public bool CanMoveQueuedSongDown() => SelectedQueuedSong is not null && CanMoveSong(_queueItems.IndexOf(SelectedQueuedSong)) && _queueItems.IndexOf(SelectedQueuedSong) < _queueItems.Count - 1;
 
-    public bool CanMoveQueuedSongToBottom() => SelectedQueuedSong is not null && _queueItems.IndexOf(SelectedQueuedSong) >= 0 && _queueItems.IndexOf(SelectedQueuedSong) < _queueItems.Count - 1;
+    public bool CanMoveQueuedSongToBottom() => SelectedQueuedSong is not null && CanMoveSong(_queueItems.IndexOf(SelectedQueuedSong));
+
+    private bool CanMoveSong(int songIndex)
+    {
+        // Only allow moving songs that haven't been played yet and aren't currently playing
+        // Songs at positions 0 to CurrentPlayingQueueIndex are not moveable
+        var canMove = songIndex > CurrentPlayingQueueIndex;
+        System.Diagnostics.Debug.WriteLine($"[CanMoveSong] Index {songIndex} vs CurrentPlayingIndex {CurrentPlayingQueueIndex} -> CanMove: {canMove}");
+        return canMove;
+    }
+
+    private int GetFirstMoveableIndex()
+    {
+        // First moveable position is right after the currently playing song
+        return CurrentPlayingQueueIndex + 1;
+    }
 
     private async Task<int> CalculatePlaybackPositionAsync(int uiPosition)
     {
@@ -527,26 +592,38 @@ public partial class MainViewModel : ObservableObject
                 return uiPosition;
             }
             
-            // Find the currently playing song in UI queue
-            var currentSongIndex = -1;
-            for (int i = 0; i < _queueItems.Count; i++)
-            {
-                if (_queueItems[i].Id == currentSong.Id)
-                {
-                    currentSongIndex = i;
-                    break;
-                }
-            }
+            // Use the tracked playing index instead of searching by ID to handle duplicates correctly
+            var currentSongIndex = _nextExpectedPlayingIndex;
+            System.Diagnostics.Debug.WriteLine($"[CalculatePlaybackPositionAsync] Using tracked index {currentSongIndex} for current song {currentSong.Title}");
             
-            if (currentSongIndex < 0)
+            // Validate the tracked index
+            if (currentSongIndex < 0 || currentSongIndex >= _queueItems.Count || 
+                _queueItems[currentSongIndex].Id != currentSong.Id)
             {
-                // Current song not found in UI queue, assume it's at beginning
-                return Math.Max(0, uiPosition);
+                // Fallback: search for the song (this may not handle duplicates correctly)
+                System.Diagnostics.Debug.WriteLine($"[CalculatePlaybackPositionAsync] Tracked index invalid, falling back to search");
+                for (int i = 0; i < _queueItems.Count; i++)
+                {
+                    if (_queueItems[i].Id == currentSong.Id)
+                    {
+                        currentSongIndex = i;
+                        break;
+                    }
+                }
+                
+                if (currentSongIndex < 0)
+                {
+                    // Current song not found in UI queue, assume it's at beginning
+                    return Math.Max(0, uiPosition);
+                }
             }
             
             // Playback queue starts after the current song
             // So UI position N maps to playback position (N - currentSongIndex - 1)
             var playbackPosition = uiPosition - currentSongIndex - 1;
+            
+            System.Diagnostics.Debug.WriteLine($"[CalculatePlaybackPositionAsync] UI position {uiPosition} -> Playback position {playbackPosition} (current at {currentSongIndex})");
+            
             return Math.Max(0, playbackPosition);
         }
         catch
@@ -565,6 +642,8 @@ public partial class MainViewModel : ObservableObject
     partial void OnSelectedQueuedSongChanged(SongDto? value)
     {
         RemoveFromQueueCommand.NotifyCanExecuteChanged();
+        // Note: Move operations are handled by event handlers, not commands
+        // So no NotifyCanExecuteChanged() needed for moves
     }
 
     partial void OnSelectedArtistChanged(string? value)
@@ -580,6 +659,12 @@ public partial class MainViewModel : ObservableObject
     partial void OnSongSearchTextChanged(string? value)
     {
         UpdateFilteredSongs(resetPage: true);
+    }
+
+    partial void OnCurrentPlayingSongChanged(SongDto? value)
+    {
+        CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
+        OnPropertyChanged(nameof(Queue));
     }
 
     private void UpdateArtists()
@@ -744,6 +829,13 @@ public partial class MainViewModel : ObservableObject
         }
 
         RaiseQueuePagingNotifications();
+        
+        // Trigger visual refresh since Queue collection changed
+        // Use dispatcher to delay slightly so ListView containers are ready
+        Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
+        {
+            OnPropertyChanged(nameof(CurrentPlayingQueueIndex));
+        });
     }
 
     private void MoveArtistsPage(int delta)
@@ -1006,6 +1098,137 @@ public partial class MainViewModel : ObservableObject
         }
 
         return '\0';
+    }
+
+    public async Task RefreshCurrentPlayingSongAsync()
+    {
+        try
+        {
+            var oldSong = CurrentPlayingSong;
+            var oldIndex = CurrentPlayingQueueIndex;
+            
+            var newSong = await _playbackService.GetCurrentAsync(CancellationToken.None).ConfigureAwait(false);
+            
+            // Only recalculate position if the song actually changed
+            if (oldSong?.Id != newSong?.Id)
+            {
+                CurrentPlayingSong = newSong;
+                CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
+                System.Diagnostics.Debug.WriteLine($"[RefreshCurrentPlayingSong] Song changed: {oldSong?.Title}@{oldIndex} -> {CurrentPlayingSong?.Title}@{CurrentPlayingQueueIndex}");
+            }
+            else if (newSong != null)
+            {
+                // Song is the same, but still update the reference in case it's a different object
+                CurrentPlayingSong = newSong;
+                // Don't recalculate index - it should be the same
+                // Only log occasionally to avoid spam
+                if (DateTime.Now.Second % 30 == 0) // Log every 30 seconds
+                {
+                    System.Diagnostics.Debug.WriteLine($"[RefreshCurrentPlayingSong] Song unchanged: {CurrentPlayingSong?.Title}@{CurrentPlayingQueueIndex}");
+                }
+            }
+            else
+            {
+                // No song playing
+                if (oldSong != null)
+                {
+                    CurrentPlayingSong = null;
+                    CurrentPlayingQueueIndex = -1;
+                    System.Diagnostics.Debug.WriteLine($"[RefreshCurrentPlayingSong] Song stopped: {oldSong?.Title}@{oldIndex} -> null@-1");
+                }
+            }
+        }
+        catch
+        {
+            System.Diagnostics.Debug.WriteLine($"[RefreshCurrentPlayingSong] Error - setting to null");
+            CurrentPlayingSong = null;
+            CurrentPlayingQueueIndex = -1;
+        }
+    }
+
+    private int CalculateCurrentPlayingQueueIndex()
+    {
+        if (CurrentPlayingSong == null)
+        {
+            System.Diagnostics.Debug.WriteLine($"[CalculateCurrentPlayingQueueIndex] No current song, returning -1");
+            return -1;
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[CalculateCurrentPlayingQueueIndex] Looking for song: {CurrentPlayingSong.Title} (ID: {CurrentPlayingSong.Id})");
+        System.Diagnostics.Debug.WriteLine($"[CalculateCurrentPlayingQueueIndex] Expected index: {_nextExpectedPlayingIndex}");
+        
+        // First, try the expected index if it's valid and matches
+        if (_nextExpectedPlayingIndex >= 0 && 
+            _nextExpectedPlayingIndex < _queueItems.Count &&
+            _queueItems[_nextExpectedPlayingIndex].Id == CurrentPlayingSong.Id)
+        {
+            System.Diagnostics.Debug.WriteLine($"[CalculateCurrentPlayingQueueIndex] ✓ Expected index {_nextExpectedPlayingIndex} is correct");
+            return _nextExpectedPlayingIndex;
+        }
+        
+        System.Diagnostics.Debug.WriteLine($"[CalculateCurrentPlayingQueueIndex] Expected index invalid, searching for song...");
+        
+        // Fallback: search for the song, but this won't handle duplicates correctly
+        for (int i = 0; i < _queueItems.Count; i++)
+        {
+            System.Diagnostics.Debug.WriteLine($"[CalculateCurrentPlayingQueueIndex] Position {i}: {_queueItems[i].Title} (ID: {_queueItems[i].Id})");
+            if (_queueItems[i].Id == CurrentPlayingSong.Id)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CalculateCurrentPlayingQueueIndex] ✓ Found song at position {i}, updating expected index");
+                _nextExpectedPlayingIndex = i; // Update for next time
+                return i;
+            }
+        }
+        
+        System.Diagnostics.Debug.WriteLine($"[CalculateCurrentPlayingQueueIndex] ✗ Current song not found in queue, returning -1");
+        return -1;
+    }
+
+    public bool IsCurrentPlayingSong(SongDto song, int queueIndex)
+    {
+        return CurrentPlayingSong?.Id == song?.Id && CurrentPlayingQueueIndex == queueIndex;
+    }
+
+    public bool IsCurrentPlayingSong(SongDto song)
+    {
+        return CurrentPlayingSong?.Id == song?.Id;
+    }
+
+    public void OnPlaybackNextSong()
+    {
+        var oldIndex = _nextExpectedPlayingIndex;
+        
+        // Since played songs cannot be moved, next song is always at current position + 1
+        _nextExpectedPlayingIndex++;
+        
+        System.Diagnostics.Debug.WriteLine($"[OnPlaybackNextSong] Expected index: {oldIndex} -> {_nextExpectedPlayingIndex}");
+    }
+
+    public void OnPlaybackStarted()
+    {
+        // When playback starts, the first song (index 0) should be playing
+        var oldIndex = _nextExpectedPlayingIndex;
+        _nextExpectedPlayingIndex = 0;
+        System.Diagnostics.Debug.WriteLine($"[OnPlaybackStarted] Expected index: {oldIndex} -> {_nextExpectedPlayingIndex}");
+    }
+
+    private void AdjustExpectedPlayingIndexAfterMove(int fromIndex, int toIndex)
+    {
+        // If the currently playing song was moved, update the expected index
+        if (_nextExpectedPlayingIndex == fromIndex)
+        {
+            _nextExpectedPlayingIndex = toIndex;
+        }
+        // If a song was moved from before the playing song to after, decrement
+        else if (fromIndex < _nextExpectedPlayingIndex && toIndex >= _nextExpectedPlayingIndex)
+        {
+            _nextExpectedPlayingIndex--;
+        }
+        // If a song was moved from after the playing song to before, increment
+        else if (fromIndex > _nextExpectedPlayingIndex && toIndex <= _nextExpectedPlayingIndex)
+        {
+            _nextExpectedPlayingIndex++;
+        }
     }
 }
 
