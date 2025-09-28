@@ -9,6 +9,8 @@ using Karaoke.UI.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Input;
+using Windows.System;
 
 namespace Karaoke.UI;
 
@@ -309,5 +311,68 @@ public sealed partial class MainWindow : Window
         }
 
         return null;
+    }
+
+    private void OnWindowKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        // Check for Ctrl modifier
+        var isCtrlPressed = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        
+        if (isCtrlPressed)
+        {
+            switch (e.Key)
+            {
+                case VirtualKey.Up:
+                    OnMoveUpClicked(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+                case VirtualKey.Down:
+                    OnMoveDownClicked(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+                case VirtualKey.Left:
+                    OnMoveTopClicked(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+                case VirtualKey.Right:
+                    OnMoveBottomClicked(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+                case VirtualKey.S:
+                    OnSettingsClicked(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+                case VirtualKey.P:
+                    OnPlayClicked(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+                case VirtualKey.N:
+                    OnNextClicked(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+                case VirtualKey.R:
+                    OnRepeatClicked(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+                case VirtualKey.F:
+                    OnFullScreenClicked(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+            }
+        }
+        else
+        {
+            switch (e.Key)
+            {
+                case VirtualKey.Space:
+                    OnPauseClicked(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+                case VirtualKey.Escape:
+                    OnStopClicked(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+            }
+        }
     }
 }
