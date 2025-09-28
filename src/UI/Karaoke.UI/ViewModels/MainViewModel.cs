@@ -179,6 +179,9 @@ public partial class MainViewModel : ObservableObject
     private SongDto? _selectedQueuedSong;
 
     [ObservableProperty]
+    private int _selectedQueuedSongIndex = -1;
+
+    [ObservableProperty]
     private string? _artistSearchText;
 
     [ObservableProperty]
@@ -381,7 +384,7 @@ public partial class MainViewModel : ObservableObject
         if (SelectedQueuedSong is null) return;
         
         var selectedSong = SelectedQueuedSong; // Preserve reference
-        var currentIndex = _queueItems.IndexOf(selectedSong);
+        var currentIndex = SelectedQueuedSongIndex;
         System.Diagnostics.Debug.WriteLine($"[MoveQueuedSongUpAsync] Attempting to move '{selectedSong.Title}' from index {currentIndex}");
         
         if (CanMoveSong(currentIndex) && currentIndex > GetFirstMoveableIndex())
@@ -422,7 +425,7 @@ public partial class MainViewModel : ObservableObject
         if (SelectedQueuedSong is null) return;
         
         var selectedSong = SelectedQueuedSong; // Preserve reference
-        var currentIndex = _queueItems.IndexOf(selectedSong);
+        var currentIndex = SelectedQueuedSongIndex;
         if (!CanMoveSong(currentIndex)) return;
 
         try
@@ -475,12 +478,8 @@ public partial class MainViewModel : ObservableObject
             // Recalculate current playing index since queue has changed
             CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
             
-            // Preserve selection using dispatcher for proper UI timing
-            var songId = selectedSong.Id;
-            Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
-            {
-                SelectedQueuedSong = _queueItems.FirstOrDefault(s => s.Id == songId);
-            });
+            // Update selected index after move
+            SelectedQueuedSongIndex = uiTargetPosition;
         }
         catch (Exception ex)
         {
@@ -493,7 +492,7 @@ public partial class MainViewModel : ObservableObject
         if (SelectedQueuedSong is null) return;
         
         var selectedSong = SelectedQueuedSong; // Preserve reference
-        var currentIndex = _queueItems.IndexOf(selectedSong);
+        var currentIndex = SelectedQueuedSongIndex;
         if (CanMoveSong(currentIndex) && currentIndex < _queueItems.Count - 1)
         {
             var newPosition = currentIndex + 1;
@@ -513,12 +512,8 @@ public partial class MainViewModel : ObservableObject
             // Recalculate current playing index since queue has changed
             CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
             
-            // Preserve selection using dispatcher for proper UI timing
-            var songId = selectedSong.Id;
-            Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
-            {
-                SelectedQueuedSong = _queueItems.FirstOrDefault(s => s.Id == songId);
-            });
+            // Update selected index after move
+            SelectedQueuedSongIndex = newPosition;
         }
     }
 
@@ -527,7 +522,7 @@ public partial class MainViewModel : ObservableObject
         if (SelectedQueuedSong is null) return;
         
         var selectedSong = SelectedQueuedSong; // Preserve reference
-        var currentIndex = _queueItems.IndexOf(selectedSong);
+        var currentIndex = SelectedQueuedSongIndex;
         if (CanMoveSong(currentIndex) && currentIndex < _queueItems.Count - 1)
         {
             var newPosition = _queueItems.Count - 1;
@@ -547,22 +542,18 @@ public partial class MainViewModel : ObservableObject
             // Recalculate current playing index since queue has changed
             CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
             
-            // Preserve selection using dispatcher for proper UI timing
-            var songId = selectedSong.Id;
-            Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
-            {
-                SelectedQueuedSong = _queueItems.FirstOrDefault(s => s.Id == songId);
-            });
+            // Update selected index after move
+            SelectedQueuedSongIndex = newPosition;
         }
     }
 
-    public bool CanMoveQueuedSongUp() => SelectedQueuedSong is not null && CanMoveSong(_queueItems.IndexOf(SelectedQueuedSong)) && _queueItems.IndexOf(SelectedQueuedSong) > GetFirstMoveableIndex();
+    public bool CanMoveQueuedSongUp() => SelectedQueuedSong is not null && CanMoveSong(SelectedQueuedSongIndex) && SelectedQueuedSongIndex > GetFirstMoveableIndex();
 
-    public bool CanMoveQueuedSongToTop() => SelectedQueuedSong is not null && CanMoveSong(_queueItems.IndexOf(SelectedQueuedSong));
+    public bool CanMoveQueuedSongToTop() => SelectedQueuedSong is not null && CanMoveSong(SelectedQueuedSongIndex);
 
-    public bool CanMoveQueuedSongDown() => SelectedQueuedSong is not null && CanMoveSong(_queueItems.IndexOf(SelectedQueuedSong)) && _queueItems.IndexOf(SelectedQueuedSong) < _queueItems.Count - 1;
+    public bool CanMoveQueuedSongDown() => SelectedQueuedSong is not null && CanMoveSong(SelectedQueuedSongIndex) && SelectedQueuedSongIndex < _queueItems.Count - 1;
 
-    public bool CanMoveQueuedSongToBottom() => SelectedQueuedSong is not null && CanMoveSong(_queueItems.IndexOf(SelectedQueuedSong));
+    public bool CanMoveQueuedSongToBottom() => SelectedQueuedSong is not null && CanMoveSong(SelectedQueuedSongIndex);
 
     private bool CanMoveSong(int songIndex)
     {
@@ -644,6 +635,16 @@ public partial class MainViewModel : ObservableObject
         RemoveFromQueueCommand.NotifyCanExecuteChanged();
         // Note: Move operations are handled by event handlers, not commands
         // So no NotifyCanExecuteChanged() needed for moves
+    }
+
+    partial void OnSelectedQueuedSongIndexChanged(int value)
+    {
+        // Notify UI that move operation availability may have changed
+        // This will update button enabled states
+        OnPropertyChanged(nameof(CanMoveQueuedSongUp));
+        OnPropertyChanged(nameof(CanMoveQueuedSongToTop));
+        OnPropertyChanged(nameof(CanMoveQueuedSongDown));
+        OnPropertyChanged(nameof(CanMoveQueuedSongToBottom));
     }
 
     partial void OnSelectedArtistChanged(string? value)
