@@ -437,14 +437,24 @@ public partial class MainViewModel : ObservableObject
             
             if (currentSong != null)
             {
-                // Find the currently playing song in our UI queue
-                var currentSongIndex = -1;
-                for (int i = 0; i < _queueItems.Count; i++)
+                // Use the tracked playing index to handle duplicates correctly
+                var currentSongIndex = _nextExpectedPlayingIndex;
+                System.Diagnostics.Debug.WriteLine($"[MoveQueuedSongToTopAsync] Using tracked index {currentSongIndex} for current song {currentSong.Title}");
+                
+                // Validate the tracked index
+                if (currentSongIndex < 0 || currentSongIndex >= _queueItems.Count || 
+                    _queueItems[currentSongIndex].Id != currentSong.Id)
                 {
-                    if (_queueItems[i].Id == currentSong.Id)
+                    System.Diagnostics.Debug.WriteLine($"[MoveQueuedSongToTopAsync] Warning: Tracked index invalid, using fallback");
+                    // Find the currently playing song in our UI queue (fallback)
+                    currentSongIndex = -1;
+                    for (int i = 0; i < _queueItems.Count; i++)
                     {
-                        currentSongIndex = i;
-                        break;
+                        if (_queueItems[i].Id == currentSong.Id)
+                        {
+                            currentSongIndex = i;
+                            break;
+                        }
                     }
                 }
                 
@@ -592,21 +602,27 @@ public partial class MainViewModel : ObservableObject
                 _queueItems[currentSongIndex].Id != currentSong.Id)
             {
                 // Fallback: search for the song (this may not handle duplicates correctly)
-                System.Diagnostics.Debug.WriteLine($"[CalculatePlaybackPositionAsync] Tracked index invalid, falling back to search");
+                System.Diagnostics.Debug.WriteLine($"[CalculatePlaybackPositionAsync] Warning: Tracked index {currentSongIndex} invalid for song {currentSong.Title}, using fallback search");
+                var fallbackIndex = -1;
                 for (int i = 0; i < _queueItems.Count; i++)
                 {
                     if (_queueItems[i].Id == currentSong.Id)
                     {
-                        currentSongIndex = i;
+                        fallbackIndex = i;
+                        System.Diagnostics.Debug.WriteLine($"[CalculatePlaybackPositionAsync] Found fallback at index {i} (may be wrong duplicate)");
                         break;
                     }
                 }
                 
-                if (currentSongIndex < 0)
+                if (fallbackIndex < 0)
                 {
                     // Current song not found in UI queue, assume it's at beginning
+                    System.Diagnostics.Debug.WriteLine($"[CalculatePlaybackPositionAsync] Song not found in queue, defaulting to position");
                     return Math.Max(0, uiPosition);
                 }
+                
+                // Use fallback but don't update _nextExpectedPlayingIndex since it might be wrong
+                currentSongIndex = fallbackIndex;
             }
             
             // Playback queue starts after the current song
