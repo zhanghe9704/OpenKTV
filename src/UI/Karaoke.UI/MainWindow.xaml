@@ -27,10 +27,43 @@
                 <AppBarSeparator />
                 <AppBarButton Icon="FullScreen" Label="Full Screen" Click="OnFullScreenClicked" />
                 <AppBarSeparator />
-                <AppBarButton Icon="Up" Label="Move Up" Click="OnMoveUpClicked" />
-                <AppBarButton Icon="Previous" Label="Move Next" Click="OnMoveTopClicked" />
-                <AppBarButton Icon="Forward" Label="Move Down" Click="OnMoveDownClicked" />
-                <AppBarButton Icon="Next" Label="Move Bottom" Click="OnMoveBottomClicked" />
+                <AppBarButton Icon="Up" Label="Up" Click="OnMoveUpClicked" />
+                <AppBarButton Label="Down" Click="OnMoveDownClicked">
+                    <AppBarButton.Icon>
+                        <SymbolIcon Symbol="Up">
+                            <SymbolIcon.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform ScaleY="-1" />
+                                    <TranslateTransform Y="20" />
+                                </TransformGroup>
+                            </SymbolIcon.RenderTransform>
+                        </SymbolIcon>
+                    </AppBarButton.Icon>
+                </AppBarButton>
+              <AppBarButton Label="Top" Click="OnMoveTopClicked">
+                <AppBarButton.Icon>
+                  <SymbolIcon Symbol="Previous">
+                    <SymbolIcon.RenderTransform>
+                      <TransformGroup>
+                        <RotateTransform Angle="90" />
+                        <TranslateTransform X="15" />
+                      </TransformGroup>
+                    </SymbolIcon.RenderTransform>
+                  </SymbolIcon>
+                </AppBarButton.Icon>
+              </AppBarButton>
+                <AppBarButton Label="Bottom" Click="OnMoveBottomClicked">
+                    <AppBarButton.Icon>
+                        <SymbolIcon Symbol="Next">
+                            <SymbolIcon.RenderTransform>
+                                <TransformGroup>
+                                    <RotateTransform Angle="90" />
+                                    <TranslateTransform X="15" />
+                                </TransformGroup>
+                            </SymbolIcon.RenderTransform>
+                        </SymbolIcon>
+                    </AppBarButton.Icon>
+                </AppBarButton>
             </CommandBar>
             <ProgressRing
                 HorizontalAlignment="Right"
