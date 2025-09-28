@@ -1110,18 +1110,19 @@ public partial class MainViewModel : ObservableObject
             
             var newSong = await _playbackService.GetCurrentAsync(CancellationToken.None).ConfigureAwait(false);
             
-            // Only recalculate position if the song actually changed
-            if (oldSong?.Id != newSong?.Id)
+            // Always update the song reference first
+            CurrentPlayingSong = newSong;
+            
+            // Recalculate position if song ID changed OR if expected index doesn't match current position
+            var newCalculatedIndex = CalculateCurrentPlayingQueueIndex();
+            if (oldSong?.Id != newSong?.Id || oldIndex != newCalculatedIndex)
             {
-                CurrentPlayingSong = newSong;
-                CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
-                System.Diagnostics.Debug.WriteLine($"[RefreshCurrentPlayingSong] Song changed: {oldSong?.Title}@{oldIndex} -> {CurrentPlayingSong?.Title}@{CurrentPlayingQueueIndex}");
+                CurrentPlayingQueueIndex = newCalculatedIndex;
+                System.Diagnostics.Debug.WriteLine($"[RefreshCurrentPlayingSong] Position updated: {oldSong?.Title}@{oldIndex} -> {CurrentPlayingSong?.Title}@{CurrentPlayingQueueIndex}");
             }
             else if (newSong != null)
             {
-                // Song is the same, but still update the reference in case it's a different object
-                CurrentPlayingSong = newSong;
-                // Don't recalculate index - it should be the same
+                // Song and position unchanged
                 // Only log occasionally to avoid spam
                 if (DateTime.Now.Second % 30 == 0) // Log every 30 seconds
                 {
