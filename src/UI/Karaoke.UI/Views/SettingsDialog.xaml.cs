@@ -22,22 +22,19 @@ public sealed partial class SettingsDialog : ContentDialog
     private async void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
         var deferral = args.GetDeferral();
+        
         try
         {
+            if (ViewModel == null)
+            {
+                args.Cancel = true;
+                return;
+            }
+            
             await ViewModel.SaveAsync().ConfigureAwait(true);
             args.Cancel = false;
         }
-        catch (IOException ex)
-        {
-            args.Cancel = true;
-            HandleSaveError(ex);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            args.Cancel = true;
-            HandleSaveError(ex);
-        }
-        catch (InvalidOperationException ex)
+        catch (Exception ex)
         {
             args.Cancel = true;
             HandleSaveError(ex);
@@ -51,5 +48,18 @@ public sealed partial class SettingsDialog : ContentDialog
     private static void HandleSaveError(Exception ex)
     {
         Debug.WriteLine($"Settings save failed: {ex}");
+        
+        try
+        {
+            // Instead of showing another dialog, just close the current dialog and let the user know via debug/console
+            System.Console.WriteLine($"Save failed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Save failed: {ex.Message}");
+        }
+        catch (Exception dialogEx)
+        {
+            // If anything goes wrong, just log it
+            System.Console.WriteLine($"Save error: {ex}");
+            System.Diagnostics.Debug.WriteLine($"Failed to handle error: {dialogEx}");
+        }
     }
 }

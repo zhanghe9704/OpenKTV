@@ -98,10 +98,26 @@ public sealed partial class MainWindow : Window
             XamlRoot = (Content as FrameworkElement)?.XamlRoot,
         };
 
-        var result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.Primary)
+        // Subscribe to the rescan event
+        RescanRequestedEventArgs? rescanArgs = null;
+        _settingsViewModel.RescanRequested += (_, args) =>
         {
-            await _viewModel.ReloadAsync(_settingsViewModel.RescanAfterSave, CancellationToken.None).ConfigureAwait(false);
+            rescanArgs = args;
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary && rescanArgs != null)
+        {
+            if (rescanArgs.RescanAll)
+            {
+                // Rescan all roots
+                await _viewModel.ReloadAsync(rescan: true, CancellationToken.None).ConfigureAwait(false);
+            }
+            else if (rescanArgs.RootsToRescan.Count > 0)
+            {
+                // Rescan only specific roots
+                await _viewModel.ReloadSpecificRootsAsync(rescanArgs.RootsToRescan, CancellationToken.None).ConfigureAwait(false);
+            }
         }
     }
 

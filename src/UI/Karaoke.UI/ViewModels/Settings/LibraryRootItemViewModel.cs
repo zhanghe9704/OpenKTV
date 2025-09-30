@@ -5,7 +5,7 @@ namespace Karaoke.UI.ViewModels.Settings;
 
 public partial class LibraryRootItemViewModel : ObservableObject
 {
-    public LibraryRootItemViewModel(string name, string path, int? defaultPriority, string? defaultChannel, string? driveOverride)
+    public LibraryRootItemViewModel(string name, string path, int? defaultPriority, string? defaultChannel, string? driveOverride, string? keywordFormat = null, bool shouldRescan = true)
     {
         OriginalName = name;
         _name = name;
@@ -13,6 +13,8 @@ public partial class LibraryRootItemViewModel : ObservableObject
         _defaultPriority = (defaultPriority ?? 2).ToString(CultureInfo.InvariantCulture);
         _defaultChannel = defaultChannel ?? "Stereo";
         _driveOverride = driveOverride;
+        _keywordFormat = keywordFormat;
+        _shouldRescan = shouldRescan;
     }
 
     public string OriginalName { get; }
@@ -31,6 +33,12 @@ public partial class LibraryRootItemViewModel : ObservableObject
 
     [ObservableProperty]
     private string? _driveOverride;
+
+    [ObservableProperty]
+    private string? _keywordFormat;
+
+    [ObservableProperty]
+    private bool _shouldRescan;
 
     public int GetPriority()
     {

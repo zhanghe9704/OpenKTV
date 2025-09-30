@@ -120,6 +120,19 @@ public sealed class SqliteLibraryRepository : ILibraryRepository, IDisposable
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task DeleteSongsByRootAsync(string rootName, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(rootName);
+
+        using var connection = CreateConnection();
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        using var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM Songs WHERE RootName = @RootName";
+        command.Parameters.AddWithValue("@RootName", rootName);
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     private SqliteConnection CreateConnection()
     {
         var connectionString = new SqliteConnectionStringBuilder

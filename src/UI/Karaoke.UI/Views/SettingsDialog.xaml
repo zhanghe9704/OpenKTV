@@ -10,17 +10,45 @@
     PrimaryButtonText="Save"
     CloseButtonText="Cancel"
     DefaultButton="Primary"
-    Width="640">
-    <StackPanel Spacing="12">
+    Width="800"
+    MaxHeight="600">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="12" Margin="12">
         <TextBlock Text="Configure library roots and drive overrides." />
+        
+        <!-- Global Keyword Format Setting -->
+        <StackPanel Spacing="8">
+            <TextBlock Text="Global Keyword Format (Default)" FontWeight="SemiBold" />
+            <TextBox 
+                Text="{Binding GlobalKeywordFormat, Mode=TwoWay}" 
+                PlaceholderText="e.g., artist-song-comment" />
+            <TextBlock 
+                Text="Format: Use keywords separated by hyphens. Supported keywords: artist, song, comment, language, genre. If a keyword appears multiple times, values will be joined with ', '."
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+        
         <ListView
             MinHeight="240"
-            ItemsSource="{x:Bind ViewModel.Roots, Mode=OneWay}"
-            SelectedItem="{x:Bind ViewModel.SelectedRoot, Mode=TwoWay}" >
+            MaxHeight="300"
+            ItemsSource="{Binding Roots, Mode=OneWay}"
+            SelectedItem="{Binding SelectedRoot, Mode=TwoWay}"
+            ScrollViewer.VerticalScrollBarVisibility="Auto">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="settings:LibraryRootItemViewModel">
                     <StackPanel Spacing="8" Padding="12" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4">
-                        <TextBlock Text="Name" FontWeight="SemiBold" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Name" FontWeight="SemiBold" />
+                            <CheckBox 
+                                Grid.Column="1" 
+                                Content="Rescan this folder" 
+                                IsChecked="{x:Bind ShouldRescan, Mode=TwoWay}"
+                                ToolTipService.ToolTip="Check to rescan this folder when saving changes" />
+                        </Grid>
                         <TextBox Text="{x:Bind Name, Mode=TwoWay}" />
                         <TextBlock Text="Path" FontWeight="SemiBold" Margin="0,8,0,0" />
                         <TextBox Text="{x:Bind Path, Mode=TwoWay}" />
@@ -38,16 +66,33 @@
                                 <TextBox Text="{x:Bind DriveOverride, Mode=TwoWay}" PlaceholderText="Optional" />
                             </StackPanel>
                         </StackPanel>
+                        <StackPanel Margin="0,8,0,0">
+                            <TextBlock Text="Keyword Format (Root-specific)" FontWeight="SemiBold" />
+                            <TextBox 
+                                Text="{x:Bind KeywordFormat, Mode=TwoWay}" 
+                                PlaceholderText="Overrides global format if set" />
+                        </StackPanel>
                     </StackPanel>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
         <StackPanel Orientation="Horizontal" Spacing="12">
-            <Button Content="Add Root" Command="{x:Bind ViewModel.AddRootCommand}" />
-            <Button Content="Remove Selected" Command="{x:Bind ViewModel.RemoveSelectedRootCommand}" />
+            <Button Content="Add Root" Command="{Binding AddRootCommand}" />
+            <Button Content="Remove Selected" Command="{Binding RemoveSelectedRootCommand}" />
         </StackPanel>
-        <CheckBox
-            Content="Rescan after saving"
-            IsChecked="{x:Bind ViewModel.RescanAfterSave, Mode=TwoWay}" />
-    </StackPanel>
+        
+        <StackPanel Spacing="8">
+            <TextBlock Text="Global Options" FontWeight="SemiBold" />
+            <CheckBox
+                Content="Rescan all folders after saving (overrides individual settings)"
+                IsChecked="{Binding RescanAfterSave, Mode=TwoWay}"
+                ToolTipService.ToolTip="When checked, all folders will be rescanned regardless of individual folder settings" />
+            <TextBlock 
+                Text="Note: If unchecked, only folders with 'Rescan this folder' checked will be rescanned. Use individual folder settings to save time when only some folders need updating."
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" 
+                TextWrapping="Wrap" />
+        </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
 </ContentDialog>

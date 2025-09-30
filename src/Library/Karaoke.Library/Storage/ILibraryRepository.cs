@@ -11,4 +11,6 @@ public interface ILibraryRepository
     Task UpsertSongAsync(SongRecord song, CancellationToken cancellationToken);
 
     Task DeleteAllSongsAsync(CancellationToken cancellationToken);
+
+    Task DeleteSongsByRootAsync(string rootName, CancellationToken cancellationToken);
 }

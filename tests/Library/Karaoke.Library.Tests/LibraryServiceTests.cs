@@ -95,6 +95,17 @@ public class LibraryServiceTests
             _songs.Clear();
             return Task.CompletedTask;
         }
+
+        public Task DeleteSongsByRootAsync(string rootName, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var songsToRemove = _songs.Values.Where(s => s.RootName == rootName).Select(s => s.Id).ToList();
+            foreach (var id in songsToRemove)
+            {
+                _songs.Remove(id);
+            }
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class StaticOptionsMonitor : IOptionsMonitor<LibraryOptions>

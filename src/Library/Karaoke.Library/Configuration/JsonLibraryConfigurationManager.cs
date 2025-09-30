@@ -34,6 +34,22 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
         return Task.FromResult<IReadOnlyList<LibraryRootOptions>>(cloned);
     }
 
+    public Task<LibraryOptions> GetLibraryOptionsAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var current = _options.CurrentValue;
+        var cloned = new LibraryOptions
+        {
+            DefaultPriority = current.DefaultPriority,
+            DefaultChannel = current.DefaultChannel,
+            DatabasePath = current.DatabasePath,
+            SupportedExtensions = new List<string>(current.SupportedExtensions),
+            Roots = current.Roots.Select(CloneRoot).ToList(),
+            KeywordFormat = current.KeywordFormat
+        };
+        return Task.FromResult(cloned);
+    }
+
     public async Task SaveRootsAsync(IEnumerable<LibraryRootOptions> roots, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(roots);
@@ -64,15 +80,73 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
                 ["DefaultPriority"] = option.DefaultPriority,
                 ["DefaultChannel"] = option.DefaultChannel,
                 ["DriveOverride"] = option.DriveOverride,
+                ["KeywordFormat"] = option.KeywordFormat,
             });
         }
 
         libraryNode["Roots"] = array;
 
+        await File.WriteAllTextAsync(
+            settingsPath,
+            rootNode.ToString(),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task SaveLibraryOptionsAsync(LibraryOptions options, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var settingsPath = GetSettingsPath();
+        
+        JsonNode rootNode;
+        if (File.Exists(settingsPath))
+        {
+            var content = await File.ReadAllTextAsync(settingsPath, cancellationToken).ConfigureAwait(false);
+            rootNode = JsonNode.Parse(content) ?? new JsonObject();
+        }
+        else
+        {
+            rootNode = new JsonObject();
+        }
+
+        var libraryNode = rootNode["Library"] as JsonObject ?? new JsonObject();
+        rootNode["Library"] = libraryNode;
+
+        // Update global settings
+        libraryNode["DefaultPriority"] = options.DefaultPriority;
+        libraryNode["DefaultChannel"] = options.DefaultChannel;
+        libraryNode["DatabasePath"] = options.DatabasePath;
+        libraryNode["KeywordFormat"] = options.KeywordFormat;
+
+        // Update roots
+        var rootsArray = new JsonArray();
+        foreach (var root in options.Roots)
+        {
+            rootsArray.Add(new JsonObject
+            {
+                ["Name"] = root.Name,
+                ["Path"] = root.Path,
+                ["DefaultPriority"] = root.DefaultPriority,
+                ["DefaultChannel"] = root.DefaultChannel,
+                ["DriveOverride"] = root.DriveOverride,
+                ["KeywordFormat"] = root.KeywordFormat,
+            });
+        }
+        libraryNode["Roots"] = rootsArray;
+
+        // Update supported extensions
+        var extensionsArray = new JsonArray();
+        foreach (var extension in options.SupportedExtensions)
+        {
+            extensionsArray.Add(extension);
+        }
+        libraryNode["SupportedExtensions"] = extensionsArray;
+
         Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
         await File.WriteAllTextAsync(
             settingsPath,
-            rootNode.ToJsonString(new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }),
+            rootNode.ToString(),
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -90,6 +164,7 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
             DefaultPriority = source.DefaultPriority,
             DefaultChannel = source.DefaultChannel,
             DriveOverride = source.DriveOverride,
+            KeywordFormat = source.KeywordFormat,
         };
     }
 }

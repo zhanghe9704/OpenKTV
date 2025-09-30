@@ -6,6 +6,18 @@ using Karaoke.Library.Configuration;
 
 namespace Karaoke.UI.ViewModels.Settings;
 
+public sealed class RescanRequestedEventArgs : EventArgs
+{
+    public RescanRequestedEventArgs(bool rescanAll, IReadOnlyList<string> rootsToRescan)
+    {
+        RescanAll = rescanAll;
+        RootsToRescan = rootsToRescan ?? throw new ArgumentNullException(nameof(rootsToRescan));
+    }
+
+    public bool RescanAll { get; }
+    public IReadOnlyList<string> RootsToRescan { get; }
+}
+
 public partial class LibrarySettingsViewModel : ObservableObject
 {
     private readonly ILibraryConfigurationManager _configurationManager;
@@ -42,40 +54,87 @@ public partial class LibrarySettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _rescanAfterSave;
 
+    [ObservableProperty]
+    private string? _globalKeywordFormat;
+
     public event EventHandler? SettingsSaved;
+
+    public event EventHandler<RescanRequestedEventArgs>? RescanRequested;
+
+    public IEnumerable<string> GetRootsToRescan()
+    {
+        return Roots.Where(r => r.ShouldRescan).Select(r => r.Name);
+    }
 
     public async Task LoadAsync()
     {
-        var roots = await _configurationManager.GetRootsAsync(CancellationToken.None).ConfigureAwait(false);
+        var libraryOptions = await _configurationManager.GetLibraryOptionsAsync(CancellationToken.None).ConfigureAwait(false);
+        GlobalKeywordFormat = libraryOptions.KeywordFormat;
 
         Roots.Clear();
-        foreach (var root in roots)
+        foreach (var root in libraryOptions.Roots)
         {
-            Roots.Add(new LibraryRootItemViewModel(root.Name, root.Path, root.DefaultPriority, root.DefaultChannel, root.DriveOverride));
+            Roots.Add(new LibraryRootItemViewModel(root.Name, root.Path, root.DefaultPriority, root.DefaultChannel, root.DriveOverride, root.KeywordFormat, shouldRescan: true));
         }
         RescanAfterSave = true;
     }
 
     public async Task SaveAsync()
     {
-        var updatedRoots = Roots
-            .Select(root => new LibraryRootOptions
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"SaveAsync: GlobalKeywordFormat = '{GlobalKeywordFormat}'");
+            System.Diagnostics.Debug.WriteLine($"SaveAsync: Roots count = {Roots.Count}");
+            
+            foreach (var root in Roots)
             {
-                Name = root.Name,
-                Path = root.Path,
-                DefaultPriority = root.GetPriority(),
-                DefaultChannel = root.DefaultChannel,
-                DriveOverride = string.IsNullOrWhiteSpace(root.DriveOverride) ? null : root.DriveOverride,
-            })
-            .ToList();
+                System.Diagnostics.Debug.WriteLine($"  Root: Name='{root.Name}', Path='{root.Path}', Priority='{root.DefaultPriority}', Channel='{root.DefaultChannel}', DriveOverride='{root.DriveOverride}', KeywordFormat='{root.KeywordFormat}', ShouldRescan={root.ShouldRescan}");
+            }
+            
+            var currentOptions = await _configurationManager.GetLibraryOptionsAsync(CancellationToken.None).ConfigureAwait(false);
+            
+            // Update the options with new values
+            currentOptions.KeywordFormat = string.IsNullOrWhiteSpace(GlobalKeywordFormat) ? null : GlobalKeywordFormat;
+            currentOptions.Roots = Roots
+                .Select(root => new LibraryRootOptions
+                {
+                    Name = root.Name,
+                    Path = root.Path,
+                    DefaultPriority = root.GetPriority(),
+                    DefaultChannel = root.DefaultChannel,
+                    DriveOverride = string.IsNullOrWhiteSpace(root.DriveOverride) ? null : root.DriveOverride,
+                    KeywordFormat = string.IsNullOrWhiteSpace(root.KeywordFormat) ? null : root.KeywordFormat,
+                })
+                .ToList();
 
-        await _configurationManager.SaveRootsAsync(updatedRoots, CancellationToken.None).ConfigureAwait(false);
-        SettingsSaved?.Invoke(this, EventArgs.Empty);
+            await _configurationManager.SaveLibraryOptionsAsync(currentOptions, CancellationToken.None).ConfigureAwait(false);
+            System.Diagnostics.Debug.WriteLine("SaveAsync: Configuration saved successfully");
+
+            // Give the configuration system time to reload the settings file
+            // IOptionsMonitor uses file watchers which need time to detect changes
+            await Task.Delay(500, CancellationToken.None).ConfigureAwait(false);
+
+            // Determine what needs rescanning
+            var rootsToRescan = GetRootsToRescan().ToList();
+            var shouldRescanAll = RescanAfterSave;
+
+            SettingsSaved?.Invoke(this, EventArgs.Empty);
+
+            if (shouldRescanAll || rootsToRescan.Count > 0)
+            {
+                RescanRequested?.Invoke(this, new RescanRequestedEventArgs(shouldRescanAll, rootsToRescan));
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Exception in SaveAsync: {ex}");
+            throw; // Re-throw to let the UI handle it
+        }
     }
 
     private void AddRoot()
     {
-        Roots.Add(new LibraryRootItemViewModel("NewRoot", "", defaultPriority: 2, defaultChannel: "Stereo", driveOverride: null));
+        Roots.Add(new LibraryRootItemViewModel("NewRoot", "", defaultPriority: 2, defaultChannel: "Stereo", driveOverride: null, keywordFormat: null, shouldRescan: true));
         SelectedRoot = Roots.Last();
     }
 

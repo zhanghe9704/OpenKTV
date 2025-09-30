@@ -18,6 +18,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILibraryRepository, SqliteLibraryRepository>();
         services.AddSingleton<ILibraryService, LibraryService>();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMediaPathParser, DirectoryStructureParser>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMediaPathParser, KeywordFileNameParser>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMediaPathParser, HyphenFileNameParser>());
         services.AddSingleton<ILibraryIngestionService, LibraryIngestionService>();
         return services;

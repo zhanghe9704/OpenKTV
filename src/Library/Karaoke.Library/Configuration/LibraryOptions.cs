@@ -20,6 +20,8 @@ public sealed class LibraryOptions
     [SuppressMessage("Usage", "CA2227", Justification = "Configuration binding requires a set accessor")]
     [SuppressMessage("Design", "CA1002", Justification = "List binding is acceptable for configuration data")]
     public List<LibraryRootOptions> Roots { get; set; } = new();
+
+    public string? KeywordFormat { get; set; }
 }
 
 public sealed class LibraryRootOptions
@@ -33,4 +35,6 @@ public sealed class LibraryRootOptions
     public string? DefaultChannel { get; set; }
 
     public string? DriveOverride { get; set; }
+
+    public string? KeywordFormat { get; set; }
 }

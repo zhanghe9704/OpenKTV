@@ -30,7 +30,7 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
         "Skipped media file '{File}' in root '{RootName}'");
 
     private readonly IEnumerable<IMediaPathParser> _parsers;
-    private readonly LibraryOptions _options;
+    private readonly IOptionsMonitor<LibraryOptions> _optionsMonitor;
     private readonly IAppEnvironment _appEnvironment;
     private readonly ILogger<LibraryIngestionService> _logger;
     private readonly ILibraryRepository _repository;
@@ -39,33 +39,59 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
     public LibraryIngestionService(
         IEnumerable<IMediaPathParser> parsers,
         ILibraryRepository repository,
-        IOptions<LibraryOptions> options,
+        IOptionsMonitor<LibraryOptions> optionsMonitor,
         IAppEnvironment appEnvironment,
         ILogger<LibraryIngestionService> logger)
     {
         ArgumentNullException.ThrowIfNull(parsers);
         ArgumentNullException.ThrowIfNull(repository);
-        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(optionsMonitor);
         ArgumentNullException.ThrowIfNull(appEnvironment);
         ArgumentNullException.ThrowIfNull(logger);
 
         _parsers = parsers;
         _repository = repository;
-        _options = options.Value;
+        _optionsMonitor = optionsMonitor;
         _appEnvironment = appEnvironment;
         _logger = logger;
-        _extensionSet = new HashSet<string>(_options.SupportedExtensions, StringComparer.OrdinalIgnoreCase);
+        _extensionSet = new HashSet<string>(optionsMonitor.CurrentValue.SupportedExtensions, StringComparer.OrdinalIgnoreCase);
     }
 
     public async Task<LibraryIngestionResult> ScanAsync(CancellationToken cancellationToken)
     {
+        return await ScanSpecificRootsAsync(null, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<LibraryIngestionResult> ScanSpecificRootsAsync(IEnumerable<string>? rootNames, CancellationToken cancellationToken)
+    {
+        var _options = _optionsMonitor.CurrentValue; // Get the latest configuration
+        
         var processed = 0;
         var skipped = 0;
 
         await _repository.InitializeAsync(cancellationToken).ConfigureAwait(false);
-        await _repository.DeleteAllSongsAsync(cancellationToken).ConfigureAwait(false);
+        
+        // If specific roots are specified, only delete songs from those roots
+        if (rootNames != null)
+        {
+            var rootNamesToScan = rootNames.ToHashSet();
+            foreach (var rootName in rootNamesToScan)
+            {
+                await _repository.DeleteSongsByRootAsync(rootName, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        else
+        {
+            // Full rescan - delete all songs
+            await _repository.DeleteAllSongsAsync(cancellationToken).ConfigureAwait(false);
+        }
 
-        foreach (var root in _options.Roots)
+        // Determine which roots to scan
+        var rootsToScan = rootNames != null 
+            ? _options.Roots.Where(r => rootNames.Contains(r.Name))
+            : _options.Roots;
+
+        foreach (var root in rootsToScan)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
