@@ -19,6 +19,20 @@ public sealed partial class SettingsDialog : ContentDialog
 
     public LibrarySettingsViewModel ViewModel { get; }
 
+    private void OnAddTabButtonClick(TabView sender, object args)
+    {
+        ViewModel.AddRootCommand.Execute(null);
+    }
+
+    private void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
+    {
+        if (args.Item is LibraryRootItemViewModel root)
+        {
+            ViewModel.SelectedRoot = root;
+            ViewModel.RemoveSelectedRootCommand.Execute(null);
+        }
+    }
+
     private async void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
         var deferral = args.GetDeferral();
