@@ -57,6 +57,18 @@ public partial class LibrarySettingsViewModel : ObservableObject
     [ObservableProperty]
     private string? _globalKeywordFormat;
 
+    [ObservableProperty]
+    private bool _showArtist;
+
+    [ObservableProperty]
+    private bool _showLanguage;
+
+    [ObservableProperty]
+    private bool _showGenre;
+
+    [ObservableProperty]
+    private bool _showComment;
+
     public event EventHandler? SettingsSaved;
 
     public event EventHandler<RescanRequestedEventArgs>? RescanRequested;
@@ -70,6 +82,11 @@ public partial class LibrarySettingsViewModel : ObservableObject
     {
         var libraryOptions = await _configurationManager.GetLibraryOptionsAsync(CancellationToken.None).ConfigureAwait(false);
         GlobalKeywordFormat = libraryOptions.KeywordFormat;
+
+        ShowArtist = libraryOptions.DisplayOptions.ShowArtist;
+        ShowLanguage = libraryOptions.DisplayOptions.ShowLanguage;
+        ShowGenre = libraryOptions.DisplayOptions.ShowGenre;
+        ShowComment = libraryOptions.DisplayOptions.ShowComment;
 
         Roots.Clear();
         foreach (var root in libraryOptions.Roots)
@@ -102,6 +119,13 @@ public partial class LibrarySettingsViewModel : ObservableObject
                 DatabasePath = baseOptions.DatabasePath,
                 SupportedExtensions = new List<string>(baseOptions.SupportedExtensions), // Create new list to avoid reference issues
                 KeywordFormat = string.IsNullOrWhiteSpace(GlobalKeywordFormat) ? null : GlobalKeywordFormat,
+                DisplayOptions = new SongDisplayOptions
+                {
+                    ShowArtist = ShowArtist,
+                    ShowLanguage = ShowLanguage,
+                    ShowGenre = ShowGenre,
+                    ShowComment = ShowComment
+                },
                 Roots = Roots
                     .Select(root => new LibraryRootOptions
                     {

@@ -42,6 +42,19 @@
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap" />
+
+            <!-- Display Options -->
+            <StackPanel Spacing="4" Margin="0,12,0,0">
+                <TextBlock Text="Song List Display Options" FontWeight="SemiBold" />
+                <TextBlock
+                    Text="Choose which information to show in the song list (Song name is always shown)"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <CheckBox Content="Show Artist" IsChecked="{Binding ShowArtist, Mode=TwoWay}" Margin="0,4,0,0" />
+                <CheckBox Content="Show Language" IsChecked="{Binding ShowLanguage, Mode=TwoWay}" />
+                <CheckBox Content="Show Genre" IsChecked="{Binding ShowGenre, Mode=TwoWay}" />
+                <CheckBox Content="Show Comment" IsChecked="{Binding ShowComment, Mode=TwoWay}" />
+            </StackPanel>
         </StackPanel>
 
         <!-- Library Roots Section -->

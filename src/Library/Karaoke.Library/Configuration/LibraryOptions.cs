@@ -22,6 +22,16 @@ public sealed class LibraryOptions
     public List<LibraryRootOptions> Roots { get; set; } = new();
 
     public string? KeywordFormat { get; set; }
+
+    public SongDisplayOptions DisplayOptions { get; set; } = new();
+}
+
+public sealed class SongDisplayOptions
+{
+    public bool ShowArtist { get; set; } = true;
+    public bool ShowLanguage { get; set; } = false;
+    public bool ShowGenre { get; set; } = false;
+    public bool ShowComment { get; set; } = false;
 }
 
 public sealed class LibraryRootOptions
