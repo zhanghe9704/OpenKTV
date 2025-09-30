@@ -16,7 +16,6 @@
                 FontSize="24"
                 HorizontalAlignment="Center" />
             <CommandBar DefaultLabelPosition="Right" IsOpen="False">
-                <AppBarButton Icon="Refresh" Label="Rescan" Click="OnRescanClicked" />
                 <AppBarButton Icon="Setting" Label="Settings" Click="OnSettingsClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="S" />
@@ -157,7 +156,7 @@
                     </Button>
                     <NumberBox
                         Grid.Column="1"
-                        Width="80"
+                        Width="40"
                         Minimum="1"
                         Maximum="{x:Bind ViewModel.ArtistsTotalPages, Mode=OneWay}"
                         Value="{x:Bind ViewModel.ArtistsPageNumber, Mode=TwoWay}"
@@ -225,7 +224,7 @@
                     </Button>
                     <NumberBox
                         Grid.Column="1"
-                        Width="80"
+                        Width="40"
                         Minimum="1"
                         Maximum="{x:Bind ViewModel.SongsTotalPages, Mode=OneWay}"
                         Value="{x:Bind ViewModel.SongsPageNumber, Mode=TwoWay}"
@@ -291,7 +290,7 @@
                     </Button>
                     <NumberBox
                         Grid.Column="1"
-                        Width="80"
+                        Width="40"
                         Minimum="1"
                         Maximum="{x:Bind ViewModel.QueueTotalPages, Mode=OneWay}"
                         Value="{x:Bind ViewModel.QueuePageNumber, Mode=TwoWay}"
