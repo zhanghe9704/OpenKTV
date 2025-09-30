@@ -98,6 +98,8 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
         cancellationToken.ThrowIfCancellationRequested();
 
         var settingsPath = GetSettingsPath();
+        System.Diagnostics.Debug.WriteLine($"[JsonLibraryConfigurationManager] Saving library options to {settingsPath}");
+        System.Diagnostics.Debug.WriteLine($"[JsonLibraryConfigurationManager] Saving {options.Roots.Count} roots");
         
         JsonNode rootNode;
         if (File.Exists(settingsPath))
@@ -144,10 +146,17 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
         libraryNode["SupportedExtensions"] = extensionsArray;
 
         Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
-        await File.WriteAllTextAsync(
-            settingsPath,
-            rootNode.ToString(),
-            cancellationToken).ConfigureAwait(false);
+
+        // Use JsonSerializer.Serialize for proper formatting instead of ToJsonString
+        var jsonString = JsonSerializer.Serialize(rootNode, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        });
+
+        System.Diagnostics.Debug.WriteLine($"[JsonLibraryConfigurationManager] Writing to file: {settingsPath}");
+        await File.WriteAllTextAsync(settingsPath, jsonString, cancellationToken).ConfigureAwait(false);
+        System.Diagnostics.Debug.WriteLine($"[JsonLibraryConfigurationManager] File saved successfully");
     }
 
     private string GetSettingsPath()

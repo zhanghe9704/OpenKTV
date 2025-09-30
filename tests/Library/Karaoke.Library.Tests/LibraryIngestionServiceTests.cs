@@ -40,7 +40,7 @@ public class LibraryIngestionServiceTests
         var options = Options.Create(libraryOptions);
         var repository = new SqliteLibraryRepository(options, NullLogger<SqliteLibraryRepository>.Instance);
         var libraryService = new LibraryService(repository, NullLogger<LibraryService>.Instance, new StaticOptionsMonitor(libraryOptions), new TestAppEnvironment(repositoryRoot));
-        var ingestionService = CreateIngestionService(repositoryRoot, options, repository, libraryService: libraryService);
+        var ingestionService = CreateIngestionService(repositoryRoot, new StaticOptionsMonitor(libraryOptions), repository, libraryService: libraryService);
 
         try
         {
@@ -91,7 +91,7 @@ public class LibraryIngestionServiceTests
             var libraryService = new LibraryService(repository, NullLogger<LibraryService>.Instance, new StaticOptionsMonitor(libraryOptions), new TestAppEnvironment(tempDirectory.FullName));
             var ingestionService = CreateIngestionService(
                 tempDirectory.FullName,
-                options,
+                new StaticOptionsMonitor(libraryOptions),
                 repository,
                 parsers: new[] { new SanitizingParser() },
                 libraryService: libraryService);
@@ -114,7 +114,7 @@ public class LibraryIngestionServiceTests
 
     private static LibraryIngestionService CreateIngestionService(
         string contentRoot,
-        IOptions<LibraryOptions> options,
+        IOptionsMonitor<LibraryOptions> optionsMonitor,
         ILibraryRepository repository,
         IEnumerable<IMediaPathParser>? parsers = null,
         LibraryService? libraryService = null)
@@ -126,12 +126,12 @@ public class LibraryIngestionServiceTests
         };
 
         var appEnvironment = new TestAppEnvironment(contentRoot);
-        libraryService ??= new LibraryService(repository, NullLogger<LibraryService>.Instance, new StaticOptionsMonitor(options.Value), appEnvironment);
+        libraryService ??= new LibraryService(repository, NullLogger<LibraryService>.Instance, optionsMonitor, appEnvironment);
 
         return new LibraryIngestionService(
             parsers,
             repository,
-            options,
+            optionsMonitor,
             appEnvironment,
             NullLogger<LibraryIngestionService>.Instance);
     }

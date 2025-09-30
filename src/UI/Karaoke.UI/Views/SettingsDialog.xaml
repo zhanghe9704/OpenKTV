@@ -15,19 +15,40 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="12" Margin="12">
         <TextBlock Text="Configure library roots and drive overrides." />
-        
-        <!-- Global Keyword Format Setting -->
+
+        <!-- Global Options Section -->
         <StackPanel Spacing="8">
-            <TextBlock Text="Global Keyword Format (Default)" FontWeight="SemiBold" />
-            <TextBox 
-                Text="{Binding GlobalKeywordFormat, Mode=TwoWay}" 
-                PlaceholderText="e.g., artist-song-comment" />
-            <TextBlock 
-                Text="Format: Use keywords separated by hyphens. Supported keywords: artist, song, comment, language, genre. If a keyword appears multiple times, values will be joined with ', '."
+            <TextBlock Text="Global Options" FontWeight="SemiBold" FontSize="16" />
+
+            <!-- Global Keyword Format -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Global Keyword Format (Default)" FontWeight="SemiBold" />
+                <TextBox
+                    Text="{Binding GlobalKeywordFormat, Mode=TwoWay}"
+                    PlaceholderText="e.g., artist-song-comment" />
+                <TextBlock
+                    Text="Format: Use keywords separated by hyphens. Supported keywords: artist, song, comment, language, genre. If a keyword appears multiple times, values will be joined with ', '."
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+
+            <!-- Rescan All Checkbox -->
+            <CheckBox
+                Content="Rescan all folders after saving (overrides individual settings)"
+                IsChecked="{Binding RescanAfterSave, Mode=TwoWay}"
+                ToolTipService.ToolTip="When checked, all folders will be rescanned regardless of individual folder settings" />
+            <TextBlock
+                Text="Note: If unchecked, only folders with 'Rescan this folder' checked will be rescanned. Use individual folder settings to save time when only some folders need updating."
                 Style="{StaticResource CaptionTextBlockStyle}"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap" />
         </StackPanel>
-        
+
+        <!-- Library Roots Section -->
+        <StackPanel Spacing="8">
+            <TextBlock Text="Library Roots" FontWeight="SemiBold" FontSize="16" />
+        </StackPanel>
+
         <ListView
             MinHeight="240"
             MaxHeight="300"
@@ -79,19 +100,6 @@
         <StackPanel Orientation="Horizontal" Spacing="12">
             <Button Content="Add Root" Command="{Binding AddRootCommand}" />
             <Button Content="Remove Selected" Command="{Binding RemoveSelectedRootCommand}" />
-        </StackPanel>
-        
-        <StackPanel Spacing="8">
-            <TextBlock Text="Global Options" FontWeight="SemiBold" />
-            <CheckBox
-                Content="Rescan all folders after saving (overrides individual settings)"
-                IsChecked="{Binding RescanAfterSave, Mode=TwoWay}"
-                ToolTipService.ToolTip="When checked, all folders will be rescanned regardless of individual folder settings" />
-            <TextBlock 
-                Text="Note: If unchecked, only folders with 'Rescan this folder' checked will be rescanned. Use individual folder settings to save time when only some folders need updating."
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}" 
-                TextWrapping="Wrap" />
         </StackPanel>
         </StackPanel>
     </ScrollViewer>

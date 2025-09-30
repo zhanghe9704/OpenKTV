@@ -91,23 +91,31 @@ public partial class LibrarySettingsViewModel : ObservableObject
                 System.Diagnostics.Debug.WriteLine($"  Root: Name='{root.Name}', Path='{root.Path}', Priority='{root.DefaultPriority}', Channel='{root.DefaultChannel}', DriveOverride='{root.DriveOverride}', KeywordFormat='{root.KeywordFormat}', ShouldRescan={root.ShouldRescan}");
             }
             
-            var currentOptions = await _configurationManager.GetLibraryOptionsAsync(CancellationToken.None).ConfigureAwait(false);
-            
-            // Update the options with new values
-            currentOptions.KeywordFormat = string.IsNullOrWhiteSpace(GlobalKeywordFormat) ? null : GlobalKeywordFormat;
-            currentOptions.Roots = Roots
-                .Select(root => new LibraryRootOptions
-                {
-                    Name = root.Name,
-                    Path = root.Path,
-                    DefaultPriority = root.GetPriority(),
-                    DefaultChannel = root.DefaultChannel,
-                    DriveOverride = string.IsNullOrWhiteSpace(root.DriveOverride) ? null : root.DriveOverride,
-                    KeywordFormat = string.IsNullOrWhiteSpace(root.KeywordFormat) ? null : root.KeywordFormat,
-                })
-                .ToList();
+            // Load the base options to preserve settings like SupportedExtensions and DatabasePath
+            var baseOptions = await _configurationManager.GetLibraryOptionsAsync(CancellationToken.None).ConfigureAwait(false);
 
-            await _configurationManager.SaveLibraryOptionsAsync(currentOptions, CancellationToken.None).ConfigureAwait(false);
+            // Create a fresh options object with updated values from UI
+            var updatedOptions = new LibraryOptions
+            {
+                DefaultPriority = baseOptions.DefaultPriority,
+                DefaultChannel = baseOptions.DefaultChannel,
+                DatabasePath = baseOptions.DatabasePath,
+                SupportedExtensions = new List<string>(baseOptions.SupportedExtensions), // Create new list to avoid reference issues
+                KeywordFormat = string.IsNullOrWhiteSpace(GlobalKeywordFormat) ? null : GlobalKeywordFormat,
+                Roots = Roots
+                    .Select(root => new LibraryRootOptions
+                    {
+                        Name = root.Name,
+                        Path = root.Path,
+                        DefaultPriority = root.GetPriority(),
+                        DefaultChannel = root.DefaultChannel,
+                        DriveOverride = string.IsNullOrWhiteSpace(root.DriveOverride) ? null : root.DriveOverride,
+                        KeywordFormat = string.IsNullOrWhiteSpace(root.KeywordFormat) ? null : root.KeywordFormat,
+                    })
+                    .ToList()
+            };
+
+            await _configurationManager.SaveLibraryOptionsAsync(updatedOptions, CancellationToken.None).ConfigureAwait(false);
             System.Diagnostics.Debug.WriteLine("SaveAsync: Configuration saved successfully");
 
             // Give the configuration system time to reload the settings file
