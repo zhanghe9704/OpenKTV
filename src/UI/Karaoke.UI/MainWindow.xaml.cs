@@ -106,17 +106,82 @@ public sealed partial class MainWindow : Window
         };
 
         var result = await dialog.ShowAsync();
+        System.Diagnostics.Debug.WriteLine($"Dialog result: {result}, rescanArgs: {rescanArgs != null}");
         if (result == ContentDialogResult.Primary && rescanArgs != null)
         {
-            if (rescanArgs.RescanAll)
+            System.Diagnostics.Debug.WriteLine($"RescanAll: {rescanArgs.RescanAll}, RootsCount: {rescanArgs.RootsToRescan.Count}");
+            // Create progress UI elements
+            var progressRing = new ProgressRing { IsActive = true, Width = 40, Height = 40 };
+            var progressText = new TextBlock
             {
-                // Rescan all roots
-                await _viewModel.ReloadAsync(rescan: true, CancellationToken.None).ConfigureAwait(false);
+                Text = "Preparing to scan...",
+                TextAlignment = TextAlignment.Center,
+                TextWrapping = TextWrapping.Wrap
+            };
+            var progressDetails = new TextBlock
+            {
+                Text = "",
+                TextAlignment = TextAlignment.Center,
+                FontSize = 14
+            };
+
+            // Show scanning progress dialog
+            var progressDialog = new ContentDialog
+            {
+                Title = "Scanning Library",
+                Content = new StackPanel
+                {
+                    Spacing = 12,
+                    Children = { progressRing, progressText, progressDetails }
+                },
+                XamlRoot = (Content as FrameworkElement)?.XamlRoot,
+                DefaultButton = ContentDialogButton.None
+            };
+
+            // Start showing the dialog (don't await yet)
+            var dialogTask = progressDialog.ShowAsync();
+
+            try
+            {
+                // Give the UI a moment to render the dialog
+                await Task.Delay(100);
+
+                System.Diagnostics.Debug.WriteLine("Starting rescan...");
+
+                // Create progress reporter that updates UI directly
+                var progress = new Progress<Karaoke.Library.Ingestion.ScanProgress>(p =>
+                {
+                    System.Diagnostics.Debug.WriteLine($"Progress callback received: {p.RootName} - {p.FilesScanned} files");
+                    // Update UI and force render
+                    progressText.Text = $"Scanning: {p.RootName}";
+                    progressDetails.Text = $"{p.FilesScanned} files scanned";
+                    // Force UI to update immediately
+                    progressText.UpdateLayout();
+                    progressDetails.UpdateLayout();
+                    System.Diagnostics.Debug.WriteLine($"UI Updated: {progressText.Text}");
+                });
+
+                // Perform the rescan
+                if (rescanArgs.RescanAll)
+                {
+                    // Rescan all roots
+                    await _viewModel.ReloadAsync(rescan: true, CancellationToken.None, progress);
+                }
+                else if (rescanArgs.RootsToRescan.Count > 0)
+                {
+                    // Rescan only specific roots
+                    await _viewModel.ReloadSpecificRootsAsync(rescanArgs.RootsToRescan, CancellationToken.None, progress);
+                }
+
+                System.Diagnostics.Debug.WriteLine("Rescan completed");
+
+                // Close the progress dialog
+                progressDialog.Hide();
             }
-            else if (rescanArgs.RootsToRescan.Count > 0)
+            catch (Exception ex)
             {
-                // Rescan only specific roots
-                await _viewModel.ReloadSpecificRootsAsync(rescanArgs.RootsToRescan, CancellationToken.None).ConfigureAwait(false);
+                System.Diagnostics.Debug.WriteLine($"Error during rescan: {ex}");
+                progressDialog.Hide();
             }
         }
     }

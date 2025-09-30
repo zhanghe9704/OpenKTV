@@ -289,14 +289,14 @@ public partial class MainViewModel : ObservableObject
         await RefreshCurrentPlayingSongAsync().ConfigureAwait(false);
     }
 
-    public async Task ReloadAsync(bool rescan, CancellationToken cancellationToken)
+    public async Task ReloadAsync(bool rescan, CancellationToken cancellationToken, IProgress<Karaoke.Library.Ingestion.ScanProgress>? progress = null)
     {
         try
         {
             IsLoading = true;
             if (rescan)
             {
-                await _ingestionService.ScanAsync(cancellationToken).ConfigureAwait(false);
+                await _ingestionService.ScanAsync(cancellationToken, progress).ConfigureAwait(false);
             }
 
             var songs = await _libraryService.GetAllSongsAsync(cancellationToken).ConfigureAwait(false);
@@ -313,12 +313,12 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    public async Task ReloadSpecificRootsAsync(IEnumerable<string> rootNames, CancellationToken cancellationToken)
+    public async Task ReloadSpecificRootsAsync(IEnumerable<string> rootNames, CancellationToken cancellationToken, IProgress<Karaoke.Library.Ingestion.ScanProgress>? progress = null)
     {
         try
         {
             IsLoading = true;
-            await _ingestionService.ScanSpecificRootsAsync(rootNames, cancellationToken).ConfigureAwait(false);
+            await _ingestionService.ScanSpecificRootsAsync(rootNames, cancellationToken, progress).ConfigureAwait(false);
 
             var songs = await _libraryService.GetAllSongsAsync(cancellationToken).ConfigureAwait(false);
             _allSongs = songs.ToList();

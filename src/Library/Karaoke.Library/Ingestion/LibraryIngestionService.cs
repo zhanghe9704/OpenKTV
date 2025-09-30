@@ -57,12 +57,12 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
         _extensionSet = new HashSet<string>(optionsMonitor.CurrentValue.SupportedExtensions, StringComparer.OrdinalIgnoreCase);
     }
 
-    public async Task<LibraryIngestionResult> ScanAsync(CancellationToken cancellationToken)
+    public async Task<LibraryIngestionResult> ScanAsync(CancellationToken cancellationToken, IProgress<ScanProgress>? progress = null)
     {
-        return await ScanSpecificRootsAsync(null, cancellationToken).ConfigureAwait(false);
+        return await ScanSpecificRootsAsync(null, cancellationToken, progress).ConfigureAwait(false);
     }
 
-    public async Task<LibraryIngestionResult> ScanSpecificRootsAsync(IEnumerable<string>? rootNames, CancellationToken cancellationToken)
+    public async Task<LibraryIngestionResult> ScanSpecificRootsAsync(IEnumerable<string>? rootNames, CancellationToken cancellationToken, IProgress<ScanProgress>? progress = null)
     {
         var _options = _optionsMonitor.CurrentValue; // Get the latest configuration
         
@@ -103,6 +103,7 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
                 continue;
             }
 
+            var rootFilesScanned = 0;
             foreach (var file in Directory.EnumerateFiles(resolvedRoot, "*", SearchOption.AllDirectories))
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -125,6 +126,21 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
                 var songRecord = ToSongRecord(songDto);
                 await _repository.UpsertSongAsync(songRecord, cancellationToken).ConfigureAwait(false);
                 processed++;
+                rootFilesScanned++;
+
+                // Report progress every 10 files or if it's a new file being scanned
+                if (rootFilesScanned % 10 == 0 || rootFilesScanned == 1)
+                {
+                    progress?.Report(new ScanProgress(root.Name, rootFilesScanned, Path.GetFileName(file)));
+                    // Yield to allow UI to process the progress update
+                    await Task.Delay(1, cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            // Report final count for this root
+            if (rootFilesScanned > 0)
+            {
+                progress?.Report(new ScanProgress(root.Name, rootFilesScanned, "Completed"));
             }
         }
 
