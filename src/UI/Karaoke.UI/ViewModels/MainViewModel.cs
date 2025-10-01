@@ -340,19 +340,32 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"ReloadSpecificRootsAsync: Starting, roots count={rootNames.Count()}");
             IsLoading = true;
-            await _ingestionService.ScanSpecificRootsAsync(rootNames, cancellationToken, progress).ConfigureAwait(false);
+            System.Diagnostics.Debug.WriteLine("ReloadSpecificRootsAsync: IsLoading set to true");
 
-            var songs = await _libraryService.GetAllSongsAsync(cancellationToken).ConfigureAwait(false);
+            await _ingestionService.ScanSpecificRootsAsync(rootNames, cancellationToken, progress).ConfigureAwait(true);
+            System.Diagnostics.Debug.WriteLine("ReloadSpecificRootsAsync: Scan completed");
+
+            var songs = await _libraryService.GetAllSongsAsync(cancellationToken).ConfigureAwait(true);
+            System.Diagnostics.Debug.WriteLine($"ReloadSpecificRootsAsync: Retrieved {songs.Count} songs");
+
             _allSongs = songs.ToList();
             Songs = songs;
 
             RebuildSongInitials();
             UpdateArtists();
             UpdateFilteredSongs(resetPage: true);
+            System.Diagnostics.Debug.WriteLine("ReloadSpecificRootsAsync: Completed successfully");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ReloadSpecificRootsAsync: EXCEPTION: {ex}");
+            throw;
         }
         finally
         {
+            System.Diagnostics.Debug.WriteLine("ReloadSpecificRootsAsync: IsLoading set to false");
             IsLoading = false;
         }
     }
