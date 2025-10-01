@@ -442,16 +442,18 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 // Stop current playback
                 _mediaPlayer.Stop();
 
-                // Small delay to ensure VLC stops cleanly
-                await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+                // Wait for VLC to actually stop
+                await WaitForStoppedAsync(cancellationToken.IsCancellationRequested ? 0 : 1500).ConfigureAwait(false);
+                _logger.LogInformation("VLC stopped successfully");
 
                 // Restart playback with new channel configuration
                 await PlayCurrentSongAsync().ConfigureAwait(false);
 
-                // Wait for playback to start
-                await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+                // Wait for playback to actually start
+                await WaitUntilPlayingAsync(1200).ConfigureAwait(false);
+                _logger.LogInformation("VLC playing successfully");
 
-                // Restore playback position
+                // Restore playback position after VLC is playing
                 if (currentPosition > 0)
                 {
                     _mediaPlayer.Time = currentPosition;
@@ -837,29 +839,27 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             // Configure stereo mode per-media based on Instrumental value
             var instrumental = _currentSong.Instrumental;
 
-            // Enable the stereo filter for this media (correct VLC option)
+            // Enable the stereo filter for this media
             newMedia.AddOption(":audio-filter=stereo");
 
-            if (instrumental == 0)
+            // :stereo-mode values: 0=stereo, 1=left, 2=right, 3=reverse, 4=downmix
+            switch (instrumental)
             {
-                // Left channel only (typically instrumental track)
-                newMedia.AddOption(":stereo-mode=left");
-                _logger.LogInformation("Configured stereo-mode=left (Instrumental=0)");
-            }
-            else if (instrumental == 1)
-            {
-                // Right channel only (typically vocal+music track)
-                newMedia.AddOption(":stereo-mode=right");
-                _logger.LogInformation("Configured stereo-mode=right (Instrumental=1)");
-            }
-            else
-            {
-                // Both channels (normal stereo)
-                newMedia.AddOption(":stereo-mode=stereo");
-                _logger.LogInformation("Configured stereo-mode=stereo (Instrumental={Instrumental})", instrumental);
+                case 0: // instrumental (left-only)
+                    newMedia.AddOption(":stereo-mode=1");
+                    _logger.LogInformation("Configured :stereo-mode=1 (left)");
+                    break;
+                case 1: // vocal+music (right-only)
+                    newMedia.AddOption(":stereo-mode=2");
+                    _logger.LogInformation("Configured :stereo-mode=2 (right)");
+                    break;
+                default: // normal stereo
+                    newMedia.AddOption(":stereo-mode=0");
+                    _logger.LogInformation("Configured :stereo-mode=0 (stereo)");
+                    break;
             }
 
-            _logger.LogInformation("Added audio-filter=stereo to media options");
+            _logger.LogInformation("Added audio-filter=stereo with numeric stereo-mode");
 
             // Set media to player BEFORE disposing old media
             _mediaPlayer.Media = newMedia;
@@ -878,6 +878,50 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _logger.LogError(ex, "Failed to play song {SongPath}", _currentSong.MediaPath);
             // Try to move to next song if current one fails
             await MoveNextAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+    }
+
+    private Task WaitForStoppedAsync(int timeoutMs = 1500)
+    {
+        var tcs = new TaskCompletionSource();
+        EventHandler<EventArgs>? ev = null;
+        ev = (s, e) =>
+        {
+            var st = _mediaPlayer!.State;
+            if (st == VLCState.Stopped || st == VLCState.Ended || st == VLCState.NothingSpecial)
+            {
+                _mediaPlayer.Stopped -= ev;
+                tcs.TrySetResult();
+            }
+        };
+        _mediaPlayer!.Stopped += ev;
+
+        // already stopped?
+        var st0 = _mediaPlayer.State;
+        if (st0 == VLCState.Stopped || st0 == VLCState.Ended || st0 == VLCState.NothingSpecial)
+        {
+            _mediaPlayer.Stopped -= ev;
+            tcs.TrySetResult();
+        }
+
+        _ = Task.Run(async () =>
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            while (sw.ElapsedMilliseconds < timeoutMs && !tcs.Task.IsCompleted)
+                await Task.Delay(50).ConfigureAwait(false);
+            tcs.TrySetResult();
+        });
+
+        return tcs.Task;
+    }
+
+    private async Task WaitUntilPlayingAsync(int timeoutMs = 1200)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (sw.ElapsedMilliseconds < timeoutMs)
+        {
+            if (_mediaPlayer!.State == VLCState.Playing) return;
+            await Task.Delay(30).ConfigureAwait(false);
         }
     }
 
