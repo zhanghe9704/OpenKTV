@@ -726,11 +726,51 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         {
             // Create new media
             var newMedia = new Media(_libVlc!, _currentSong.MediaPath, FromType.FromPath);
-            
+
+            // Log detailed song information
+            _logger.LogInformation("=== Playing Song ===");
+            _logger.LogInformation("Song ID: {SongId}", _currentSong.Id);
+            _logger.LogInformation("Media Path: {MediaPath}", _currentSong.MediaPath);
+            _logger.LogInformation("Instrumental Value: {Instrumental}", _currentSong.Instrumental);
+            _logger.LogInformation("Channel Configuration: {ChannelConfig}", _currentSong.ChannelConfiguration);
+
+            // Configure audiochannel mode per-media based on Instrumental value
+            var instrumental = _currentSong.Instrumental;
+
+            // Enable the audiochannel filter for this media
+            newMedia.AddOption(":audio-filter=audiochannel");
+
+            if (instrumental == 0)
+            {
+                // Left channel only: mode 1 or mode 4
+                newMedia.AddOption(":audiochannel-mode=1"); // 1 = left channel
+                _logger.LogInformation("Configured for left channel (Instrumental=0, mode=1)");
+            }
+            else if (instrumental == 1)
+            {
+                // Right channel only: mode 2 or mode 5
+                newMedia.AddOption(":audiochannel-mode=2"); // 2 = right channel
+                _logger.LogInformation("Configured for right channel (Instrumental=1, mode=2)");
+            }
+            else
+            {
+                // Both channels (stereo)
+                newMedia.AddOption(":audiochannel-mode=0"); // 0 = stereo (both channels)
+                _logger.LogInformation("Configured for stereo (Instrumental={Instrumental}, mode=0)", instrumental);
+            }
+
+            _logger.LogInformation("Added audio-filter=audiochannel to media options");
+
             // Set media to player BEFORE disposing old media
             _mediaPlayer.Media = newMedia;
             _mediaPlayer.Play();  // Play without parameters to reuse existing window
-            
+
+            // Wait a moment for VLC to start parsing the media
+            await Task.Delay(500).ConfigureAwait(false);
+
+            // Apply instrumental audio track selection (for multi-track files)
+            ApplyInstrumentalAudioSelection();
+
             // Only dispose old media AFTER new one is set and playing
             var oldMedia = _currentMedia;
             _currentMedia = newMedia;
@@ -741,6 +781,116 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _logger.LogError(ex, "Failed to play song {SongPath}", _currentSong.MediaPath);
             // Try to move to next song if current one fails
             await MoveNextAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+    }
+
+    private void ApplyInstrumentalAudioSelection()
+    {
+        if (_mediaPlayer == null || _currentSong == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var instrumental = _currentSong.Instrumental;
+            _logger.LogInformation("=== Audio Track Selection ===");
+            _logger.LogInformation("Applying instrumental audio track selection: {Instrumental}", instrumental);
+
+            // Get audio track count and details
+            var audioTrackCount = _mediaPlayer.AudioTrackCount;
+            _logger.LogInformation("Audio track count: {TrackCount}", audioTrackCount);
+
+            // Log all available audio tracks
+            var trackDescriptions = _mediaPlayer.AudioTrackDescription;
+            if (trackDescriptions != null)
+            {
+                _logger.LogInformation("Total track descriptions: {Count}", trackDescriptions.Length);
+                for (int i = 0; i < trackDescriptions.Length; i++)
+                {
+                    var track = trackDescriptions[i];
+                    _logger.LogInformation("Track [{Index}]: Id={Id}, Name={Name}",
+                        i, track.Id, track.Name);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("AudioTrackDescription is null");
+            }
+
+            // Get current audio track
+            var currentTrack = _mediaPlayer.AudioTrack;
+            _logger.LogInformation("Current audio track ID: {CurrentTrackId}", currentTrack);
+
+            // Check if we have multiple valid audio tracks (for files with separate instrumental tracks)
+            var validTracks = trackDescriptions != null
+                ? trackDescriptions.Where(t => t.Id >= 0).ToArray()
+                : Array.Empty<LibVLCSharp.Shared.Structures.TrackDescription>();
+            _logger.LogInformation("Valid tracks (Id >= 0): {Count}", validTracks.Length);
+
+            if (validTracks.Length >= 2)
+            {
+                // Multi-track file: select track based on Instrumental value
+                var targetTrack = instrumental == 0 ? validTracks[0] : validTracks[1];
+                _logger.LogInformation("Target track for Instrumental={Instrumental}: Id={TrackId}, Name={Name}",
+                    instrumental, targetTrack.Id, targetTrack.Name);
+
+                var result = _mediaPlayer.SetAudioTrack(targetTrack.Id);
+                _logger.LogInformation("SetAudioTrack result: {Result}", result);
+
+                // Verify the track was set
+                var newCurrentTrack = _mediaPlayer.AudioTrack;
+                _logger.LogInformation("Audio track after SetAudioTrack: {NewTrackId}", newCurrentTrack);
+
+                if (newCurrentTrack == targetTrack.Id)
+                {
+                    _logger.LogInformation("Successfully selected audio track {TrackId}", targetTrack.Id);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to set audio track - expected {ExpectedId}, got {ActualId}",
+                        targetTrack.Id, newCurrentTrack);
+                }
+            }
+            else
+            {
+                // Single-track (stereo) file: need to extract specific channel
+                _logger.LogInformation("Single audio track detected - applying channel selection");
+
+                // VLC's channel selection: use SetAudioOutput or audio device selection
+                // Try to set stereo mode - note this might not work for all VLC builds
+                try
+                {
+                    // Get available audio output devices
+                    var audioOutputDevices = _mediaPlayer.AudioOutputDeviceEnum;
+                    if (audioOutputDevices != null)
+                    {
+                        _logger.LogInformation("Available audio devices: {Count}", audioOutputDevices.Count());
+                        foreach (var device in audioOutputDevices)
+                        {
+                            _logger.LogInformation("Audio device: {DeviceId}, Description: {Description}",
+                                device.DeviceIdentifier, device.Description);
+                        }
+                    }
+
+                    // For stereo channel selection, we need to use audio remapping
+                    // VLC doesn't provide a simple API for this, so we'll log a warning
+                    _logger.LogWarning("Stereo channel selection (Instrumental={Instrumental}) requires audio remapping which is not fully supported via LibVLCSharp API",
+                        instrumental);
+                    _logger.LogWarning("Desired channel: {Channel}", instrumental == 0 ? "left" : "right");
+                    _logger.LogWarning("Consider using the ChannelConfiguration metadata or pre-processing audio files");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error attempting to configure audio output");
+                }
+            }
+
+            _logger.LogInformation("=== End Audio Track Selection ===");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to apply instrumental audio selection");
         }
     }
 

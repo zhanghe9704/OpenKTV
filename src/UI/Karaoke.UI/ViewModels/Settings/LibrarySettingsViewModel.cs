@@ -91,7 +91,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
         Roots.Clear();
         foreach (var root in libraryOptions.Roots)
         {
-            Roots.Add(new LibraryRootItemViewModel(root.Name, root.Path, root.DefaultPriority, root.DefaultChannel, root.DriveOverride, root.KeywordFormat, shouldRescan: true));
+            Roots.Add(new LibraryRootItemViewModel(root.Name, root.Path, root.DefaultPriority, root.DefaultChannel, root.DriveOverride, root.KeywordFormat, root.Instrumental, shouldRescan: true));
         }
         RescanAfterSave = true;
     }
@@ -135,6 +135,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
                         DefaultChannel = root.DefaultChannel,
                         DriveOverride = string.IsNullOrWhiteSpace(root.DriveOverride) ? null : root.DriveOverride,
                         KeywordFormat = string.IsNullOrWhiteSpace(root.KeywordFormat) ? null : root.KeywordFormat,
+                        Instrumental = root.GetInstrumental(),
                     })
                     .ToList()
             };
@@ -166,7 +167,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
 
     private void AddRoot()
     {
-        Roots.Add(new LibraryRootItemViewModel("NewRoot", "", defaultPriority: 2, defaultChannel: "Stereo", driveOverride: null, keywordFormat: null, shouldRescan: true));
+        Roots.Add(new LibraryRootItemViewModel("NewRoot", "", defaultPriority: 2, defaultChannel: "Stereo", driveOverride: null, keywordFormat: null, instrumental: 0, shouldRescan: true));
         SelectedRoot = Roots.Last();
     }
 

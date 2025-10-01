@@ -1,0 +1,16 @@
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\bin\Debug\net8.0\Karaoke.Library.deps.json
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\bin\Debug\net8.0\Karaoke.Library.dll
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\bin\Debug\net8.0\Karaoke.Library.pdb
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\bin\Debug\net8.0\Karaoke.Common.dll
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\bin\Debug\net8.0\Karaoke.Common.pdb
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\obj\Debug\net8.0\Karaoke.Library.csproj.AssemblyReference.cache
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\obj\Debug\net8.0\Karaoke.Library.GeneratedMSBuildEditorConfig.editorconfig
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\obj\Debug\net8.0\Karaoke.Library.AssemblyInfoInputs.cache
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\obj\Debug\net8.0\Karaoke.Library.AssemblyInfo.cs
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\obj\Debug\net8.0\Karaoke.Library.csproj.CoreCompileInputs.cache
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\obj\Debug\net8.0\Karaoke.Library.sourcelink.json
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\obj\Debug\net8.0\Karaoke..8629681F.Up2Date
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\obj\Debug\net8.0\Karaoke.Library.dll
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\obj\Debug\net8.0\refint\Karaoke.Library.dll
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\obj\Debug\net8.0\Karaoke.Library.pdb
+D:\Work\Code\karaoke\src\Library\Karaoke.Library\obj\Debug\net8.0\ref\Karaoke.Library.dll

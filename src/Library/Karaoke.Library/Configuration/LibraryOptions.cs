@@ -47,4 +47,6 @@ public sealed class LibraryRootOptions
     public string? DriveOverride { get; set; }
 
     public string? KeywordFormat { get; set; }
+
+    public int Instrumental { get; set; } = 0;
 }

@@ -116,7 +116,8 @@ public sealed class LibraryService : ILibraryService
             record.Priority,
             record.Language,
             record.Genre,
-            record.Comment);
+            record.Comment,
+            record.Instrumental);
     }
 
     private static SongRecord ToSongRecord(SongDto song)
@@ -137,7 +138,8 @@ public sealed class LibraryService : ILibraryService
             DateTimeOffset.UtcNow,
             song.Language,
             song.Genre,
-            song.Comment);
+            song.Comment,
+            song.Instrumental);
     }
 
     private string ResolveMediaPath(string rootName, string relativePath)

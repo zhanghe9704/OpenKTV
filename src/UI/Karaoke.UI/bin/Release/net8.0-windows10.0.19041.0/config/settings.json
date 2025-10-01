@@ -1,0 +1,49 @@
+{
+  "AppEnvironment": {
+    "EnvironmentName": "Development",
+    "ConfigurationRoot": "config",
+    "AssetsRoot": "assets"
+  },
+  "Library": {
+    "DefaultPriority": 2,
+    "DefaultChannel": "Stereo",
+    "DatabasePath": "d:/Work/Code/karaoke/data/library.db",
+    "KeywordFormat": "artist-song",
+    "Roots": [
+      {
+        "Name": "ktv_old",
+        "Path": "F:/ktv/ktv_old",
+        "DefaultPriority": 2,
+        "DefaultChannel": "Stereo",
+        "DriveOverride": null
+      },
+      {
+        "Name": "test_data",
+        "Path": "F:/ktv/test2",
+        "DefaultPriority": 1,
+        "DefaultChannel": "Stereo",
+        "DriveOverride": null,
+        "KeywordFormat": "artist-song-language-genre"
+      }
+    ],
+    "SupportedExtensions": [
+      ".mp3",
+      ".wav",
+      ".mp4",
+      ".mkv",
+      ".dat",
+      ".avi",
+      ".mpg",
+      ".rmvb",
+      ".rm",
+      ".mpeg"
+    ]
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Karaoke.Library.Ingestion": "Information",
+      "Karaoke": "Debug"
+    }
+  }
+}

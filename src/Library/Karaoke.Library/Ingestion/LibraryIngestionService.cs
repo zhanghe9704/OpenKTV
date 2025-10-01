@@ -166,7 +166,8 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
             metadata.Priority,
             sanitizedLanguage,
             sanitizedGenre,
-            sanitizedComment);
+            sanitizedComment,
+            rootOptions.Instrumental);
     }
 
     private static string ResolveMediaPath(string rootPath, string relativePath)
@@ -258,6 +259,7 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
             DateTimeOffset.UtcNow,
             song.Language,
             song.Genre,
-            song.Comment);
+            song.Comment,
+            song.Instrumental);
     }
 }

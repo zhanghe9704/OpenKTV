@@ -279,36 +279,59 @@ public partial class MainViewModel : ObservableObject
 
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
+        System.Diagnostics.Debug.WriteLine("MainViewModel: InitializeAsync started");
         await ReloadAsync(rescan: false, cancellationToken).ConfigureAwait(false);
+        System.Diagnostics.Debug.WriteLine($"MainViewModel: After first ReloadAsync, Songs.Count = {Songs.Count}");
 
         if (Songs.Count == 0)
         {
+            System.Diagnostics.Debug.WriteLine("MainViewModel: No songs found, triggering rescan");
             await ReloadAsync(rescan: true, cancellationToken).ConfigureAwait(false);
+            System.Diagnostics.Debug.WriteLine("MainViewModel: Rescan completed");
         }
 
         await RefreshCurrentPlayingSongAsync().ConfigureAwait(false);
+        System.Diagnostics.Debug.WriteLine("MainViewModel: InitializeAsync completed");
     }
 
     public async Task ReloadAsync(bool rescan, CancellationToken cancellationToken, IProgress<Karaoke.Library.Ingestion.ScanProgress>? progress = null)
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"MainViewModel: ReloadAsync started, rescan={rescan}");
             IsLoading = true;
+            System.Diagnostics.Debug.WriteLine("MainViewModel: IsLoading set to true");
+
             if (rescan)
             {
+                System.Diagnostics.Debug.WriteLine("MainViewModel: Starting scan...");
                 await _ingestionService.ScanAsync(cancellationToken, progress).ConfigureAwait(false);
+                System.Diagnostics.Debug.WriteLine("MainViewModel: Scan completed");
             }
 
+            System.Diagnostics.Debug.WriteLine("MainViewModel: Getting all songs...");
             var songs = await _libraryService.GetAllSongsAsync(cancellationToken).ConfigureAwait(false);
+            System.Diagnostics.Debug.WriteLine($"MainViewModel: Retrieved {songs.Count} songs");
+
             _allSongs = songs.ToList();
             Songs = songs;
 
+            System.Diagnostics.Debug.WriteLine("MainViewModel: Rebuilding song initials...");
             RebuildSongInitials();
+            System.Diagnostics.Debug.WriteLine("MainViewModel: Updating artists...");
             UpdateArtists();
+            System.Diagnostics.Debug.WriteLine("MainViewModel: Updating filtered songs...");
             UpdateFilteredSongs(resetPage: true);
+            System.Diagnostics.Debug.WriteLine("MainViewModel: ReloadAsync completed successfully");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"MainViewModel: ReloadAsync EXCEPTION: {ex}");
+            throw;
         }
         finally
         {
+            System.Diagnostics.Debug.WriteLine("MainViewModel: IsLoading set to false");
             IsLoading = false;
         }
     }

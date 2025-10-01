@@ -90,28 +90,36 @@
 
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="Name" FontWeight="SemiBold" />
-                                        <TextBox x:ConnectionId='11'                                   />
+                                        <TextBox x:ConnectionId='12'                                   />
                                     </StackPanel>
 
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="Path" FontWeight="SemiBold" />
-                                        <TextBox x:ConnectionId='10'                                   />
+                                        <TextBox x:ConnectionId='11'                                   />
                                     </StackPanel>
 
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <StackPanel Width="120" Spacing="4">
                                             <TextBlock Text="Priority" FontWeight="SemiBold" />
-                                            <TextBox x:ConnectionId='9'                                              />
+                                            <TextBox x:ConnectionId='10'                                              />
                                         </StackPanel>
                                         <StackPanel Width="160" Spacing="4">
                                             <TextBlock Text="Channel" FontWeight="SemiBold" />
-                                            <TextBox x:ConnectionId='8'                                             />
+                                            <TextBox x:ConnectionId='9'                                             />
                                         </StackPanel>
                                         <StackPanel Width="160" Spacing="4">
                                             <TextBlock Text="Drive Override" FontWeight="SemiBold" />
-                                            <TextBox x:ConnectionId='7'                                            PlaceholderText="Optional" />
+                                            <TextBox x:ConnectionId='8'                                            PlaceholderText="Optional" />
+                                        </StackPanel>
+                                        <StackPanel Width="120" Spacing="4">
+                                            <TextBlock Text="Instrumental" FontWeight="SemiBold" />
+                                            <TextBox x:ConnectionId='7'                                           PlaceholderText="0 or 1" />
                                         </StackPanel>
                                     </StackPanel>
+                                    <TextBlock
+                                        Text="Instrumental: 0 = first track/left channel, 1 = second track/right channel"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="Keyword Format (Root-specific)" FontWeight="SemiBold" />

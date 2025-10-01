@@ -11,4 +11,5 @@ public sealed record SongRecord(
     DateTimeOffset UpdatedAt,
     string? Language = null,
     string? Genre = null,
-    string? Comment = null);
+    string? Comment = null,
+    int Instrumental = 0);

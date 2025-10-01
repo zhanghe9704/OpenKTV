@@ -9,4 +9,5 @@ public sealed record SongDto(
     int Priority,
     string? Language = null,
     string? Genre = null,
-    string? Comment = null);
+    string? Comment = null,
+    int Instrumental = 0);
