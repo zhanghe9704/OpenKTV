@@ -75,6 +75,8 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     private FormBorderStyle _originalBorderStyle;
     private System.Drawing.Size _originalSize;
     private System.Drawing.Point _originalLocation;
+    private volatile bool _stereoFilterLoadedRecently;
+    private volatile bool _monoFilterLoadedRecently;
 
     public event EventHandler<SongDto>? SongChanged;
     public event EventHandler<PlaybackState>? StateChanged;
@@ -446,12 +448,48 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 await WaitForStoppedAsync(cancellationToken.IsCancellationRequested ? 0 : 1500).ConfigureAwait(false);
                 _logger.LogInformation("VLC stopped successfully");
 
-                // Restart playback with new channel configuration
+                // Reset filter detection flags
+                _stereoFilterLoadedRecently = false;
+                _monoFilterLoadedRecently = false;
+
+                // Restart playback with new channel configuration (will try stereo filter first)
                 await PlayCurrentSongAsync().ConfigureAwait(false);
 
                 // Wait for playback to actually start
                 await WaitUntilPlayingAsync(1200).ConfigureAwait(false);
                 _logger.LogInformation("VLC playing successfully");
+
+                // Give VLC a moment to load filters and emit logs
+                await Task.Delay(300, cancellationToken).ConfigureAwait(false);
+
+                // Check if stereo filter loaded, if not try mono filter fallback
+                if (!_stereoFilterLoadedRecently)
+                {
+                    _logger.LogWarning("Stereo filter not detected, trying mono filter fallback");
+
+                    // Stop again
+                    _mediaPlayer.Stop();
+                    await WaitForStoppedAsync(1500).ConfigureAwait(false);
+
+                    // Try with mono filter
+                    _monoFilterLoadedRecently = false;
+                    await PlayCurrentSongWithMonoFilterAsync().ConfigureAwait(false);
+                    await WaitUntilPlayingAsync(1200).ConfigureAwait(false);
+                    await Task.Delay(200, cancellationToken).ConfigureAwait(false);
+
+                    if (_monoFilterLoadedRecently)
+                    {
+                        _logger.LogInformation("Mono filter fallback successful");
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Neither stereo nor mono filter loaded - channel selection may not work");
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation("Stereo filter confirmed loaded");
+                }
 
                 // Restore playback position after VLC is playing
                 if (currentPosition > 0)
@@ -709,10 +747,14 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _logger.LogInformation("Calling Core.Initialize...");
             Core.Initialize(vlcPath);
             _logger.LogInformation("Core.Initialize completed");
-            
-            _logger.LogInformation("Creating LibVLC instance...");
-            _libVlc = new LibVLC();
+
+            _logger.LogInformation("Creating LibVLC instance with verbose logging...");
+            _libVlc = new LibVLC("--verbose=2");
             _logger.LogInformation("LibVLC instance created");
+
+            // Hook VLC logs to track filter loading
+            _libVlc.Log += OnVlcLog;
+            _logger.LogInformation("VLC log hook attached");
             
             _logger.LogInformation("Creating MediaPlayer instance...");
             _mediaPlayer = new MediaPlayer(_libVlc);
@@ -768,6 +810,34 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         {
             _logger.LogError(ex, "Failed to initialize VLC player - falling back to safe mode");
             _vlcInitialized = false;
+        }
+    }
+
+    private void OnVlcLog(object? sender, LogEventArgs e)
+    {
+        // Log all VLC messages for debugging
+        _logger.LogDebug("VLC[{Level}] {Module}: {Message}", e.Level, e.Module, e.Message);
+
+        // Track if stereo or mono filter loads
+        var msg = e.Message?.ToLowerInvariant() ?? "";
+        if (msg.Contains("audio filter") && msg.Contains("stereo"))
+        {
+            _stereoFilterLoadedRecently = true;
+            _logger.LogInformation("✓ VLC stereo filter detected loading");
+        }
+        else if (msg.Contains("stereo") && msg.Contains("set mode"))
+        {
+            _stereoFilterLoadedRecently = true;
+            _logger.LogInformation("✓ VLC stereo mode being set: {Message}", e.Message);
+        }
+        else if (msg.Contains("audio filter") && msg.Contains("mono"))
+        {
+            _monoFilterLoadedRecently = true;
+            _logger.LogInformation("✓ VLC mono filter detected loading");
+        }
+        else if (msg.Contains("no audio filter module matching"))
+        {
+            _logger.LogWarning("✗ VLC could not load audio filter: {Message}", e.Message);
         }
     }
 
@@ -876,6 +946,64 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to play song {SongPath}", _currentSong.MediaPath);
+            // Try to move to next song if current one fails
+            await MoveNextAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+    }
+
+    private async Task PlayCurrentSongWithMonoFilterAsync()
+    {
+        if (!_vlcInitialized || _mediaPlayer == null || _currentSong == null)
+        {
+            _logger.LogWarning("Cannot play song with mono filter - VLC not initialized or missing components");
+            return;
+        }
+
+        try
+        {
+            // Create new media with mono filter
+            var newMedia = new Media(_libVlc!, _currentSong.MediaPath, FromType.FromPath);
+
+            _logger.LogInformation("=== Playing Song with Mono Filter ===");
+            _logger.LogInformation("Song ID: {SongId}", _currentSong.Id);
+            _logger.LogInformation("Media Path: {MediaPath}", _currentSong.MediaPath);
+            _logger.LogInformation("Instrumental Value: {Instrumental}", _currentSong.Instrumental);
+
+            var instrumental = _currentSong.Instrumental;
+
+            // Enable mono filter
+            newMedia.AddOption(":audio-filter=mono");
+
+            // Set mono channel: left or right
+            if (instrumental == 0)
+            {
+                // Left channel (instrumental)
+                newMedia.AddOption(":mono-channel=left");
+                newMedia.AddOption(":mono-channel=1");  // numeric fallback
+                _logger.LogInformation("Configured mono filter: left channel");
+            }
+            else if (instrumental == 1)
+            {
+                // Right channel (vocal+music)
+                newMedia.AddOption(":mono-channel=right");
+                newMedia.AddOption(":mono-channel=2");  // numeric fallback
+                _logger.LogInformation("Configured mono filter: right channel");
+            }
+
+            _logger.LogInformation("Added audio-filter=mono to media options");
+
+            // Set media to player BEFORE disposing old media
+            _mediaPlayer.Media = newMedia;
+            _mediaPlayer.Play();
+
+            // Only dispose old media AFTER new one is set and playing
+            var oldMedia = _currentMedia;
+            _currentMedia = newMedia;
+            oldMedia?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to play song with mono filter {SongPath}", _currentSong.MediaPath);
             // Try to move to next song if current one fails
             await MoveNextAsync(CancellationToken.None).ConfigureAwait(false);
         }
