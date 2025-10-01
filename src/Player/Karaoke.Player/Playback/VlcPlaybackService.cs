@@ -748,9 +748,28 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             Core.Initialize(vlcPath);
             _logger.LogInformation("Core.Initialize completed");
 
+            // Check for plugins directory
+            var pluginPath = Path.Combine(vlcPath, "plugins");
+            var pluginExists = Directory.Exists(pluginPath);
+            _logger.LogInformation("Plugin path: {PluginPath}, Exists: {Exists}", pluginPath, pluginExists);
+
+            if (pluginExists)
+            {
+                var audioFilterPath = Path.Combine(pluginPath, "audio_filter");
+                if (Directory.Exists(audioFilterPath))
+                {
+                    var audioPlugins = Directory.GetFiles(audioFilterPath, "*.dll");
+                    _logger.LogInformation("Found {Count} audio filter plugins", audioPlugins.Length);
+                    foreach (var plugin in audioPlugins)
+                    {
+                        _logger.LogInformation("  - {PluginName}", Path.GetFileName(plugin));
+                    }
+                }
+            }
+
             _logger.LogInformation("Creating LibVLC instance with verbose logging...");
-            _libVlc = new LibVLC("--verbose=2");
-            _logger.LogInformation("LibVLC instance created");
+            _libVlc = new LibVLC($"--plugin-path={pluginPath}", "--verbose=2");
+            _logger.LogInformation("LibVLC instance created with explicit plugin path");
 
             // Hook VLC logs to track filter loading
             _libVlc.Log += OnVlcLog;
@@ -835,9 +854,18 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _monoFilterLoadedRecently = true;
             _logger.LogInformation("✓ VLC mono filter detected loading");
         }
-        else if (msg.Contains("no audio filter module matching"))
+        else if (msg.Contains("mono") && (msg.Contains("left") || msg.Contains("right")))
+        {
+            _monoFilterLoadedRecently = true;
+            _logger.LogInformation("✓ VLC mono channel detected: {Message}", e.Message);
+        }
+        else if (msg.Contains("no audio filter module matching") || msg.Contains("no suitable module"))
         {
             _logger.LogWarning("✗ VLC could not load audio filter: {Message}", e.Message);
+        }
+        else if (msg.Contains("looking for audio filter"))
+        {
+            _logger.LogInformation("VLC searching for filter: {Message}", e.Message);
         }
     }
 
