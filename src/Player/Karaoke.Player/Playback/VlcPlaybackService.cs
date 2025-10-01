@@ -422,9 +422,14 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             else
             {
                 // Single-track stereo file: toggle channel (left/right)
-                _logger.LogInformation("Single track detected - toggling between channels");
+                // For stereo files, we need to restart playback with different channel mode
+                _logger.LogInformation("Single track detected - restarting with toggled channel");
 
-                // Get current instrumental setting from song
+                // Save current playback position
+                var currentPosition = _mediaPlayer.Time;
+                _logger.LogInformation("Current playback position: {Position}ms", currentPosition);
+
+                // Get current instrumental setting and toggle it
                 var currentInstrumental = _currentSong.Instrumental;
                 var newInstrumental = (currentInstrumental == 0) ? 1 : 0;
 
@@ -434,24 +439,26 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 // Update the song's instrumental value for this session
                 _currentSong = _currentSong with { Instrumental = newInstrumental };
 
-                // Apply the new channel configuration
-                // Note: This requires re-applying media options, which isn't fully supported
-                // during playback. Log a warning.
-                _logger.LogWarning("Channel toggle for single-track files during playback is limited");
-                _logger.LogWarning("For best results, set the Track/Channel before playback starts");
+                // Stop current playback
+                _mediaPlayer.Stop();
 
-                // Attempt to change audio output mode (may not work reliably)
-                try
+                // Small delay to ensure VLC stops cleanly
+                await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+
+                // Restart playback with new channel configuration
+                await PlayCurrentSongAsync().ConfigureAwait(false);
+
+                // Wait for playback to start
+                await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+
+                // Restore playback position
+                if (currentPosition > 0)
                 {
-                    var mode = newInstrumental == 0 ? 1 : 2; // 1=left, 2=right
-                    _logger.LogInformation("Attempting to set audio channel mode to {Mode}", mode);
-                    // Unfortunately LibVLCSharp doesn't expose audiochannel filter control at runtime
-                    // This would require VLC command-line options or filter manipulation
+                    _mediaPlayer.Time = currentPosition;
+                    _logger.LogInformation("Restored playback position to: {Position}ms", currentPosition);
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to change audio channel");
-                }
+
+                _logger.LogInformation("Successfully toggled channel by restarting playback");
             }
 
             _logger.LogInformation("=== End Toggle Vocal ===");
