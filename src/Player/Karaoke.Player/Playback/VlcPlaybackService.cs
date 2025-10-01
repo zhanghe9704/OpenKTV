@@ -969,62 +969,35 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 : Array.Empty<LibVLCSharp.Shared.Structures.TrackDescription>();
             _logger.LogInformation("Valid tracks (Id >= 0): {Count}", validTracks.Length);
 
-            if (validTracks.Length >= 2)
+            // For single-track dual-channel (stereo) files, do NOT manipulate tracks/channels here
+            // We already applied :stereo-mode during media creation, and touching anything here would undo it
+            if (validTracks.Length == 1)
             {
-                // Multi-track file: select track based on Instrumental value
-                var targetTrack = instrumental == 0 ? validTracks[0] : validTracks[1];
-                _logger.LogInformation("Target track for Instrumental={Instrumental}: Id={TrackId}, Name={Name}",
-                    instrumental, targetTrack.Id, targetTrack.Name);
+                _logger.LogInformation("Single-track dual-channel detected; skipping post-play audio manipulation (stereo-mode already applied)");
+                _logger.LogInformation("=== End Audio Track Selection ===");
+                return;
+            }
 
-                var result = _mediaPlayer.SetAudioTrack(targetTrack.Id);
-                _logger.LogInformation("SetAudioTrack result: {Result}", result);
+            // Multi-track file: select track based on Instrumental value
+            var targetTrack = instrumental == 0 ? validTracks[0] : validTracks[1];
+            _logger.LogInformation("Target track for Instrumental={Instrumental}: Id={TrackId}, Name={Name}",
+                instrumental, targetTrack.Id, targetTrack.Name);
 
-                // Verify the track was set
-                var newCurrentTrack = _mediaPlayer.AudioTrack;
-                _logger.LogInformation("Audio track after SetAudioTrack: {NewTrackId}", newCurrentTrack);
+            var result = _mediaPlayer.SetAudioTrack(targetTrack.Id);
+            _logger.LogInformation("SetAudioTrack result: {Result}", result);
 
-                if (newCurrentTrack == targetTrack.Id)
-                {
-                    _logger.LogInformation("Successfully selected audio track {TrackId}", targetTrack.Id);
-                }
-                else
-                {
-                    _logger.LogWarning("Failed to set audio track - expected {ExpectedId}, got {ActualId}",
-                        targetTrack.Id, newCurrentTrack);
-                }
+            // Verify the track was set
+            var newCurrentTrack = _mediaPlayer.AudioTrack;
+            _logger.LogInformation("Audio track after SetAudioTrack: {NewTrackId}", newCurrentTrack);
+
+            if (newCurrentTrack == targetTrack.Id)
+            {
+                _logger.LogInformation("Successfully selected audio track {TrackId}", targetTrack.Id);
             }
             else
             {
-                // Single-track (stereo) file: need to extract specific channel
-                _logger.LogInformation("Single audio track detected - applying channel selection");
-
-                // VLC's channel selection: use SetAudioOutput or audio device selection
-                // Try to set stereo mode - note this might not work for all VLC builds
-                try
-                {
-                    // Get available audio output devices
-                    var audioOutputDevices = _mediaPlayer.AudioOutputDeviceEnum;
-                    if (audioOutputDevices != null)
-                    {
-                        _logger.LogInformation("Available audio devices: {Count}", audioOutputDevices.Count());
-                        foreach (var device in audioOutputDevices)
-                        {
-                            _logger.LogInformation("Audio device: {DeviceId}, Description: {Description}",
-                                device.DeviceIdentifier, device.Description);
-                        }
-                    }
-
-                    // For stereo channel selection, we need to use audio remapping
-                    // VLC doesn't provide a simple API for this, so we'll log a warning
-                    _logger.LogWarning("Stereo channel selection (Instrumental={Instrumental}) requires audio remapping which is not fully supported via LibVLCSharp API",
-                        instrumental);
-                    _logger.LogWarning("Desired channel: {Channel}", instrumental == 0 ? "left" : "right");
-                    _logger.LogWarning("Consider using the ChannelConfiguration metadata or pre-processing audio files");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error attempting to configure audio output");
-                }
+                _logger.LogWarning("Failed to set audio track - expected {ExpectedId}, got {ActualId}",
+                    targetTrack.Id, newCurrentTrack);
             }
 
             _logger.LogInformation("=== End Audio Track Selection ===");
