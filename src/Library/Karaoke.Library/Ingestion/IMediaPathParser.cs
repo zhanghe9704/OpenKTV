@@ -19,4 +19,7 @@ public sealed record ParsedSongMetadata(
     string Title,
     string Artist,
     string ChannelConfiguration,
-    int Priority);
+    int Priority,
+    string? Language = null,
+    string? Genre = null,
+    string? Comment = null);

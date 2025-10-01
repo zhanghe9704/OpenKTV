@@ -8,4 +8,7 @@ public sealed record SongRecord(
     string Artist,
     string ChannelConfiguration,
     int Priority,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string? Language = null,
+    string? Genre = null,
+    string? Comment = null);

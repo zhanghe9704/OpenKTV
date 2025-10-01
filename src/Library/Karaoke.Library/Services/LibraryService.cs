@@ -113,7 +113,10 @@ public sealed class LibraryService : ILibraryService
             record.Artist,
             ResolveMediaPath(record.RootName, record.RelativePath),
             record.ChannelConfiguration,
-            record.Priority);
+            record.Priority,
+            record.Language,
+            record.Genre,
+            record.Comment);
     }
 
     private static SongRecord ToSongRecord(SongDto song)
@@ -131,7 +134,10 @@ public sealed class LibraryService : ILibraryService
             song.Artist,
             song.ChannelConfiguration,
             song.Priority,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow,
+            song.Language,
+            song.Genre,
+            song.Comment);
     }
 
     private string ResolveMediaPath(string rootName, string relativePath)

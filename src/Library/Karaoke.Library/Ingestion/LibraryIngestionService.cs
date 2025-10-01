@@ -151,6 +151,9 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
     {
         var sanitizedTitle = Sanitize(metadata.Title);
         var sanitizedArtist = Sanitize(metadata.Artist);
+        var sanitizedLanguage = metadata.Language != null ? Sanitize(metadata.Language) : null;
+        var sanitizedGenre = metadata.Genre != null ? Sanitize(metadata.Genre) : null;
+        var sanitizedComment = metadata.Comment != null ? Sanitize(metadata.Comment) : null;
         var mediaPath = ResolveMediaPath(resolvedRootPath, metadata.RelativePath);
         var rootName = rootOptions.Name;
 
@@ -160,7 +163,10 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
             sanitizedArtist,
             mediaPath,
             metadata.ChannelConfiguration,
-            metadata.Priority);
+            metadata.Priority,
+            sanitizedLanguage,
+            sanitizedGenre,
+            sanitizedComment);
     }
 
     private static string ResolveMediaPath(string rootPath, string relativePath)
@@ -249,6 +255,9 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
             song.Artist,
             song.ChannelConfiguration,
             song.Priority,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow,
+            song.Language,
+            song.Genre,
+            song.Comment);
     }
 }

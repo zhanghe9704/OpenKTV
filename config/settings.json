@@ -8,6 +8,7 @@
     "DefaultPriority": 2,
     "DefaultChannel": "Stereo",
     "DatabasePath": "d:/Work/Code/karaoke/data/library.db",
+    "KeywordFormat": "artist-song",
     "Roots": [
       {
         "Name": "ktv_old",
@@ -15,6 +16,14 @@
         "DefaultPriority": 2,
         "DefaultChannel": "Stereo",
         "DriveOverride": null
+      },
+      {
+        "Name": "test_data",
+        "Path": "F:/ktv/test2",
+        "DefaultPriority": 1,
+        "DefaultChannel": "Stereo",
+        "DriveOverride": null,
+        "KeywordFormat": "artist-song-language-genre"
       }
     ],
     "SupportedExtensions": [

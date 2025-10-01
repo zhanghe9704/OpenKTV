@@ -6,4 +6,7 @@ public sealed record SongDto(
     string Artist,
     string MediaPath,
     string ChannelConfiguration,
-    int Priority);
+    int Priority,
+    string? Language = null,
+    string? Genre = null,
+    string? Comment = null);
