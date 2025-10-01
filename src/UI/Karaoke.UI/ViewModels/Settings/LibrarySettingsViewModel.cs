@@ -117,7 +117,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
                 DefaultPriority = baseOptions.DefaultPriority,
                 DefaultChannel = baseOptions.DefaultChannel,
                 DatabasePath = baseOptions.DatabasePath,
-                SupportedExtensions = new List<string>(baseOptions.SupportedExtensions), // Create new list to avoid reference issues
+                SupportedExtensions = baseOptions.SupportedExtensions.Distinct().ToList(), // Deduplicate extensions
                 KeywordFormat = string.IsNullOrWhiteSpace(GlobalKeywordFormat) ? null : GlobalKeywordFormat,
                 DisplayOptions = new SongDisplayOptions
                 {
