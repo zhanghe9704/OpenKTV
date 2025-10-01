@@ -75,8 +75,6 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     private FormBorderStyle _originalBorderStyle;
     private System.Drawing.Size _originalSize;
     private System.Drawing.Point _originalLocation;
-    private volatile bool _stereoFilterLoadedRecently;
-    private volatile bool _monoFilterLoadedRecently;
 
     public event EventHandler<SongDto>? SongChanged;
     public event EventHandler<PlaybackState>? StateChanged;
@@ -396,109 +394,44 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 ? trackDescriptions.Where(t => t.Id >= 0).ToArray()
                 : Array.Empty<LibVLCSharp.Shared.Structures.TrackDescription>();
 
-            _logger.LogInformation("Valid audio tracks: {Count}", validTracks.Length);
-
             if (validTracks.Length >= 2)
             {
-                // Multi-track file: switch between tracks
+                // 🎵 Multi-track karaoke file (clean separation: one track = music, one = vocal+music)
                 var currentTrackId = _mediaPlayer.AudioTrack;
-                _logger.LogInformation("Current track ID: {TrackId}", currentTrackId);
-
-                // Find current track index
                 int currentIndex = Array.FindIndex(validTracks, t => t.Id == currentTrackId);
                 if (currentIndex == -1) currentIndex = 0;
 
-                // Toggle to the other track
                 int newIndex = (currentIndex == 0) ? 1 : 0;
                 var targetTrack = validTracks[newIndex];
 
-                _logger.LogInformation("Switching from track {CurrentIndex} to track {NewIndex} (ID: {TrackId})",
+                _logger.LogInformation("Switching audio track {Old} -> {New} (Id={TrackId})",
                     currentIndex, newIndex, targetTrack.Id);
 
-                var result = _mediaPlayer.SetAudioTrack(targetTrack.Id);
-                _logger.LogInformation("SetAudioTrack result: {Result}", result);
-
-                var newTrackId = _mediaPlayer.AudioTrack;
-                _logger.LogInformation("New track ID: {TrackId}", newTrackId);
+                _mediaPlayer.SetAudioTrack(targetTrack.Id);
             }
             else
             {
-                // Single-track stereo file: toggle channel (left/right)
-                // For stereo files, we need to restart playback with different channel mode
-                _logger.LogInformation("Single track detected - restarting with toggled channel");
-
-                // Save current playback position
+                // 🎵 Single-track stereo file → restart with "mono" filter on left/right
                 var currentPosition = _mediaPlayer.Time;
-                _logger.LogInformation("Current playback position: {Position}ms", currentPosition);
-
-                // Get current instrumental setting and toggle it
                 var currentInstrumental = _currentSong.Instrumental;
                 var newInstrumental = (currentInstrumental == 0) ? 1 : 0;
 
-                _logger.LogInformation("Toggling from Instrumental={Current} to {New}",
+                _logger.LogInformation("Single-track stereo toggle: {Old} -> {New}",
                     currentInstrumental, newInstrumental);
 
-                // Update the song's instrumental value for this session
                 _currentSong = _currentSong with { Instrumental = newInstrumental };
 
-                // Stop current playback
                 _mediaPlayer.Stop();
+                await Task.Delay(50, cancellationToken);
 
-                // Wait for VLC to actually stop
-                await WaitForStoppedAsync(cancellationToken.IsCancellationRequested ? 0 : 1500).ConfigureAwait(false);
-                _logger.LogInformation("VLC stopped successfully");
-
-                // Reset filter detection flags
-                _stereoFilterLoadedRecently = false;
-                _monoFilterLoadedRecently = false;
-
-                // Restart playback with new channel configuration (will try stereo filter first)
                 await PlayCurrentSongAsync().ConfigureAwait(false);
+                await Task.Delay(100, cancellationToken);
 
-                // Wait for playback to actually start
-                await WaitUntilPlayingAsync(1200).ConfigureAwait(false);
-                _logger.LogInformation("VLC playing successfully");
-
-                // Give VLC a moment to load filters and emit logs
-                await Task.Delay(300, cancellationToken).ConfigureAwait(false);
-
-                // Check if stereo filter loaded, if not try mono filter fallback
-                if (!_stereoFilterLoadedRecently)
-                {
-                    _logger.LogWarning("Stereo filter not detected, trying mono filter fallback");
-
-                    // Stop again
-                    _mediaPlayer.Stop();
-                    await WaitForStoppedAsync(1500).ConfigureAwait(false);
-
-                    // Try with mono filter
-                    _monoFilterLoadedRecently = false;
-                    await PlayCurrentSongWithMonoFilterAsync().ConfigureAwait(false);
-                    await WaitUntilPlayingAsync(1200).ConfigureAwait(false);
-                    await Task.Delay(200, cancellationToken).ConfigureAwait(false);
-
-                    if (_monoFilterLoadedRecently)
-                    {
-                        _logger.LogInformation("Mono filter fallback successful");
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Neither stereo nor mono filter loaded - channel selection may not work");
-                    }
-                }
-                else
-                {
-                    _logger.LogInformation("Stereo filter confirmed loaded");
-                }
-
-                // Restore playback position after VLC is playing
                 if (currentPosition > 0)
                 {
                     _mediaPlayer.Time = currentPosition;
-                    _logger.LogInformation("Restored playback position to: {Position}ms", currentPosition);
+                    _logger.LogInformation("Restored playback to {Time}ms", currentPosition);
                 }
-
-                _logger.LogInformation("Successfully toggled channel by restarting playback");
             }
 
             _logger.LogInformation("=== End Toggle Vocal ===");
@@ -836,37 +769,6 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     {
         // Log all VLC messages for debugging
         _logger.LogDebug("VLC[{Level}] {Module}: {Message}", e.Level, e.Module, e.Message);
-
-        // Track if stereo or mono filter loads
-        var msg = e.Message?.ToLowerInvariant() ?? "";
-        if (msg.Contains("audio filter") && msg.Contains("stereo"))
-        {
-            _stereoFilterLoadedRecently = true;
-            _logger.LogInformation("✓ VLC stereo filter detected loading");
-        }
-        else if (msg.Contains("stereo") && msg.Contains("set mode"))
-        {
-            _stereoFilterLoadedRecently = true;
-            _logger.LogInformation("✓ VLC stereo mode being set: {Message}", e.Message);
-        }
-        else if (msg.Contains("audio filter") && msg.Contains("mono"))
-        {
-            _monoFilterLoadedRecently = true;
-            _logger.LogInformation("✓ VLC mono filter detected loading");
-        }
-        else if (msg.Contains("mono") && (msg.Contains("left") || msg.Contains("right")))
-        {
-            _monoFilterLoadedRecently = true;
-            _logger.LogInformation("✓ VLC mono channel detected: {Message}", e.Message);
-        }
-        else if (msg.Contains("no audio filter module matching") || msg.Contains("no suitable module"))
-        {
-            _logger.LogWarning("✗ VLC could not load audio filter: {Message}", e.Message);
-        }
-        else if (msg.Contains("looking for audio filter"))
-        {
-            _logger.LogInformation("VLC searching for filter: {Message}", e.Message);
-        }
     }
 
     private async void OnMediaPlayerEndReached(object? sender, EventArgs e)
@@ -934,30 +836,8 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _logger.LogInformation("Instrumental Value: {Instrumental}", _currentSong.Instrumental);
             _logger.LogInformation("Channel Configuration: {ChannelConfig}", _currentSong.ChannelConfiguration);
 
-            // Configure stereo mode per-media based on Instrumental value
-            var instrumental = _currentSong.Instrumental;
-
-            // Enable the stereo filter for this media
-            newMedia.AddOption(":audio-filter=stereo");
-
-            // :stereo-mode values: 0=stereo, 1=left, 2=right, 3=reverse, 4=downmix
-            switch (instrumental)
-            {
-                case 0: // instrumental (left-only)
-                    newMedia.AddOption(":stereo-mode=1");
-                    _logger.LogInformation("Configured :stereo-mode=1 (left)");
-                    break;
-                case 1: // vocal+music (right-only)
-                    newMedia.AddOption(":stereo-mode=2");
-                    _logger.LogInformation("Configured :stereo-mode=2 (right)");
-                    break;
-                default: // normal stereo
-                    newMedia.AddOption(":stereo-mode=0");
-                    _logger.LogInformation("Configured :stereo-mode=0 (stereo)");
-                    break;
-            }
-
-            _logger.LogInformation("Added audio-filter=stereo with numeric stereo-mode");
+            // Note: Audio channel selection is applied in OnMediaPlayerPlaying event
+            // using SetChannel() after VLC has started playback
 
             // Set media to player BEFORE disposing old media
             _mediaPlayer.Media = newMedia;
@@ -979,107 +859,6 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         }
     }
 
-    private async Task PlayCurrentSongWithMonoFilterAsync()
-    {
-        if (!_vlcInitialized || _mediaPlayer == null || _currentSong == null)
-        {
-            _logger.LogWarning("Cannot play song with mono filter - VLC not initialized or missing components");
-            return;
-        }
-
-        try
-        {
-            // Create new media with mono filter
-            var newMedia = new Media(_libVlc!, _currentSong.MediaPath, FromType.FromPath);
-
-            _logger.LogInformation("=== Playing Song with Mono Filter ===");
-            _logger.LogInformation("Song ID: {SongId}", _currentSong.Id);
-            _logger.LogInformation("Media Path: {MediaPath}", _currentSong.MediaPath);
-            _logger.LogInformation("Instrumental Value: {Instrumental}", _currentSong.Instrumental);
-
-            var instrumental = _currentSong.Instrumental;
-
-            // Enable mono filter
-            newMedia.AddOption(":audio-filter=mono");
-
-            // Set mono channel: left or right
-            if (instrumental == 0)
-            {
-                // Left channel (instrumental)
-                newMedia.AddOption(":mono-channel=left");
-                newMedia.AddOption(":mono-channel=1");  // numeric fallback
-                _logger.LogInformation("Configured mono filter: left channel");
-            }
-            else if (instrumental == 1)
-            {
-                // Right channel (vocal+music)
-                newMedia.AddOption(":mono-channel=right");
-                newMedia.AddOption(":mono-channel=2");  // numeric fallback
-                _logger.LogInformation("Configured mono filter: right channel");
-            }
-
-            _logger.LogInformation("Added audio-filter=mono to media options");
-
-            // Set media to player BEFORE disposing old media
-            _mediaPlayer.Media = newMedia;
-            _mediaPlayer.Play();
-
-            // Only dispose old media AFTER new one is set and playing
-            var oldMedia = _currentMedia;
-            _currentMedia = newMedia;
-            oldMedia?.Dispose();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to play song with mono filter {SongPath}", _currentSong.MediaPath);
-            // Try to move to next song if current one fails
-            await MoveNextAsync(CancellationToken.None).ConfigureAwait(false);
-        }
-    }
-
-    private Task WaitForStoppedAsync(int timeoutMs = 1500)
-    {
-        var tcs = new TaskCompletionSource();
-        EventHandler<EventArgs>? ev = null;
-        ev = (s, e) =>
-        {
-            var st = _mediaPlayer!.State;
-            if (st == VLCState.Stopped || st == VLCState.Ended || st == VLCState.NothingSpecial)
-            {
-                _mediaPlayer.Stopped -= ev;
-                tcs.TrySetResult();
-            }
-        };
-        _mediaPlayer!.Stopped += ev;
-
-        // already stopped?
-        var st0 = _mediaPlayer.State;
-        if (st0 == VLCState.Stopped || st0 == VLCState.Ended || st0 == VLCState.NothingSpecial)
-        {
-            _mediaPlayer.Stopped -= ev;
-            tcs.TrySetResult();
-        }
-
-        _ = Task.Run(async () =>
-        {
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            while (sw.ElapsedMilliseconds < timeoutMs && !tcs.Task.IsCompleted)
-                await Task.Delay(50).ConfigureAwait(false);
-            tcs.TrySetResult();
-        });
-
-        return tcs.Task;
-    }
-
-    private async Task WaitUntilPlayingAsync(int timeoutMs = 1200)
-    {
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        while (sw.ElapsedMilliseconds < timeoutMs)
-        {
-            if (_mediaPlayer!.State == VLCState.Playing) return;
-            await Task.Delay(30).ConfigureAwait(false);
-        }
-    }
 
     private void ApplyInstrumentalAudioSelection()
     {
@@ -1125,11 +904,30 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 : Array.Empty<LibVLCSharp.Shared.Structures.TrackDescription>();
             _logger.LogInformation("Valid tracks (Id >= 0): {Count}", validTracks.Length);
 
-            // For single-track dual-channel (stereo) files, do NOT manipulate tracks/channels here
-            // We already applied :stereo-mode during media creation, and touching anything here would undo it
+            // For single-track dual-channel (stereo) files, use SetChannel at runtime
             if (validTracks.Length == 1)
             {
-                _logger.LogInformation("Single-track dual-channel detected; skipping post-play audio manipulation (stereo-mode already applied)");
+                _logger.LogInformation("Single-track dual-channel detected; applying channel selection via SetChannel");
+
+                if (instrumental == 0)
+                {
+                    // Left channel only (instrumental)
+                    _mediaPlayer.SetChannel(AudioOutputChannel.Left);
+                    _logger.LogInformation("Set audio channel to Left (Instrumental=0)");
+                }
+                else if (instrumental == 1)
+                {
+                    // Right channel only (vocal+music)
+                    _mediaPlayer.SetChannel(AudioOutputChannel.Right);
+                    _logger.LogInformation("Set audio channel to Right (Instrumental=1)");
+                }
+                else
+                {
+                    // Normal stereo
+                    _mediaPlayer.SetChannel(AudioOutputChannel.Stereo);
+                    _logger.LogInformation("Set audio channel to Stereo (Instrumental={Instrumental})", instrumental);
+                }
+
                 _logger.LogInformation("=== End Audio Track Selection ===");
                 return;
             }

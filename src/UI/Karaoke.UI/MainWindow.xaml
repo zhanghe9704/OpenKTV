@@ -16,55 +16,55 @@
                 FontSize="24"
                 HorizontalAlignment="Center" />
             <CommandBar DefaultLabelPosition="Right" IsOpen="False">
-                <AppBarButton Icon="Setting" Label="Settings" Click="OnSettingsClicked">
+                <AppBarButton Icon="Setting" Label="Settings (s)" Click="OnSettingsClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="S" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
                 <AppBarSeparator />
-                <AppBarButton Icon="Play" Label="Play" Click="OnPlayClicked">
+                <AppBarButton Icon="Play" Label="Play (p)" Click="OnPlayClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="P" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton Icon="Pause" Label="Pause" Click="OnPauseClicked">
+                <AppBarButton Icon="Pause" Label="Pause (SPACE)" Click="OnPauseClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Key="Space" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton Icon="Stop" Label="Stop" Click="OnStopClicked">
+                <AppBarButton Icon="Stop" Label="Stop (ESP)" Click="OnStopClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Key="Escape" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton Icon="Next" Label="Next" Click="OnNextClicked">
+                <AppBarButton Icon="Next" Label="Next (n)" Click="OnNextClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="N" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton Icon="RepeatOne" Label="Repeat" Click="OnRepeatClicked">
+                <AppBarButton Icon="RepeatOne" Label="Repeat (n)" Click="OnRepeatClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="R" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton Icon="Volume" Label="Vocal" Click="OnVocalClicked">
+                <AppBarButton Icon="Volume" Label="Vocal (v)" Click="OnVocalClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="V" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
                 <AppBarSeparator />
-                <AppBarButton Icon="FullScreen" Label="Full Screen" Click="OnFullScreenClicked">
+                <AppBarButton Icon="FullScreen" Label="Full Screen (f)" Click="OnFullScreenClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="F" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
                 <AppBarSeparator />
-                <AppBarButton Icon="Up" Label="Up" Click="OnMoveUpClicked">
+                <AppBarButton Icon="Up" Label="Up (up)" Click="OnMoveUpClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="Up" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton Label="Down" Click="OnMoveDownClicked">
+                <AppBarButton Label="Down (dn)" Click="OnMoveDownClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="Down" />
                     </AppBarButton.KeyboardAccelerators>
@@ -79,7 +79,7 @@
                         </SymbolIcon>
                     </AppBarButton.Icon>
                 </AppBarButton>
-              <AppBarButton Label="Top" Click="OnMoveTopClicked">
+              <AppBarButton Label="Top (lf)" Click="OnMoveTopClicked">
                 <AppBarButton.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Control" Key="Left" />
                 </AppBarButton.KeyboardAccelerators>
@@ -94,7 +94,7 @@
                   </SymbolIcon>
                 </AppBarButton.Icon>
               </AppBarButton>
-                <AppBarButton Label="Bottom" Click="OnMoveBottomClicked">
+                <AppBarButton Label="Bottom (rt)" Click="OnMoveBottomClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="Right" />
                     </AppBarButton.KeyboardAccelerators>
