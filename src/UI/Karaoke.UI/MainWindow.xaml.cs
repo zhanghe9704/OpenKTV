@@ -267,6 +267,19 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private async void OnVocalClicked(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _playbackService.ToggleVocalAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // TODO: Show error dialog to user
+            System.Diagnostics.Debug.WriteLine($"Vocal toggle error: {ex.Message}");
+        }
+    }
+
     private void OnMoveUpClicked(object sender, RoutedEventArgs e)
     {
         if (_viewModel.CanMoveQueuedSongUp())

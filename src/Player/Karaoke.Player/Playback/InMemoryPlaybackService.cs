@@ -157,6 +157,15 @@ public sealed class InMemoryPlaybackService : IPlaybackService
         return Task.CompletedTask;
     }
 
+    public Task ToggleVocalAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // For in-memory service, we can't actually toggle vocal tracks
+        // This is just a stub for testing
+        return Task.CompletedTask;
+    }
+
     public Task<SongDto?> GetCurrentAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

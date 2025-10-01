@@ -25,6 +25,8 @@ public interface IPlaybackService
 
     Task ToggleFullScreenAsync(CancellationToken cancellationToken);
 
+    Task ToggleVocalAsync(CancellationToken cancellationToken);
+
     Task<SongDto?> GetCurrentAsync(CancellationToken cancellationToken);
 
     Task<SongDto?> MoveNextAsync(CancellationToken cancellationToken);

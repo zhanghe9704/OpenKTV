@@ -47,6 +47,11 @@
                         <KeyboardAccelerator Modifiers="Control" Key="R" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
+                <AppBarButton Icon="Volume" Label="Vocal" Click="OnVocalClicked">
+                    <AppBarButton.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="V" />
+                    </AppBarButton.KeyboardAccelerators>
+                </AppBarButton>
                 <AppBarSeparator />
                 <AppBarButton Icon="FullScreen" Label="Full Screen" Click="OnFullScreenClicked">
                     <AppBarButton.KeyboardAccelerators>

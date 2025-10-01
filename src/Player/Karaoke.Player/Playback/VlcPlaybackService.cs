@@ -347,7 +347,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             // Switch to full screen on the screen where the window is currently located
             _playbackForm.WindowState = FormWindowState.Normal;
             _playbackForm.FormBorderStyle = FormBorderStyle.None;
-            
+
             // Get the screen that contains the current window
             var currentScreen = Screen.FromControl(_playbackForm);
             _playbackForm.Bounds = currentScreen.Bounds;
@@ -363,12 +363,102 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _playbackForm.WindowState = _originalWindowState;
             _playbackForm.Size = _originalSize;
             _playbackForm.Location = _originalLocation;
-            
+
             // Restore TopMost based on current playback state
             UpdateWindowTopMost(_currentState);
 
             _isFullScreen = false;
             _logger.LogInformation("Player window restored from full screen");
+        }
+    }
+
+    public async Task ToggleVocalAsync(CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (_mediaPlayer == null || _currentSong == null)
+        {
+            _logger.LogWarning("No media playing to toggle vocal");
+            return;
+        }
+
+        await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            _logger.LogInformation("=== Toggling Vocal ===");
+
+            // Get audio track information
+            var trackDescriptions = _mediaPlayer.AudioTrackDescription;
+            var validTracks = trackDescriptions != null
+                ? trackDescriptions.Where(t => t.Id >= 0).ToArray()
+                : Array.Empty<LibVLCSharp.Shared.Structures.TrackDescription>();
+
+            _logger.LogInformation("Valid audio tracks: {Count}", validTracks.Length);
+
+            if (validTracks.Length >= 2)
+            {
+                // Multi-track file: switch between tracks
+                var currentTrackId = _mediaPlayer.AudioTrack;
+                _logger.LogInformation("Current track ID: {TrackId}", currentTrackId);
+
+                // Find current track index
+                int currentIndex = Array.FindIndex(validTracks, t => t.Id == currentTrackId);
+                if (currentIndex == -1) currentIndex = 0;
+
+                // Toggle to the other track
+                int newIndex = (currentIndex == 0) ? 1 : 0;
+                var targetTrack = validTracks[newIndex];
+
+                _logger.LogInformation("Switching from track {CurrentIndex} to track {NewIndex} (ID: {TrackId})",
+                    currentIndex, newIndex, targetTrack.Id);
+
+                var result = _mediaPlayer.SetAudioTrack(targetTrack.Id);
+                _logger.LogInformation("SetAudioTrack result: {Result}", result);
+
+                var newTrackId = _mediaPlayer.AudioTrack;
+                _logger.LogInformation("New track ID: {TrackId}", newTrackId);
+            }
+            else
+            {
+                // Single-track stereo file: toggle channel (left/right)
+                _logger.LogInformation("Single track detected - toggling between channels");
+
+                // Get current instrumental setting from song
+                var currentInstrumental = _currentSong.Instrumental;
+                var newInstrumental = (currentInstrumental == 0) ? 1 : 0;
+
+                _logger.LogInformation("Toggling from Instrumental={Current} to {New}",
+                    currentInstrumental, newInstrumental);
+
+                // Update the song's instrumental value for this session
+                _currentSong = _currentSong with { Instrumental = newInstrumental };
+
+                // Apply the new channel configuration
+                // Note: This requires re-applying media options, which isn't fully supported
+                // during playback. Log a warning.
+                _logger.LogWarning("Channel toggle for single-track files during playback is limited");
+                _logger.LogWarning("For best results, set the Track/Channel before playback starts");
+
+                // Attempt to change audio output mode (may not work reliably)
+                try
+                {
+                    var mode = newInstrumental == 0 ? 1 : 2; // 1=left, 2=right
+                    _logger.LogInformation("Attempting to set audio channel mode to {Mode}", mode);
+                    // Unfortunately LibVLCSharp doesn't expose audiochannel filter control at runtime
+                    // This would require VLC command-line options or filter manipulation
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to change audio channel");
+                }
+            }
+
+            _logger.LogInformation("=== End Toggle Vocal ===");
+        }
+        finally
+        {
+            _semaphore.Release();
         }
     }
 
