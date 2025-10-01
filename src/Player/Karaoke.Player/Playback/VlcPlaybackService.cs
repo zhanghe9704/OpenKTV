@@ -695,6 +695,9 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         await Task.Run(async () =>
         {
             await SetStateAsync(PlaybackState.Playing).ConfigureAwait(false);
+
+            // Apply audio track selection after media is playing (tracks are now available)
+            ApplyInstrumentalAudioSelection();
         }).ConfigureAwait(false);
     }
 
@@ -765,11 +768,8 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _mediaPlayer.Media = newMedia;
             _mediaPlayer.Play();  // Play without parameters to reuse existing window
 
-            // Wait a moment for VLC to start parsing the media
-            await Task.Delay(500).ConfigureAwait(false);
-
-            // Apply instrumental audio track selection (for multi-track files)
-            ApplyInstrumentalAudioSelection();
+            // Note: Audio track selection is applied in OnMediaPlayerPlaying event
+            // after VLC has parsed the media and tracks are available
 
             // Only dispose old media AFTER new one is set and playing
             var oldMedia = _currentMedia;
