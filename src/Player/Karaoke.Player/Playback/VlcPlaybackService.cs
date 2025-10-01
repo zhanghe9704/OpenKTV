@@ -834,32 +834,32 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _logger.LogInformation("Instrumental Value: {Instrumental}", _currentSong.Instrumental);
             _logger.LogInformation("Channel Configuration: {ChannelConfig}", _currentSong.ChannelConfiguration);
 
-            // Configure audiochannel mode per-media based on Instrumental value
+            // Configure stereo mode per-media based on Instrumental value
             var instrumental = _currentSong.Instrumental;
 
-            // Enable the audiochannel filter for this media
-            newMedia.AddOption(":audio-filter=audiochannel");
+            // Enable the stereo filter for this media (correct VLC option)
+            newMedia.AddOption(":audio-filter=stereo");
 
             if (instrumental == 0)
             {
-                // Left channel only: mode 1 or mode 4
-                newMedia.AddOption(":audiochannel-mode=1"); // 1 = left channel
-                _logger.LogInformation("Configured for left channel (Instrumental=0, mode=1)");
+                // Left channel only (typically instrumental track)
+                newMedia.AddOption(":stereo-mode=left");
+                _logger.LogInformation("Configured stereo-mode=left (Instrumental=0)");
             }
             else if (instrumental == 1)
             {
-                // Right channel only: mode 2 or mode 5
-                newMedia.AddOption(":audiochannel-mode=2"); // 2 = right channel
-                _logger.LogInformation("Configured for right channel (Instrumental=1, mode=2)");
+                // Right channel only (typically vocal+music track)
+                newMedia.AddOption(":stereo-mode=right");
+                _logger.LogInformation("Configured stereo-mode=right (Instrumental=1)");
             }
             else
             {
-                // Both channels (stereo)
-                newMedia.AddOption(":audiochannel-mode=0"); // 0 = stereo (both channels)
-                _logger.LogInformation("Configured for stereo (Instrumental={Instrumental}, mode=0)", instrumental);
+                // Both channels (normal stereo)
+                newMedia.AddOption(":stereo-mode=stereo");
+                _logger.LogInformation("Configured stereo-mode=stereo (Instrumental={Instrumental})", instrumental);
             }
 
-            _logger.LogInformation("Added audio-filter=audiochannel to media options");
+            _logger.LogInformation("Added audio-filter=stereo to media options");
 
             // Set media to player BEFORE disposing old media
             _mediaPlayer.Media = newMedia;
