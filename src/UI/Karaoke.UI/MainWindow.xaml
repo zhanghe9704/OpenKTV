@@ -202,9 +202,17 @@
                         <DataTemplate>
                             <StackPanel Spacing="4" Padding="8">
                                 <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <TextBlock Text="{Binding Artist}" Width="200" />
-                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding Priority}" Width="60" HorizontalAlignment="Right" />
+                                    <TextBlock Text="{Binding Artist}" Width="80" />
+                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Width="180" />
+                                    <TextBlock Text="{Binding Language}" Width="40" />
+                                    <TextBlock Text="{Binding Genre}" Width="60" />
+                                    <TextBlock Text="{Binding Comment}" Width="180" />
+                                    <StackPanel Orientation="Horizontal" Spacing="4" Width="100">
+                                        <TextBlock Text="Ch:" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        <TextBlock Text="{Binding Instrumental}" />
+                                        <TextBlock Text="Pri:" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="8,0,0,0" />
+                                        <TextBlock Text="{Binding Priority}" />
+                                    </StackPanel>
                                 </StackPanel>
                                 <TextBlock Text="{Binding MediaPath}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                             </StackPanel>

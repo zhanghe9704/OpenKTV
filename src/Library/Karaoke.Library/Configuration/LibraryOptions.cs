@@ -32,6 +32,8 @@ public sealed class SongDisplayOptions
     public bool ShowLanguage { get; set; } = false;
     public bool ShowGenre { get; set; } = false;
     public bool ShowComment { get; set; } = false;
+    public bool ShowChannel { get; set; } = false;
+    public bool ShowPriority { get; set; } = true;
 }
 
 public sealed class LibraryRootOptions

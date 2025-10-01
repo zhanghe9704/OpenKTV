@@ -45,7 +45,16 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
             DatabasePath = current.DatabasePath,
             SupportedExtensions = new List<string>(current.SupportedExtensions),
             Roots = current.Roots.Select(CloneRoot).ToList(),
-            KeywordFormat = current.KeywordFormat
+            KeywordFormat = current.KeywordFormat,
+            DisplayOptions = new SongDisplayOptions
+            {
+                ShowArtist = current.DisplayOptions.ShowArtist,
+                ShowLanguage = current.DisplayOptions.ShowLanguage,
+                ShowGenre = current.DisplayOptions.ShowGenre,
+                ShowComment = current.DisplayOptions.ShowComment,
+                ShowChannel = current.DisplayOptions.ShowChannel,
+                ShowPriority = current.DisplayOptions.ShowPriority
+            }
         };
         return Task.FromResult(cloned);
     }
@@ -81,6 +90,7 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
                 ["DefaultChannel"] = option.DefaultChannel,
                 ["DriveOverride"] = option.DriveOverride,
                 ["KeywordFormat"] = option.KeywordFormat,
+                ["Instrumental"] = option.Instrumental,
             });
         }
 
@@ -125,6 +135,7 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
         var rootsArray = new JsonArray();
         foreach (var root in options.Roots)
         {
+            System.Diagnostics.Debug.WriteLine($"[JsonLibraryConfigurationManager] Root '{root.Name}': Instrumental = {root.Instrumental}");
             rootsArray.Add(new JsonObject
             {
                 ["Name"] = root.Name,
@@ -133,6 +144,7 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
                 ["DefaultChannel"] = root.DefaultChannel,
                 ["DriveOverride"] = root.DriveOverride,
                 ["KeywordFormat"] = root.KeywordFormat,
+                ["Instrumental"] = root.Instrumental,
             });
         }
         libraryNode["Roots"] = rootsArray;
@@ -144,6 +156,18 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
             extensionsArray.Add(extension);
         }
         libraryNode["SupportedExtensions"] = extensionsArray;
+
+        // Update display options
+        var displayOptionsNode = new JsonObject
+        {
+            ["ShowArtist"] = options.DisplayOptions.ShowArtist,
+            ["ShowLanguage"] = options.DisplayOptions.ShowLanguage,
+            ["ShowGenre"] = options.DisplayOptions.ShowGenre,
+            ["ShowComment"] = options.DisplayOptions.ShowComment,
+            ["ShowChannel"] = options.DisplayOptions.ShowChannel,
+            ["ShowPriority"] = options.DisplayOptions.ShowPriority
+        };
+        libraryNode["DisplayOptions"] = displayOptionsNode;
 
         Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
 
@@ -174,6 +198,7 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
             DefaultChannel = source.DefaultChannel,
             DriveOverride = source.DriveOverride,
             KeywordFormat = source.KeywordFormat,
+            Instrumental = source.Instrumental,
         };
     }
 }

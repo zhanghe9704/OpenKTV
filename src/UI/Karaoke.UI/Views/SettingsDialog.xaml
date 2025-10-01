@@ -54,6 +54,8 @@
                 <CheckBox Content="Show Language" IsChecked="{Binding ShowLanguage, Mode=TwoWay}" />
                 <CheckBox Content="Show Genre" IsChecked="{Binding ShowGenre, Mode=TwoWay}" />
                 <CheckBox Content="Show Comment" IsChecked="{Binding ShowComment, Mode=TwoWay}" />
+                <CheckBox Content="Show Default Track/Channel" IsChecked="{Binding ShowChannel, Mode=TwoWay}" />
+                <CheckBox Content="Show Priority" IsChecked="{Binding ShowPriority, Mode=TwoWay}" />
             </StackPanel>
         </StackPanel>
 
@@ -104,20 +106,16 @@
                                             <TextBox Text="{x:Bind DefaultPriority, Mode=TwoWay}" />
                                         </StackPanel>
                                         <StackPanel Width="160" Spacing="4">
-                                            <TextBlock Text="Channel" FontWeight="SemiBold" />
-                                            <TextBox Text="{x:Bind DefaultChannel, Mode=TwoWay}" />
+                                            <TextBlock Text="Track/Channel" FontWeight="SemiBold" />
+                                            <TextBox Text="{x:Bind Instrumental, Mode=TwoWay}" PlaceholderText="0 or 1" />
                                         </StackPanel>
                                         <StackPanel Width="160" Spacing="4">
                                             <TextBlock Text="Drive Override" FontWeight="SemiBold" />
                                             <TextBox Text="{x:Bind DriveOverride, Mode=TwoWay}" PlaceholderText="Optional" />
                                         </StackPanel>
-                                        <StackPanel Width="120" Spacing="4">
-                                            <TextBlock Text="Instrumental" FontWeight="SemiBold" />
-                                            <TextBox Text="{x:Bind Instrumental, Mode=TwoWay}" PlaceholderText="0 or 1" />
-                                        </StackPanel>
                                     </StackPanel>
                                     <TextBlock
-                                        Text="Instrumental: 0 = first track/left channel, 1 = second track/right channel"
+                                        Text="Track/Channel: 0 = first track/left channel (vocals), 1 = second track/right channel (instrumental)"
                                         Style="{StaticResource CaptionTextBlockStyle}"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 

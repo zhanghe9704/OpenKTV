@@ -69,6 +69,12 @@ public partial class LibrarySettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _showComment;
 
+    [ObservableProperty]
+    private bool _showChannel;
+
+    [ObservableProperty]
+    private bool _showPriority;
+
     public event EventHandler? SettingsSaved;
 
     public event EventHandler<RescanRequestedEventArgs>? RescanRequested;
@@ -87,6 +93,8 @@ public partial class LibrarySettingsViewModel : ObservableObject
         ShowLanguage = libraryOptions.DisplayOptions.ShowLanguage;
         ShowGenre = libraryOptions.DisplayOptions.ShowGenre;
         ShowComment = libraryOptions.DisplayOptions.ShowComment;
+        ShowChannel = libraryOptions.DisplayOptions.ShowChannel;
+        ShowPriority = libraryOptions.DisplayOptions.ShowPriority;
 
         Roots.Clear();
         foreach (var root in libraryOptions.Roots)
@@ -105,7 +113,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
             
             foreach (var root in Roots)
             {
-                System.Diagnostics.Debug.WriteLine($"  Root: Name='{root.Name}', Path='{root.Path}', Priority='{root.DefaultPriority}', Channel='{root.DefaultChannel}', DriveOverride='{root.DriveOverride}', KeywordFormat='{root.KeywordFormat}', ShouldRescan={root.ShouldRescan}");
+                System.Diagnostics.Debug.WriteLine($"  Root: Name='{root.Name}', Path='{root.Path}', Priority='{root.DefaultPriority}', Channel='{root.DefaultChannel}', DriveOverride='{root.DriveOverride}', KeywordFormat='{root.KeywordFormat}', Instrumental='{root.Instrumental}', InstrumentalInt={root.GetInstrumental()}, ShouldRescan={root.ShouldRescan}");
             }
             
             // Load the base options to preserve settings like SupportedExtensions and DatabasePath
@@ -124,7 +132,9 @@ public partial class LibrarySettingsViewModel : ObservableObject
                     ShowArtist = ShowArtist,
                     ShowLanguage = ShowLanguage,
                     ShowGenre = ShowGenre,
-                    ShowComment = ShowComment
+                    ShowComment = ShowComment,
+                    ShowChannel = ShowChannel,
+                    ShowPriority = ShowPriority
                 },
                 Roots = Roots
                     .Select(root => new LibraryRootOptions
