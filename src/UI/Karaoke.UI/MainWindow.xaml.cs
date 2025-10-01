@@ -65,7 +65,12 @@ public sealed partial class MainWindow : Window
     {
         if (e.PropertyName == nameof(_viewModel.CurrentPlayingQueueIndex))
         {
-            RefreshQueueVisualStates();
+            // Ensure UI updates happen on the UI thread
+            var dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+            if (dispatcherQueue != null)
+            {
+                dispatcherQueue.TryEnqueue(() => RefreshQueueVisualStates());
+            }
         }
     }
 
