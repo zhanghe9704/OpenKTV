@@ -24,6 +24,7 @@
                       <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="200" />
                       <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
@@ -45,11 +46,20 @@
 
                     <TextBlock Grid.Column="2"
                                VerticalAlignment="Center"
-                               Margin="8,0,0,0"
+                               Margin="8,0,16,0"
                                MinWidth="40">
                       <Run Text="{x:Bind VolumeSlider.Value, Mode=OneWay}" />
                       <Run Text="%" />
                     </TextBlock>
+
+                    <CheckBox x:Name="VolumeNormCheckBox"
+                              Grid.Column="3"
+                              Content="Volume Norm"
+                              IsChecked="True"
+                              Checked="OnVolumeNormChanged"
+                              Unchecked="OnVolumeNormChanged"
+                              VerticalAlignment="Center"
+                              Margin="0,0,8,0" />
                   </Grid>
                 </CommandBar.Content>
                 <AppBarButton Icon="Setting" Label="Settings (s)" Click="OnSettingsClicked">

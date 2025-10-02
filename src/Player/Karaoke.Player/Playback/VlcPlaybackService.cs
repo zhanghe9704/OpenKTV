@@ -75,6 +75,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     private FormBorderStyle _originalBorderStyle;
     private System.Drawing.Size _originalSize;
     private System.Drawing.Point _originalLocation;
+    private bool _volumeNormalizationEnabled = true;
 
     public event EventHandler<SongDto>? SongChanged;
     public event EventHandler<PlaybackState>? StateChanged;
@@ -837,6 +838,30 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _logger.LogInformation("Instrumental Value: {Instrumental}", _currentSong.Instrumental);
             _logger.LogInformation("Channel Configuration: {ChannelConfig}", _currentSong.ChannelConfiguration);
 
+            // Apply volume normalization if enabled and gain data is available
+            if (_volumeNormalizationEnabled && _currentSong.GainDb.HasValue)
+            {
+                var targetVolume = _mediaPlayer.Volume;
+                var gainDb = _currentSong.GainDb.Value;
+
+                // Convert dB to linear scale and apply to current volume
+                // Volume gain = 10^(dB/20)
+                var gainLinear = Math.Pow(10.0, gainDb / 20.0);
+                var normalizedVolume = (int)Math.Round(targetVolume * gainLinear);
+
+                // Clamp to valid range
+                normalizedVolume = Math.Clamp(normalizedVolume, 0, 100);
+
+                _logger.LogInformation("Applying volume normalization: GainDb={GainDb}, BaseVolume={BaseVolume}, NormalizedVolume={NormalizedVolume}",
+                    gainDb, targetVolume, normalizedVolume);
+
+                _mediaPlayer.Volume = normalizedVolume;
+            }
+            else if (_volumeNormalizationEnabled)
+            {
+                _logger.LogInformation("Volume normalization enabled but no gain data available for this song");
+            }
+
             // Note: Audio channel selection is applied in OnMediaPlayerPlaying event
             // using SetChannel() after VLC has started playback
 
@@ -1093,5 +1118,21 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         }
 
         return Task.FromResult(_mediaPlayer.Volume);
+    }
+
+    public Task SetVolumeNormalizationAsync(bool enabled, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _volumeNormalizationEnabled = enabled;
+        _logger.LogInformation("Volume normalization {Status}", enabled ? "enabled" : "disabled");
+
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> GetVolumeNormalizationAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(_volumeNormalizationEnabled);
     }
 }

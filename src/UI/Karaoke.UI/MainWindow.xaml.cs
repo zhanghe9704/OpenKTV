@@ -644,4 +644,23 @@ public sealed partial class MainWindow : Window
             System.Diagnostics.Debug.WriteLine($"Error decreasing volume: {ex}");
         }
     }
+
+    private async void OnVolumeNormChanged(object sender, RoutedEventArgs e)
+    {
+        if (_playbackService == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var isEnabled = VolumeNormCheckBox.IsChecked ?? false;
+            await _playbackService.SetVolumeNormalizationAsync(isEnabled, CancellationToken.None);
+            System.Diagnostics.Debug.WriteLine($"Volume normalization {(isEnabled ? "enabled" : "disabled")}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error changing volume normalization: {ex}");
+        }
+    }
 }

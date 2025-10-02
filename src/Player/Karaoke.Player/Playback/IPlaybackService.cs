@@ -47,6 +47,10 @@ public interface IPlaybackService
 
     Task<int> GetVolumeAsync(CancellationToken cancellationToken);
 
+    Task SetVolumeNormalizationAsync(bool enabled, CancellationToken cancellationToken);
+
+    Task<bool> GetVolumeNormalizationAsync(CancellationToken cancellationToken);
+
     event EventHandler<SongDto>? SongChanged;
 
     event EventHandler<PlaybackState>? StateChanged;

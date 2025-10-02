@@ -27,6 +27,7 @@ public sealed class InMemoryPlaybackService : IPlaybackService
     private SongDto? _current;
     private PlaybackState _state = PlaybackState.Stopped;
     private int _volume = 100;
+    private bool _volumeNormalizationEnabled = true;
 
     public event EventHandler<SongDto>? SongChanged;
     public event EventHandler<PlaybackState>? StateChanged;
@@ -264,5 +265,18 @@ public sealed class InMemoryPlaybackService : IPlaybackService
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(_volume);
+    }
+
+    public Task SetVolumeNormalizationAsync(bool enabled, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _volumeNormalizationEnabled = enabled;
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> GetVolumeNormalizationAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(_volumeNormalizationEnabled);
     }
 }
