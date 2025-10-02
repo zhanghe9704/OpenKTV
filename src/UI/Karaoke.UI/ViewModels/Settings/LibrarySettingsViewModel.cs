@@ -30,7 +30,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         AddRootCommand = new RelayCommand(AddRoot);
         RemoveSelectedRootCommand = new RelayCommand(RemoveSelectedRoot, () => SelectedRoot is not null);
-        RescanAfterSave = true;
+        RescanAfterSave = false;
     }
 
     public ObservableCollection<LibraryRootItemViewModel> Roots { get; }
@@ -99,9 +99,9 @@ public partial class LibrarySettingsViewModel : ObservableObject
         Roots.Clear();
         foreach (var root in libraryOptions.Roots)
         {
-            Roots.Add(new LibraryRootItemViewModel(root.Name, root.Path, root.DefaultPriority, root.DefaultChannel, root.DriveOverride, root.KeywordFormat, root.Instrumental, shouldRescan: true));
+            Roots.Add(new LibraryRootItemViewModel(root.Name, root.Path, root.DefaultPriority, root.DefaultChannel, root.DriveOverride, root.KeywordFormat, root.Instrumental, shouldRescan: false));
         }
-        RescanAfterSave = true;
+        RescanAfterSave = false;
     }
 
     public async Task SaveAsync()
