@@ -16,6 +16,15 @@
     Height="600">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="16" Margin="12">
+            <!-- Status Message -->
+            <InfoBar x:Name="StatusInfoBar"
+                     IsOpen="{x:Bind ShowStatusMessage, Mode=OneWay}"
+                     Severity="{x:Bind StatusSeverity, Mode=OneWay}"
+                     Title="{x:Bind StatusTitle, Mode=OneWay}"
+                     Message="{x:Bind StatusMessage, Mode=OneWay}"
+                     IsClosable="True"
+                     Closed="OnStatusInfoBarClosed" />
+
             <!-- Basic Information -->
             <StackPanel Spacing="8">
                 <TextBlock Text="Basic Information" FontWeight="SemiBold" FontSize="16" />

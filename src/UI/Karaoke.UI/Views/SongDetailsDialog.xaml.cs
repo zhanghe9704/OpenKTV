@@ -22,6 +22,10 @@ public sealed partial class SongDetailsDialog : ContentDialog, INotifyPropertyCh
     private string? _editedComment;
     private double _editedPriority;
     private double _editedInstrumental;
+    private bool _showStatusMessage;
+    private InfoBarSeverity _statusSeverity;
+    private string _statusTitle = string.Empty;
+    private string _statusMessage = string.Empty;
 
     public SongDetailsDialog(SongDto song, ILibraryService libraryService)
     {
@@ -162,6 +166,58 @@ public sealed partial class SongDetailsDialog : ContentDialog, INotifyPropertyCh
         }
     }
 
+    public bool ShowStatusMessage
+    {
+        get => _showStatusMessage;
+        set
+        {
+            if (_showStatusMessage != value)
+            {
+                _showStatusMessage = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public InfoBarSeverity StatusSeverity
+    {
+        get => _statusSeverity;
+        set
+        {
+            if (_statusSeverity != value)
+            {
+                _statusSeverity = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string StatusTitle
+    {
+        get => _statusTitle;
+        set
+        {
+            if (_statusTitle != value)
+            {
+                _statusTitle = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string StatusMessage
+    {
+        get => _statusMessage;
+        set
+        {
+            if (_statusMessage != value)
+            {
+                _statusMessage = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public string LoudnessText => Song.LoudnessLufs.HasValue
         ? $"{Song.LoudnessLufs.Value:F1}"
         : "Not analyzed";
@@ -246,14 +302,14 @@ public sealed partial class SongDetailsDialog : ContentDialog, INotifyPropertyCh
 
                 System.Diagnostics.Debug.WriteLine($"[SongDetailsDialog] Save completed successfully");
 
-                // Show success message
-                await ShowSuccessDialog("Changes saved successfully!");
+                // Show success message in InfoBar
+                ShowStatusInfo("Success", "Changes saved successfully!", InfoBarSeverity.Success);
 
                 // Stay in edit mode so user can continue editing or click Close to exit
             }
             catch (Exception ex)
             {
-                await ShowErrorDialog("Failed to save changes", ex.Message);
+                ShowStatusInfo("Error", $"Failed to save changes: {ex.Message}", InfoBarSeverity.Error);
             }
             finally
             {
@@ -285,54 +341,43 @@ public sealed partial class SongDetailsDialog : ContentDialog, INotifyPropertyCh
         // Title and Artist are required
         if (string.IsNullOrWhiteSpace(EditedTitle))
         {
-            _ = ShowErrorDialog("Validation Error", "Title cannot be empty.");
+            ShowStatusInfo("Validation Error", "Title cannot be empty.", InfoBarSeverity.Warning);
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(EditedArtist))
         {
-            _ = ShowErrorDialog("Validation Error", "Artist cannot be empty.");
+            ShowStatusInfo("Validation Error", "Artist cannot be empty.", InfoBarSeverity.Warning);
             return false;
         }
 
         // Priority should be between 1 and 10
         if (EditedPriority < 1 || EditedPriority > 10)
         {
-            _ = ShowErrorDialog("Validation Error", "Priority must be between 1 and 10.");
+            ShowStatusInfo("Validation Error", "Priority must be between 1 and 10.", InfoBarSeverity.Warning);
             return false;
         }
 
         // Instrumental should be 0 or 1
         if (EditedInstrumental < 0 || EditedInstrumental > 1 || EditedInstrumental != Math.Floor(EditedInstrumental))
         {
-            _ = ShowErrorDialog("Validation Error", "Channel/Track must be 0 (Vocal) or 1 (Instrumental).");
+            ShowStatusInfo("Validation Error", "Channel/Track must be 0 (Vocal) or 1 (Instrumental).", InfoBarSeverity.Warning);
             return false;
         }
 
         return true;
     }
 
-    private async System.Threading.Tasks.Task ShowErrorDialog(string title, string message)
+    private void ShowStatusInfo(string title, string message, InfoBarSeverity severity)
     {
-        var errorDialog = new ContentDialog
-        {
-            Title = title,
-            Content = message,
-            CloseButtonText = "OK",
-            XamlRoot = this.XamlRoot
-        };
-        await errorDialog.ShowAsync();
+        StatusTitle = title;
+        StatusMessage = message;
+        StatusSeverity = severity;
+        ShowStatusMessage = true;
     }
 
-    private async System.Threading.Tasks.Task ShowSuccessDialog(string message)
+    private void OnStatusInfoBarClosed(InfoBar sender, InfoBarClosedEventArgs args)
     {
-        var successDialog = new ContentDialog
-        {
-            Title = "Success",
-            Content = message,
-            CloseButtonText = "OK",
-            XamlRoot = this.XamlRoot
-        };
-        await successDialog.ShowAsync();
+        ShowStatusMessage = false;
     }
 }

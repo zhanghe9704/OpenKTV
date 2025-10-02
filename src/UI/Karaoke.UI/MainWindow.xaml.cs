@@ -520,9 +520,9 @@ public sealed partial class MainWindow : Window
 
             await dialog.ShowAsync();
 
-            // Always refresh the songs list when dialog closes
+            // Always reload the songs list from database when dialog closes
             // User may have saved changes while in edit mode
-            _viewModel.SearchSongsCommand.Execute(null);
+            await _viewModel.ReloadAsync(rescan: false, CancellationToken.None);
         }
         catch (Exception ex)
         {
