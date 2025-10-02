@@ -91,6 +91,7 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
                 ["DriveOverride"] = option.DriveOverride,
                 ["KeywordFormat"] = option.KeywordFormat,
                 ["Instrumental"] = option.Instrumental,
+                ["VolumeNormalization"] = option.VolumeNormalization,
             });
         }
 
@@ -135,7 +136,7 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
         var rootsArray = new JsonArray();
         foreach (var root in options.Roots)
         {
-            System.Diagnostics.Debug.WriteLine($"[JsonLibraryConfigurationManager] Root '{root.Name}': Instrumental = {root.Instrumental}");
+            System.Diagnostics.Debug.WriteLine($"[JsonLibraryConfigurationManager] Root '{root.Name}': Instrumental = {root.Instrumental}, VolumeNormalization = {root.VolumeNormalization}");
             rootsArray.Add(new JsonObject
             {
                 ["Name"] = root.Name,
@@ -145,6 +146,7 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
                 ["DriveOverride"] = root.DriveOverride,
                 ["KeywordFormat"] = root.KeywordFormat,
                 ["Instrumental"] = root.Instrumental,
+                ["VolumeNormalization"] = root.VolumeNormalization,
             });
         }
         libraryNode["Roots"] = rootsArray;
