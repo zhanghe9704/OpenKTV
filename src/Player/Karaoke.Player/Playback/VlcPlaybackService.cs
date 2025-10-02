@@ -702,8 +702,8 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 }
             }
 
-            _logger.LogInformation("Creating LibVLC instance with verbose logging...");
-            _libVlc = new LibVLC($"--plugin-path={pluginPath}", "--verbose=2");
+            _logger.LogInformation("Creating LibVLC instance...");
+            _libVlc = new LibVLC($"--plugin-path={pluginPath}", "--verbose=1");
             _logger.LogInformation("LibVLC instance created with explicit plugin path");
 
             // Hook VLC logs to track filter loading
