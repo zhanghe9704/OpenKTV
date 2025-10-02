@@ -26,9 +26,11 @@ public sealed class InMemoryPlaybackService : IPlaybackService
     private readonly ILogger<InMemoryPlaybackService> _logger;
     private SongDto? _current;
     private PlaybackState _state = PlaybackState.Stopped;
+    private int _volume = 100;
 
     public event EventHandler<SongDto>? SongChanged;
     public event EventHandler<PlaybackState>? StateChanged;
+    public event EventHandler<int>? VolumeChanged;
 
     public InMemoryPlaybackService(ILogger<InMemoryPlaybackService> logger)
     {
@@ -246,5 +248,21 @@ public sealed class InMemoryPlaybackService : IPlaybackService
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.CompletedTask;
+    }
+
+    public Task SetVolumeAsync(int volume, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _volume = Math.Clamp(volume, 0, 100);
+        VolumeChanged?.Invoke(this, _volume);
+
+        return Task.CompletedTask;
+    }
+
+    public Task<int> GetVolumeAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(_volume);
     }
 }

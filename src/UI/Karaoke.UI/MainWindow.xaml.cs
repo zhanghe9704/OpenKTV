@@ -472,6 +472,16 @@ public sealed partial class MainWindow : Window
                     OnDeleteClicked(this, new RoutedEventArgs());
                     e.Handled = true;
                     break;
+                case VirtualKey.Add: // Numpad +
+                case (VirtualKey)187: // Regular + (same key as =)
+                    OnVolumeIncrease();
+                    e.Handled = true;
+                    break;
+                case VirtualKey.Subtract: // Numpad -
+                case (VirtualKey)189: // Regular -
+                    OnVolumeDecrease();
+                    e.Handled = true;
+                    break;
             }
         }
         else
@@ -575,6 +585,47 @@ public sealed partial class MainWindow : Window
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error setting track as default: {ex}");
+        }
+    }
+
+    private async void OnVolumeChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        try
+        {
+            var volume = (int)e.NewValue;
+            await _playbackService.SetVolumeAsync(volume, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error changing volume: {ex}");
+        }
+    }
+
+    private async void OnVolumeIncrease()
+    {
+        try
+        {
+            var currentVolume = await _playbackService.GetVolumeAsync(CancellationToken.None);
+            var newVolume = Math.Min(100, currentVolume + 5);
+            VolumeSlider.Value = newVolume;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error increasing volume: {ex}");
+        }
+    }
+
+    private async void OnVolumeDecrease()
+    {
+        try
+        {
+            var currentVolume = await _playbackService.GetVolumeAsync(CancellationToken.None);
+            var newVolume = Math.Max(0, currentVolume - 5);
+            VolumeSlider.Value = newVolume;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error decreasing volume: {ex}");
         }
     }
 }

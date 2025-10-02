@@ -78,6 +78,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
     public event EventHandler<SongDto>? SongChanged;
     public event EventHandler<PlaybackState>? StateChanged;
+    public event EventHandler<int>? VolumeChanged;
 
     public VlcPlaybackService(ILogger<VlcPlaybackService> logger)
     {
@@ -1062,5 +1063,35 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         {
             _semaphore.Dispose();
         }
+    }
+
+    public Task SetVolumeAsync(int volume, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!_vlcInitialized || _mediaPlayer == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        // VLC volume is 0-100
+        var clampedVolume = Math.Clamp(volume, 0, 100);
+        _mediaPlayer.Volume = clampedVolume;
+
+        VolumeChanged?.Invoke(this, clampedVolume);
+
+        return Task.CompletedTask;
+    }
+
+    public Task<int> GetVolumeAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!_vlcInitialized || _mediaPlayer == null)
+        {
+            return Task.FromResult(100); // Default volume
+        }
+
+        return Task.FromResult(_mediaPlayer.Volume);
     }
 }

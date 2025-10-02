@@ -43,7 +43,13 @@ public interface IPlaybackService
 
     Task HidePlayerWindowAsync(CancellationToken cancellationToken);
 
+    Task SetVolumeAsync(int volume, CancellationToken cancellationToken);
+
+    Task<int> GetVolumeAsync(CancellationToken cancellationToken);
+
     event EventHandler<SongDto>? SongChanged;
 
     event EventHandler<PlaybackState>? StateChanged;
+
+    event EventHandler<int>? VolumeChanged;
 }
