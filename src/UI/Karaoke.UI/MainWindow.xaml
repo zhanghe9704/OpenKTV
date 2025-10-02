@@ -41,8 +41,7 @@
                             TickFrequency="10"
                             TickPlacement="BottomRight"
                             ValueChanged="OnVolumeChanged"
-                            VerticalAlignment="Center"
-                            Height="32" />
+                            VerticalAlignment="Center" />
 
                     <TextBlock Grid.Column="2"
                                VerticalAlignment="Center"
@@ -59,7 +58,11 @@
                               Checked="OnVolumeNormChanged"
                               Unchecked="OnVolumeNormChanged"
                               VerticalAlignment="Center"
-                              Margin="0,0,8,0" />
+                              Margin="0,0,8,0">
+                      <CheckBox.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="V" />
+                      </CheckBox.KeyboardAccelerators>
+                    </CheckBox>
                   </Grid>
                 </CommandBar.Content>
                 <AppBarButton Icon="Setting" Label="Settings (s)" Click="OnSettingsClicked">
@@ -93,9 +96,9 @@
                         <KeyboardAccelerator Modifiers="Control" Key="R" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton Icon="Volume" Label="Vocal (v)" Click="OnVocalClicked">
+                <AppBarButton Icon="Volume" Label="Vocal (l)" Click="OnVocalClicked">
                     <AppBarButton.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Control" Key="V" />
+                        <KeyboardAccelerator Modifiers="Control" Key="L" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
                 <AppBarSeparator />
