@@ -590,6 +590,12 @@ public sealed partial class MainWindow : Window
 
     private async void OnVolumeChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
     {
+        // Guard against initialization - slider ValueChanged fires before constructor completes
+        if (_playbackService == null)
+        {
+            return;
+        }
+
         try
         {
             var volume = (int)e.NewValue;
@@ -603,6 +609,11 @@ public sealed partial class MainWindow : Window
 
     private async void OnVolumeIncrease()
     {
+        if (_playbackService == null)
+        {
+            return;
+        }
+
         try
         {
             var currentVolume = await _playbackService.GetVolumeAsync(CancellationToken.None);
@@ -617,6 +628,11 @@ public sealed partial class MainWindow : Window
 
     private async void OnVolumeDecrease()
     {
+        if (_playbackService == null)
+        {
+            return;
+        }
+
         try
         {
             var currentVolume = await _playbackService.GetVolumeAsync(CancellationToken.None);
