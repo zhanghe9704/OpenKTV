@@ -109,6 +109,12 @@
                         </SymbolIcon>
                     </AppBarButton.Icon>
                 </AppBarButton>
+                <AppBarSeparator />
+                <AppBarButton Icon="Delete" Label="Delete (Ctrl+D)" Click="OnDeleteClicked">
+                    <AppBarButton.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="D" />
+                    </AppBarButton.KeyboardAccelerators>
+                </AppBarButton>
             </CommandBar>
             <ProgressRing
                 HorizontalAlignment="Right"

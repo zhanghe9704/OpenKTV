@@ -317,6 +317,14 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private void OnDeleteClicked(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.DeleteSelectedSongCommand.CanExecute(null))
+        {
+            _viewModel.DeleteSelectedSongCommand.Execute(null);
+        }
+    }
+
     private void RefreshQueueVisualStates()
     {
         RefreshQueueVisualStatesWithRetry(0);
@@ -455,6 +463,10 @@ public sealed partial class MainWindow : Window
                     break;
                 case VirtualKey.F:
                     OnFullScreenClicked(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    break;
+                case VirtualKey.D:
+                    OnDeleteClicked(this, new RoutedEventArgs());
                     e.Handled = true;
                     break;
             }

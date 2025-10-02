@@ -212,6 +212,7 @@ public partial class MainViewModel : ObservableObject
 
         AddToQueueCommand = new AsyncRelayCommand(AddToQueueAsync, CanAddToQueue);
         RemoveFromQueueCommand = new RelayCommand(RemoveFromQueue, CanRemoveFromQueue);
+        DeleteSelectedSongCommand = new RelayCommand(DeleteSelectedSong, CanDeleteSelectedSong);
         SearchArtistsCommand = new RelayCommand(() => ApplyArtistSearch(resetPage: true));
         SearchSongsCommand = new RelayCommand(() => UpdateFilteredSongs(resetPage: true));
 
@@ -230,6 +231,8 @@ public partial class MainViewModel : ObservableObject
     public IAsyncRelayCommand AddToQueueCommand { get; }
 
     public IRelayCommand RemoveFromQueueCommand { get; }
+
+    public IRelayCommand DeleteSelectedSongCommand { get; }
 
     public IRelayCommand ArtistsPreviousPageCommand => _artistsPreviousPageCommand;
 
@@ -435,6 +438,51 @@ public partial class MainViewModel : ObservableObject
     }
 
     private bool CanRemoveFromQueue() => SelectedQueuedSong is not null;
+
+    private void DeleteSelectedSong()
+    {
+        if (SelectedQueuedSong is null || SelectedQueuedSongIndex < 0)
+        {
+            return;
+        }
+
+        // Only allow deleting songs that haven't been played yet and aren't currently playing
+        // Songs at positions 0 to CurrentPlayingQueueIndex cannot be deleted
+        if (SelectedQueuedSongIndex <= CurrentPlayingQueueIndex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Cannot delete song at index {SelectedQueuedSongIndex} - it's at or before current playing index {CurrentPlayingQueueIndex}");
+            return;
+        }
+
+        try
+        {
+            var songToDelete = SelectedQueuedSong;
+            var deleteIndex = SelectedQueuedSongIndex;
+
+            System.Diagnostics.Debug.WriteLine($"Deleting song '{songToDelete.Title}' at index {deleteIndex}");
+
+            // Remove from playback service queue
+            _ = _playbackService.RemoveFromQueueAsync(songToDelete, CancellationToken.None);
+
+            // Remove from UI queue
+            _queueItems.RemoveAt(deleteIndex);
+            SelectedQueuedSong = null;
+            UpdateQueuePage();
+
+            System.Diagnostics.Debug.WriteLine($"Successfully deleted song at index {deleteIndex}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error deleting song: {ex.Message}");
+        }
+    }
+
+    private bool CanDeleteSelectedSong()
+    {
+        // Can only delete songs that are after the current playing song
+        return SelectedQueuedSong is not null
+            && SelectedQueuedSongIndex > CurrentPlayingQueueIndex;
+    }
 
     public async Task MoveQueuedSongUpAsync()
     {
@@ -706,12 +754,14 @@ public partial class MainViewModel : ObservableObject
     partial void OnSelectedQueuedSongChanged(SongDto? value)
     {
         RemoveFromQueueCommand.NotifyCanExecuteChanged();
+        DeleteSelectedSongCommand.NotifyCanExecuteChanged();
         // Note: Move operations are handled by event handlers, not commands
         // So no NotifyCanExecuteChanged() needed for moves
     }
 
     partial void OnSelectedQueuedSongIndexChanged(int value)
     {
+        DeleteSelectedSongCommand.NotifyCanExecuteChanged();
         // Notify UI that move operation availability may have changed
         // This will update button enabled states
         OnPropertyChanged(nameof(CanMoveQueuedSongUp));
@@ -739,6 +789,12 @@ public partial class MainViewModel : ObservableObject
     {
         CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
         OnPropertyChanged(nameof(Queue));
+        DeleteSelectedSongCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnCurrentPlayingQueueIndexChanged(int value)
+    {
+        DeleteSelectedSongCommand.NotifyCanExecuteChanged();
     }
 
     private void UpdateArtists()
