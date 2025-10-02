@@ -69,6 +69,8 @@ public sealed class SqliteLibraryRepository : ILibraryRepository, IDisposable
             await AddColumnIfNotExistsAsync(connection, "Songs", "Genre", "TEXT", cancellationToken).ConfigureAwait(false);
             await AddColumnIfNotExistsAsync(connection, "Songs", "Comment", "TEXT", cancellationToken).ConfigureAwait(false);
             await AddColumnIfNotExistsAsync(connection, "Songs", "Instrumental", "INTEGER NOT NULL DEFAULT 0", cancellationToken).ConfigureAwait(false);
+            await AddColumnIfNotExistsAsync(connection, "Songs", "loudness_lufs", "REAL DEFAULT -14.0", cancellationToken).ConfigureAwait(false);
+            await AddColumnIfNotExistsAsync(connection, "Songs", "gain_db", "REAL DEFAULT 0.0", cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -83,7 +85,7 @@ public sealed class SqliteLibraryRepository : ILibraryRepository, IDisposable
 
         using var command = connection.CreateCommand();
         command.CommandText =
-            "SELECT Id, RootName, RelativePath, Title, Artist, ChannelConfiguration, Priority, UpdatedAt, Language, Genre, Comment, Instrumental " +
+            "SELECT Id, RootName, RelativePath, Title, Artist, ChannelConfiguration, Priority, UpdatedAt, Language, Genre, Comment, Instrumental, loudness_lufs, gain_db " +
             "FROM Songs";
 
         var songs = new List<SongRecord>();
@@ -105,8 +107,8 @@ public sealed class SqliteLibraryRepository : ILibraryRepository, IDisposable
 
         using var command = connection.CreateCommand();
         command.CommandText =
-            "INSERT INTO Songs (Id, RootName, RelativePath, Title, Artist, ChannelConfiguration, Priority, UpdatedAt, Language, Genre, Comment, Instrumental) " +
-            "VALUES (@Id, @RootName, @RelativePath, @Title, @Artist, @ChannelConfiguration, @Priority, @UpdatedAt, @Language, @Genre, @Comment, @Instrumental) " +
+            "INSERT INTO Songs (Id, RootName, RelativePath, Title, Artist, ChannelConfiguration, Priority, UpdatedAt, Language, Genre, Comment, Instrumental, loudness_lufs, gain_db) " +
+            "VALUES (@Id, @RootName, @RelativePath, @Title, @Artist, @ChannelConfiguration, @Priority, @UpdatedAt, @Language, @Genre, @Comment, @Instrumental, @LoudnessLufs, @GainDb) " +
             "ON CONFLICT(Id) DO UPDATE SET " +
             "RootName = excluded.RootName, " +
             "RelativePath = excluded.RelativePath, " +
@@ -118,7 +120,9 @@ public sealed class SqliteLibraryRepository : ILibraryRepository, IDisposable
             "Language = excluded.Language, " +
             "Genre = excluded.Genre, " +
             "Comment = excluded.Comment, " +
-            "Instrumental = excluded.Instrumental;";
+            "Instrumental = excluded.Instrumental, " +
+            "loudness_lufs = excluded.loudness_lufs, " +
+            "gain_db = excluded.gain_db;";
 
         AddSongParameters(command, song);
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -182,7 +186,9 @@ public sealed class SqliteLibraryRepository : ILibraryRepository, IDisposable
             record.IsDBNull(8) ? null : record.GetString(8),
             record.IsDBNull(9) ? null : record.GetString(9),
             record.IsDBNull(10) ? null : record.GetString(10),
-            record.IsDBNull(11) ? 0 : record.GetInt32(11));
+            record.IsDBNull(11) ? 0 : record.GetInt32(11),
+            record.IsDBNull(12) ? -14.0 : record.GetDouble(12),
+            record.IsDBNull(13) ? 0.0 : record.GetDouble(13));
     }
 
     private static void AddSongParameters(SqliteCommand command, SongRecord song)
@@ -199,6 +205,8 @@ public sealed class SqliteLibraryRepository : ILibraryRepository, IDisposable
         command.Parameters.AddWithValue("@Genre", (object?)song.Genre ?? DBNull.Value);
         command.Parameters.AddWithValue("@Comment", (object?)song.Comment ?? DBNull.Value);
         command.Parameters.AddWithValue("@Instrumental", song.Instrumental);
+        command.Parameters.AddWithValue("@LoudnessLufs", song.LoudnessLufs);
+        command.Parameters.AddWithValue("@GainDb", song.GainDb);
     }
 
     private static async Task AddColumnIfNotExistsAsync(SqliteConnection connection, string tableName, string columnName, string columnType, CancellationToken cancellationToken)

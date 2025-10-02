@@ -117,7 +117,9 @@ public sealed class LibraryService : ILibraryService
             record.Language,
             record.Genre,
             record.Comment,
-            record.Instrumental);
+            record.Instrumental,
+            record.LoudnessLufs,
+            record.GainDb);
     }
 
     private static SongRecord ToSongRecord(SongDto song)
