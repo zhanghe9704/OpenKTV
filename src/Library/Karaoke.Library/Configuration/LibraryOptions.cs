@@ -51,4 +51,6 @@ public sealed class LibraryRootOptions
     public string? KeywordFormat { get; set; }
 
     public int Instrumental { get; set; } = 0;
+
+    public bool VolumeNormalization { get; set; } = false;
 }

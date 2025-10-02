@@ -17,6 +17,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILibraryConfigurationManager, JsonLibraryConfigurationManager>();
         services.AddSingleton<ILibraryRepository, SqliteLibraryRepository>();
         services.AddSingleton<ILibraryService, LibraryService>();
+        services.AddSingleton<ILoudnessAnalysisService, LoudnessAnalysisService>();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMediaPathParser, DirectoryStructureParser>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMediaPathParser, KeywordFileNameParser>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMediaPathParser, HyphenFileNameParser>());

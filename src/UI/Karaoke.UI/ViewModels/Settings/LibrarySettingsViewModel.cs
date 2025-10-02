@@ -99,7 +99,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
         Roots.Clear();
         foreach (var root in libraryOptions.Roots)
         {
-            Roots.Add(new LibraryRootItemViewModel(root.Name, root.Path, root.DefaultPriority, root.DefaultChannel, root.DriveOverride, root.KeywordFormat, root.Instrumental, shouldRescan: false));
+            Roots.Add(new LibraryRootItemViewModel(root.Name, root.Path, root.DefaultPriority, root.DefaultChannel, root.DriveOverride, root.KeywordFormat, root.Instrumental, shouldRescan: false, volumeNormalization: root.VolumeNormalization));
         }
         RescanAfterSave = false;
     }
@@ -146,6 +146,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
                         DriveOverride = string.IsNullOrWhiteSpace(root.DriveOverride) ? null : root.DriveOverride,
                         KeywordFormat = string.IsNullOrWhiteSpace(root.KeywordFormat) ? null : root.KeywordFormat,
                         Instrumental = root.GetInstrumental(),
+                        VolumeNormalization = root.VolumeNormalization,
                     })
                     .ToList()
             };

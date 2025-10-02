@@ -127,13 +127,15 @@ public class LibraryIngestionServiceTests
 
         var appEnvironment = new TestAppEnvironment(contentRoot);
         libraryService ??= new LibraryService(repository, NullLogger<LibraryService>.Instance, optionsMonitor, appEnvironment);
+        var loudnessAnalysisService = new MockLoudnessAnalysisService();
 
         return new LibraryIngestionService(
             parsers,
             repository,
             optionsMonitor,
             appEnvironment,
-            NullLogger<LibraryIngestionService>.Instance);
+            NullLogger<LibraryIngestionService>.Instance,
+            loudnessAnalysisService);
     }
 
     private static string GetRepositoryRoot()
@@ -193,6 +195,15 @@ public class LibraryIngestionServiceTests
                 "Stereo",
                 2);
             return true;
+        }
+    }
+
+    private sealed class MockLoudnessAnalysisService : ILoudnessAnalysisService
+    {
+        public Task<(double loudnessLufs, double gainDb)?> AnalyzeLoudnessAsync(string filePath, CancellationToken cancellationToken)
+        {
+            // Return null for tests to skip loudness analysis
+            return Task.FromResult<(double loudnessLufs, double gainDb)?>(null);
         }
     }
 }

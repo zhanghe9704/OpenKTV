@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Karaoke.Library")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+622b8715ab5de4ddfb29ff51cf3a7f83780c7185")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+729335a0d84df0beb1b3bbb4d2bb21d78882d227")]
 [assembly: System.Reflection.AssemblyProductAttribute("Karaoke.Library")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Karaoke.Library")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

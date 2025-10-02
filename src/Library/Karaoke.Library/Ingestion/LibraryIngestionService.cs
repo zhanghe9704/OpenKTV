@@ -34,6 +34,7 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
     private readonly IAppEnvironment _appEnvironment;
     private readonly ILogger<LibraryIngestionService> _logger;
     private readonly ILibraryRepository _repository;
+    private readonly ILoudnessAnalysisService _loudnessAnalysisService;
     private readonly HashSet<string> _extensionSet;
 
     public LibraryIngestionService(
@@ -41,19 +42,22 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
         ILibraryRepository repository,
         IOptionsMonitor<LibraryOptions> optionsMonitor,
         IAppEnvironment appEnvironment,
-        ILogger<LibraryIngestionService> logger)
+        ILogger<LibraryIngestionService> logger,
+        ILoudnessAnalysisService loudnessAnalysisService)
     {
         ArgumentNullException.ThrowIfNull(parsers);
         ArgumentNullException.ThrowIfNull(repository);
         ArgumentNullException.ThrowIfNull(optionsMonitor);
         ArgumentNullException.ThrowIfNull(appEnvironment);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(loudnessAnalysisService);
 
         _parsers = parsers;
         _repository = repository;
         _optionsMonitor = optionsMonitor;
         _appEnvironment = appEnvironment;
         _logger = logger;
+        _loudnessAnalysisService = loudnessAnalysisService;
         _extensionSet = new HashSet<string>(optionsMonitor.CurrentValue.SupportedExtensions, StringComparer.OrdinalIgnoreCase);
     }
 
@@ -123,6 +127,21 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
                 }
 
                 var songDto = ToSongDto(root, resolvedRoot, parsedMetadata);
+
+                // Perform loudness analysis if VolumeNormalization is enabled for this root
+                if (root.VolumeNormalization)
+                {
+                    var loudnessResult = await _loudnessAnalysisService.AnalyzeLoudnessAsync(songDto.MediaPath, cancellationToken).ConfigureAwait(false);
+                    if (loudnessResult.HasValue)
+                    {
+                        songDto = songDto with
+                        {
+                            LoudnessLufs = loudnessResult.Value.loudnessLufs,
+                            GainDb = loudnessResult.Value.gainDb
+                        };
+                    }
+                }
+
                 var songRecord = ToSongRecord(songDto);
                 await _repository.UpsertSongAsync(songRecord, cancellationToken).ConfigureAwait(false);
                 processed++;
@@ -260,6 +279,8 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
             song.Language,
             song.Genre,
             song.Comment,
-            song.Instrumental);
+            song.Instrumental,
+            song.LoudnessLufs,
+            song.GainDb);
     }
 }

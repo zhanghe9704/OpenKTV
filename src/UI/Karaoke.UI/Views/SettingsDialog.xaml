@@ -90,6 +90,11 @@
                                         IsChecked="{x:Bind ShouldRescan, Mode=TwoWay}"
                                         ToolTipService.ToolTip="Check to rescan this folder when saving changes" />
 
+                                    <CheckBox
+                                        Content="Volume normalization (analyze loudness with ffmpeg)"
+                                        IsChecked="{x:Bind VolumeNormalization, Mode=TwoWay}"
+                                        ToolTipService.ToolTip="Perform EBU R128 loudness analysis on all songs in this folder and store gain values for consistent playback volume" />
+
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="Name" FontWeight="SemiBold" />
                                         <TextBox Text="{x:Bind Name, Mode=TwoWay}" />
