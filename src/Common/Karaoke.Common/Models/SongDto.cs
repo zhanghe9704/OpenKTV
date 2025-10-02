@@ -11,5 +11,5 @@ public sealed record SongDto(
     string? Genre = null,
     string? Comment = null,
     int Instrumental = 0,
-    double LoudnessLufs = -14.0,
-    double GainDb = 0.0);
+    double? LoudnessLufs = null,
+    double? GainDb = null);

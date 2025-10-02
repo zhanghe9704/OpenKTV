@@ -208,7 +208,17 @@
                     ItemClick="OnSongItemClick"
                     ItemsSource="{x:Bind ViewModel.FilteredSongs, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedSong, Mode=TwoWay}"
-                    SelectionMode="Single">
+                    SelectionMode="Single"
+                    RightTapped="OnSongRightTapped">
+                    <ListView.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="View Details" Click="OnViewSongDetails">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="Document" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </ListView.ContextFlyout>
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Spacing="4" Padding="8">

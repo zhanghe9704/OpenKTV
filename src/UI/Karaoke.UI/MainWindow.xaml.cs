@@ -486,4 +486,40 @@ public sealed partial class MainWindow : Window
             }
         }
     }
+
+    private void OnSongRightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        // The context menu will automatically show
+        // This handler ensures the right-clicked item is selected
+        if (e.OriginalSource is FrameworkElement element)
+        {
+            var song = element.DataContext as SongDto;
+            if (song != null)
+            {
+                _viewModel.SelectedSong = song;
+            }
+        }
+    }
+
+    private async void OnViewSongDetails(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedSong == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var dialog = new SongDetailsDialog(_viewModel.SelectedSong)
+            {
+                XamlRoot = Content.XamlRoot
+            };
+
+            await dialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error showing song details: {ex}");
+        }
+    }
 }

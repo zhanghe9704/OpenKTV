@@ -69,8 +69,17 @@ public sealed class SqliteLibraryRepository : ILibraryRepository, IDisposable
             await AddColumnIfNotExistsAsync(connection, "Songs", "Genre", "TEXT", cancellationToken).ConfigureAwait(false);
             await AddColumnIfNotExistsAsync(connection, "Songs", "Comment", "TEXT", cancellationToken).ConfigureAwait(false);
             await AddColumnIfNotExistsAsync(connection, "Songs", "Instrumental", "INTEGER NOT NULL DEFAULT 0", cancellationToken).ConfigureAwait(false);
-            await AddColumnIfNotExistsAsync(connection, "Songs", "loudness_lufs", "REAL DEFAULT -14.0", cancellationToken).ConfigureAwait(false);
-            await AddColumnIfNotExistsAsync(connection, "Songs", "gain_db", "REAL DEFAULT 0.0", cancellationToken).ConfigureAwait(false);
+            await AddColumnIfNotExistsAsync(connection, "Songs", "loudness_lufs", "REAL", cancellationToken).ConfigureAwait(false);
+            await AddColumnIfNotExistsAsync(connection, "Songs", "gain_db", "REAL", cancellationToken).ConfigureAwait(false);
+
+            // Migration: Clear old default values for songs that weren't actually analyzed
+            // Old defaults were -14.0 and 0.0, which make songs appear normalized when they're not
+            using var migrationCommand = connection.CreateCommand();
+            migrationCommand.CommandText = @"
+                UPDATE Songs
+                SET loudness_lufs = NULL, gain_db = NULL
+                WHERE loudness_lufs = -14.0 AND gain_db = 0.0";
+            await migrationCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -187,8 +196,8 @@ public sealed class SqliteLibraryRepository : ILibraryRepository, IDisposable
             record.IsDBNull(9) ? null : record.GetString(9),
             record.IsDBNull(10) ? null : record.GetString(10),
             record.IsDBNull(11) ? 0 : record.GetInt32(11),
-            record.IsDBNull(12) ? -14.0 : record.GetDouble(12),
-            record.IsDBNull(13) ? 0.0 : record.GetDouble(13));
+            record.IsDBNull(12) ? null : record.GetDouble(12),
+            record.IsDBNull(13) ? null : record.GetDouble(13));
     }
 
     private static void AddSongParameters(SqliteCommand command, SongRecord song)
@@ -205,8 +214,8 @@ public sealed class SqliteLibraryRepository : ILibraryRepository, IDisposable
         command.Parameters.AddWithValue("@Genre", (object?)song.Genre ?? DBNull.Value);
         command.Parameters.AddWithValue("@Comment", (object?)song.Comment ?? DBNull.Value);
         command.Parameters.AddWithValue("@Instrumental", song.Instrumental);
-        command.Parameters.AddWithValue("@LoudnessLufs", song.LoudnessLufs);
-        command.Parameters.AddWithValue("@GainDb", song.GainDb);
+        command.Parameters.AddWithValue("@LoudnessLufs", (object?)song.LoudnessLufs ?? DBNull.Value);
+        command.Parameters.AddWithValue("@GainDb", (object?)song.GainDb ?? DBNull.Value);
     }
 
     private static async Task AddColumnIfNotExistsAsync(SqliteConnection connection, string tableName, string columnName, string columnType, CancellationToken cancellationToken)
