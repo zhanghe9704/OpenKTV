@@ -281,7 +281,8 @@
                     ItemsSource="{x:Bind ViewModel.Queue, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedQueuedSong, Mode=TwoWay}"
                     SelectedIndex="{x:Bind ViewModel.SelectedQueuedSongIndex, Mode=TwoWay}"
-                    SelectionMode="Single">
+                    SelectionMode="Single"
+                    RightTapped="OnQueueRightTapped">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Spacing="4" Padding="8">

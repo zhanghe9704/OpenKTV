@@ -522,4 +522,52 @@ public sealed partial class MainWindow : Window
             System.Diagnostics.Debug.WriteLine($"Error showing song details: {ex}");
         }
     }
+
+    private async void OnQueueRightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        // This handler ensures the right-clicked item is selected
+        // and only shows the context menu if the song is currently playing
+        if (e.OriginalSource is FrameworkElement element)
+        {
+            var song = element.DataContext as SongDto;
+            if (song != null)
+            {
+                _viewModel.SelectedQueuedSong = song;
+
+                // Check if this song is currently playing
+                var currentSong = await _viewModel.GetCurrentSongAsync();
+                if (currentSong != null && currentSong.Id == song.Id)
+                {
+                    // This is the currently playing song, show the context menu
+                    var flyout = new MenuFlyout();
+                    var menuItem = new MenuFlyoutItem
+                    {
+                        Text = "Set Track as Default",
+                        Icon = new SymbolIcon(Symbol.Pin)
+                    };
+                    menuItem.Click += OnSetTrackAsDefault;
+                    flyout.Items.Add(menuItem);
+
+                    flyout.ShowAt(element, e.GetPosition(element));
+                }
+            }
+        }
+    }
+
+    private async void OnSetTrackAsDefault(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedQueuedSong == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _viewModel.SetTrackAsDefaultAsync(_viewModel.SelectedQueuedSong);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error setting track as default: {ex}");
+        }
+    }
 }

@@ -1361,6 +1361,42 @@ public partial class MainViewModel : ObservableObject
             _nextExpectedPlayingIndex++;
         }
     }
+
+    public async Task<SongDto?> GetCurrentSongAsync()
+    {
+        return await _playbackService.GetCurrentAsync(CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task SetTrackAsDefaultAsync(SongDto queuedSong)
+    {
+        ArgumentNullException.ThrowIfNull(queuedSong);
+
+        // Get the currently playing song to check if it matches the queued song
+        var currentSong = await _playbackService.GetCurrentAsync(CancellationToken.None).ConfigureAwait(false);
+
+        if (currentSong == null)
+        {
+            // No song is currently playing
+            return;
+        }
+
+        // Check if the queued song is the currently playing song
+        if (currentSong.Id != queuedSong.Id)
+        {
+            // The queued song is not currently playing, so we can't get its track
+            return;
+        }
+
+        // Get the current instrumental value from the playing song
+        var currentInstrumental = currentSong.Instrumental;
+
+        // Update the song in the database with the current instrumental value
+        var updatedSong = queuedSong with { Instrumental = currentInstrumental };
+        await _libraryService.UpsertAsync(updatedSong, CancellationToken.None).ConfigureAwait(false);
+
+        // Reload the library to reflect the changes
+        await ReloadAsync(rescan: false, CancellationToken.None).ConfigureAwait(false);
+    }
 }
 
 
