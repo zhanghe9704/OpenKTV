@@ -107,6 +107,8 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
                 continue;
             }
 
+            _logger.LogInformation("[VolumeNormalization] Root: {RootName}, VolumeNormalization enabled: {Enabled}", root.Name, root.VolumeNormalization);
+
             var rootFilesScanned = 0;
             foreach (var file in Directory.EnumerateFiles(resolvedRoot, "*", SearchOption.AllDirectories))
             {
@@ -131,15 +133,26 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
                 // Perform loudness analysis if VolumeNormalization is enabled for this root
                 if (root.VolumeNormalization)
                 {
+                    _logger.LogInformation("[VolumeNormalization] Analyzing: {FilePath}", songDto.MediaPath);
                     var loudnessResult = await _loudnessAnalysisService.AnalyzeLoudnessAsync(songDto.MediaPath, cancellationToken).ConfigureAwait(false);
                     if (loudnessResult.HasValue)
                     {
+                        _logger.LogInformation("[VolumeNormalization] Result: {Loudness} LUFS, {Gain} dB gain for {FilePath}",
+                            loudnessResult.Value.loudnessLufs, loudnessResult.Value.gainDb, songDto.MediaPath);
                         songDto = songDto with
                         {
                             LoudnessLufs = loudnessResult.Value.loudnessLufs,
                             GainDb = loudnessResult.Value.gainDb
                         };
                     }
+                    else
+                    {
+                        _logger.LogWarning("[VolumeNormalization] Analysis failed for {FilePath}", songDto.MediaPath);
+                    }
+                }
+                else
+                {
+                    _logger.LogDebug("[VolumeNormalization] Skipping analysis for {FilePath} (normalization disabled)", songDto.MediaPath);
                 }
 
                 var songRecord = ToSongRecord(songDto);

@@ -199,6 +199,7 @@ public sealed class JsonLibraryConfigurationManager : ILibraryConfigurationManag
             DriveOverride = source.DriveOverride,
             KeywordFormat = source.KeywordFormat,
             Instrumental = source.Instrumental,
+            VolumeNormalization = source.VolumeNormalization,
         };
     }
 }

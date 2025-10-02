@@ -137,16 +137,20 @@ public partial class LibrarySettingsViewModel : ObservableObject
                     ShowPriority = ShowPriority
                 },
                 Roots = Roots
-                    .Select(root => new LibraryRootOptions
+                    .Select(root =>
                     {
-                        Name = root.Name,
-                        Path = root.Path,
-                        DefaultPriority = root.GetPriority(),
-                        DefaultChannel = root.DefaultChannel,
-                        DriveOverride = string.IsNullOrWhiteSpace(root.DriveOverride) ? null : root.DriveOverride,
-                        KeywordFormat = string.IsNullOrWhiteSpace(root.KeywordFormat) ? null : root.KeywordFormat,
-                        Instrumental = root.GetInstrumental(),
-                        VolumeNormalization = root.VolumeNormalization,
+                        System.Diagnostics.Debug.WriteLine($"SaveAsync: Root '{root.Name}' VolumeNormalization = {root.VolumeNormalization}");
+                        return new LibraryRootOptions
+                        {
+                            Name = root.Name,
+                            Path = root.Path,
+                            DefaultPriority = root.GetPriority(),
+                            DefaultChannel = root.DefaultChannel,
+                            DriveOverride = string.IsNullOrWhiteSpace(root.DriveOverride) ? null : root.DriveOverride,
+                            KeywordFormat = string.IsNullOrWhiteSpace(root.KeywordFormat) ? null : root.KeywordFormat,
+                            Instrumental = root.GetInstrumental(),
+                            VolumeNormalization = root.VolumeNormalization,
+                        };
                     })
                     .ToList()
             };

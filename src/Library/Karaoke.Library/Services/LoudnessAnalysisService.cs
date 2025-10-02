@@ -36,7 +36,7 @@ public sealed class LoudnessAnalysisService : ILoudnessAnalysisService
 
         try
         {
-            _logger.LogDebug("Starting loudness analysis for: {FilePath}", filePath);
+            _logger.LogInformation("[LoudnessAnalysis] Starting loudness analysis for: {FilePath}", filePath);
 
             var startInfo = new ProcessStartInfo
             {
@@ -47,6 +47,8 @@ public sealed class LoudnessAnalysisService : ILoudnessAnalysisService
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+
+            _logger.LogInformation("[LoudnessAnalysis] Executing: ffmpeg {Arguments}", startInfo.Arguments);
 
             using var process = new Process { StartInfo = startInfo };
             var stderrBuilder = new System.Text.StringBuilder();
@@ -82,36 +84,39 @@ public sealed class LoudnessAnalysisService : ILoudnessAnalysisService
 
             if (process.ExitCode != 0)
             {
-                _logger.LogWarning("ffmpeg exited with code {ExitCode} for file: {FilePath}", process.ExitCode, filePath);
+                _logger.LogWarning("[LoudnessAnalysis] ffmpeg exited with code {ExitCode} for file: {FilePath}", process.ExitCode, filePath);
                 return null;
             }
 
             var stderr = stderrBuilder.ToString();
+            _logger.LogDebug("[LoudnessAnalysis] ffmpeg stderr output length: {Length} chars", stderr.Length);
+
             var match = LoudnessRegex.Match(stderr);
 
             if (!match.Success)
             {
-                _logger.LogWarning("Could not parse loudness from ffmpeg output for: {FilePath}", filePath);
+                _logger.LogWarning("[LoudnessAnalysis] Could not parse loudness from ffmpeg output for: {FilePath}", filePath);
+                _logger.LogDebug("[LoudnessAnalysis] ffmpeg stderr: {Stderr}", stderr);
                 return null;
             }
 
             if (!double.TryParse(match.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var loudnessLufs))
             {
-                _logger.LogWarning("Failed to parse loudness value: {Value}", match.Groups[1].Value);
+                _logger.LogWarning("[LoudnessAnalysis] Failed to parse loudness value: {Value}", match.Groups[1].Value);
                 return null;
             }
 
             // Calculate gain needed to reach target loudness
             var gainDb = TargetLoudness - loudnessLufs;
 
-            _logger.LogInformation("Loudness analysis complete for {FilePath}: {Loudness} LUFS, gain: {Gain} dB",
+            _logger.LogInformation("[LoudnessAnalysis] SUCCESS: {FilePath}: {Loudness} LUFS, gain: {Gain} dB",
                 filePath, loudnessLufs, gainDb);
 
             return (loudnessLufs, gainDb);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error analyzing loudness for file: {FilePath}", filePath);
+            _logger.LogError(ex, "[LoudnessAnalysis] ERROR analyzing loudness for file: {FilePath}", filePath);
             return null;
         }
     }
