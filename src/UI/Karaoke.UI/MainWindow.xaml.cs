@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Karaoke.Common.Models;
+using Karaoke.Library.Services;
 using Karaoke.Player.Playback;
 using Karaoke.UI.ViewModels;
 using Karaoke.UI.ViewModels.Settings;
@@ -19,14 +20,16 @@ public sealed partial class MainWindow : Window
     private readonly MainViewModel _viewModel;
     private readonly LibrarySettingsViewModel _settingsViewModel;
     private readonly IPlaybackService _playbackService;
+    private readonly ILibraryService _libraryService;
     private readonly DispatcherTimer _currentSongRefreshTimer;
 
-    public MainWindow(MainViewModel viewModel, LibrarySettingsViewModel settingsViewModel, IPlaybackService playbackService)
+    public MainWindow(MainViewModel viewModel, LibrarySettingsViewModel settingsViewModel, IPlaybackService playbackService, ILibraryService libraryService)
     {
         InitializeComponent();
         _viewModel = viewModel;
         _settingsViewModel = settingsViewModel;
         _playbackService = playbackService;
+        _libraryService = libraryService;
 
         _currentSongRefreshTimer = new DispatcherTimer
         {
@@ -510,12 +513,16 @@ public sealed partial class MainWindow : Window
 
         try
         {
-            var dialog = new SongDetailsDialog(_viewModel.SelectedSong)
+            var dialog = new SongDetailsDialog(_viewModel.SelectedSong, _libraryService)
             {
                 XamlRoot = Content.XamlRoot
             };
 
             await dialog.ShowAsync();
+
+            // Always refresh the songs list when dialog closes
+            // User may have saved changes while in edit mode
+            _viewModel.SearchSongsCommand.Execute(null);
         }
         catch (Exception ex)
         {

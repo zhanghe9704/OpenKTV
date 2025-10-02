@@ -141,7 +141,9 @@ public sealed class LibraryService : ILibraryService
             song.Language,
             song.Genre,
             song.Comment,
-            song.Instrumental);
+            song.Instrumental,
+            song.LoudnessLufs,
+            song.GainDb);
     }
 
     private string ResolveMediaPath(string rootName, string relativePath)

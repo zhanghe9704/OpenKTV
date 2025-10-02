@@ -1,21 +1,166 @@
 using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Karaoke.Common.Models;
+using Karaoke.Library.Services;
 using Microsoft.UI;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 
 namespace Karaoke.UI.Views;
 
-public sealed partial class SongDetailsDialog : ContentDialog
+public sealed partial class SongDetailsDialog : ContentDialog, INotifyPropertyChanged
 {
-    public SongDetailsDialog(SongDto song)
+    private readonly ILibraryService _libraryService;
+    private bool _isEditMode;
+    private string _editedTitle;
+    private string _editedArtist;
+    private string? _editedLanguage;
+    private string? _editedGenre;
+    private string? _editedComment;
+    private double _editedPriority;
+    private double _editedInstrumental;
+
+    public SongDetailsDialog(SongDto song, ILibraryService libraryService)
     {
         Song = song ?? throw new ArgumentNullException(nameof(song));
+        _libraryService = libraryService ?? throw new ArgumentNullException(nameof(libraryService));
+
+        // Initialize edited values with current song values
+        _editedTitle = song.Title;
+        _editedArtist = song.Artist;
+        _editedLanguage = song.Language;
+        _editedGenre = song.Genre;
+        _editedComment = song.Comment;
+        _editedPriority = song.Priority;
+        _editedInstrumental = song.Instrumental;
+
         InitializeComponent();
     }
 
     public SongDto Song { get; }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    public bool IsEditMode
+    {
+        get => _isEditMode;
+        set
+        {
+            if (_isEditMode != value)
+            {
+                _isEditMode = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsViewMode));
+                OnPropertyChanged(nameof(PrimaryButtonText));
+                OnPropertyChanged(nameof(SecondaryButtonText));
+            }
+        }
+    }
+
+    public Visibility IsViewMode => IsEditMode ? Visibility.Collapsed : Visibility.Visible;
+
+    public new string PrimaryButtonText => IsEditMode ? "Save" : "Edit";
+
+    public new string SecondaryButtonText => IsEditMode ? "Cancel" : "";
+
+    public string EditedTitle
+    {
+        get => _editedTitle;
+        set
+        {
+            if (_editedTitle != value)
+            {
+                _editedTitle = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string EditedArtist
+    {
+        get => _editedArtist;
+        set
+        {
+            if (_editedArtist != value)
+            {
+                _editedArtist = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string? EditedLanguage
+    {
+        get => _editedLanguage;
+        set
+        {
+            if (_editedLanguage != value)
+            {
+                _editedLanguage = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string? EditedGenre
+    {
+        get => _editedGenre;
+        set
+        {
+            if (_editedGenre != value)
+            {
+                _editedGenre = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string? EditedComment
+    {
+        get => _editedComment;
+        set
+        {
+            if (_editedComment != value)
+            {
+                _editedComment = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public double EditedPriority
+    {
+        get => _editedPriority;
+        set
+        {
+            if (Math.Abs(_editedPriority - value) > 0.001)
+            {
+                _editedPriority = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public double EditedInstrumental
+    {
+        get => _editedInstrumental;
+        set
+        {
+            if (Math.Abs(_editedInstrumental - value) > 0.001)
+            {
+                _editedInstrumental = value;
+                OnPropertyChanged();
+            }
+        }
+    }
 
     public string LoudnessText => Song.LoudnessLufs.HasValue
         ? $"{Song.LoudnessLufs.Value:F1}"
@@ -59,5 +204,135 @@ public sealed partial class SongDetailsDialog : ContentDialog
 
             return new SolidColorBrush(Colors.LightBlue);
         }
+    }
+
+    private async void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    {
+        if (!IsEditMode)
+        {
+            // Switch to edit mode
+            IsEditMode = true;
+            args.Cancel = true; // Prevent dialog from closing
+        }
+        else
+        {
+            // Save changes
+            var deferral = args.GetDeferral();
+            args.Cancel = true; // Always prevent dialog from closing - only Close button should close
+            try
+            {
+                if (!ValidateInput())
+                {
+                    return;
+                }
+
+                // Create updated song DTO
+                var updatedSong = Song with
+                {
+                    Title = EditedTitle.Trim(),
+                    Artist = EditedArtist.Trim(),
+                    Language = string.IsNullOrWhiteSpace(EditedLanguage) ? null : EditedLanguage.Trim(),
+                    Genre = string.IsNullOrWhiteSpace(EditedGenre) ? null : EditedGenre.Trim(),
+                    Comment = string.IsNullOrWhiteSpace(EditedComment) ? null : EditedComment.Trim(),
+                    Priority = (int)EditedPriority,
+                    Instrumental = (int)EditedInstrumental
+                };
+
+                System.Diagnostics.Debug.WriteLine($"[SongDetailsDialog] Saving song: {updatedSong.Id}");
+                System.Diagnostics.Debug.WriteLine($"[SongDetailsDialog] Title: '{updatedSong.Title}', Artist: '{updatedSong.Artist}'");
+                System.Diagnostics.Debug.WriteLine($"[SongDetailsDialog] Priority: {updatedSong.Priority}, Instrumental: {updatedSong.Instrumental}");
+
+                await _libraryService.UpsertAsync(updatedSong, System.Threading.CancellationToken.None);
+
+                System.Diagnostics.Debug.WriteLine($"[SongDetailsDialog] Save completed successfully");
+
+                // Show success message
+                await ShowSuccessDialog("Changes saved successfully!");
+
+                // Stay in edit mode so user can continue editing or click Close to exit
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialog("Failed to save changes", ex.Message);
+            }
+            finally
+            {
+                deferral.Complete();
+            }
+        }
+    }
+
+    private void OnSecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    {
+        if (IsEditMode)
+        {
+            // Cancel edit mode - revert to original values
+            EditedTitle = Song.Title;
+            EditedArtist = Song.Artist;
+            EditedLanguage = Song.Language;
+            EditedGenre = Song.Genre;
+            EditedComment = Song.Comment;
+            EditedPriority = Song.Priority;
+            EditedInstrumental = Song.Instrumental;
+
+            IsEditMode = false;
+            args.Cancel = true; // Prevent dialog from closing
+        }
+    }
+
+    private bool ValidateInput()
+    {
+        // Title and Artist are required
+        if (string.IsNullOrWhiteSpace(EditedTitle))
+        {
+            _ = ShowErrorDialog("Validation Error", "Title cannot be empty.");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(EditedArtist))
+        {
+            _ = ShowErrorDialog("Validation Error", "Artist cannot be empty.");
+            return false;
+        }
+
+        // Priority should be between 1 and 10
+        if (EditedPriority < 1 || EditedPriority > 10)
+        {
+            _ = ShowErrorDialog("Validation Error", "Priority must be between 1 and 10.");
+            return false;
+        }
+
+        // Instrumental should be 0 or 1
+        if (EditedInstrumental < 0 || EditedInstrumental > 1 || EditedInstrumental != Math.Floor(EditedInstrumental))
+        {
+            _ = ShowErrorDialog("Validation Error", "Channel/Track must be 0 (Vocal) or 1 (Instrumental).");
+            return false;
+        }
+
+        return true;
+    }
+
+    private async System.Threading.Tasks.Task ShowErrorDialog(string title, string message)
+    {
+        var errorDialog = new ContentDialog
+        {
+            Title = title,
+            Content = message,
+            CloseButtonText = "OK",
+            XamlRoot = this.XamlRoot
+        };
+        await errorDialog.ShowAsync();
+    }
+
+    private async System.Threading.Tasks.Task ShowSuccessDialog(string message)
+    {
+        var successDialog = new ContentDialog
+        {
+            Title = "Success",
+            Content = message,
+            CloseButtonText = "OK",
+            XamlRoot = this.XamlRoot
+        };
+        await successDialog.ShowAsync();
     }
 }

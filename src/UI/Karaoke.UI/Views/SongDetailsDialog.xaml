@@ -6,6 +6,10 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Title="Song Details"
+    PrimaryButtonText="{x:Bind PrimaryButtonText, Mode=OneWay}"
+    PrimaryButtonClick="OnPrimaryButtonClick"
+    SecondaryButtonText="{x:Bind SecondaryButtonText, Mode=OneWay}"
+    SecondaryButtonClick="OnSecondaryButtonClick"
     CloseButtonText="Close"
     DefaultButton="Close"
     Width="700"
@@ -31,19 +35,34 @@
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Title:" FontWeight="SemiBold" />
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind Song.Title, Mode=OneWay}" TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind Song.Title, Mode=OneWay}" TextWrapping="Wrap"
+                               Visibility="{x:Bind IsViewMode, Mode=OneWay}" />
+                    <TextBox Grid.Row="0" Grid.Column="1" x:Name="TitleTextBox" Text="{x:Bind EditedTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{x:Bind IsEditMode, Mode=OneWay}" />
 
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Artist:" FontWeight="SemiBold" />
-                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind Song.Artist, Mode=OneWay}" TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind Song.Artist, Mode=OneWay}" TextWrapping="Wrap"
+                               Visibility="{x:Bind IsViewMode, Mode=OneWay}" />
+                    <TextBox Grid.Row="1" Grid.Column="1" x:Name="ArtistTextBox" Text="{x:Bind EditedArtist, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{x:Bind IsEditMode, Mode=OneWay}" />
 
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Language:" FontWeight="SemiBold" />
-                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{x:Bind Song.Language, Mode=OneWay}" TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{x:Bind Song.Language, Mode=OneWay}" TextWrapping="Wrap"
+                               Visibility="{x:Bind IsViewMode, Mode=OneWay}" />
+                    <TextBox Grid.Row="2" Grid.Column="1" x:Name="LanguageTextBox" Text="{x:Bind EditedLanguage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{x:Bind IsEditMode, Mode=OneWay}" />
 
                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Genre:" FontWeight="SemiBold" />
-                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{x:Bind Song.Genre, Mode=OneWay}" TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{x:Bind Song.Genre, Mode=OneWay}" TextWrapping="Wrap"
+                               Visibility="{x:Bind IsViewMode, Mode=OneWay}" />
+                    <TextBox Grid.Row="3" Grid.Column="1" x:Name="GenreTextBox" Text="{x:Bind EditedGenre, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{x:Bind IsEditMode, Mode=OneWay}" />
 
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Comment:" FontWeight="SemiBold" />
-                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{x:Bind Song.Comment, Mode=OneWay}" TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{x:Bind Song.Comment, Mode=OneWay}" TextWrapping="Wrap"
+                               Visibility="{x:Bind IsViewMode, Mode=OneWay}" />
+                    <TextBox Grid.Row="4" Grid.Column="1" x:Name="CommentTextBox" Text="{x:Bind EditedComment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{x:Bind IsEditMode, Mode=OneWay}" />
 
                     <TextBlock Grid.Row="5" Grid.Column="0" Text="Song ID:" FontWeight="SemiBold" />
                     <TextBlock Grid.Row="5" Grid.Column="1" Text="{x:Bind Song.Id, Mode=OneWay}" TextWrapping="Wrap"
@@ -67,12 +86,24 @@
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Priority:" FontWeight="SemiBold" />
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind Song.Priority, Mode=OneWay}" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind Song.Priority, Mode=OneWay}"
+                               Visibility="{x:Bind IsViewMode, Mode=OneWay}" />
+                    <NumberBox Grid.Row="0" Grid.Column="1" x:Name="PriorityNumberBox" Value="{x:Bind EditedPriority, Mode=TwoWay}"
+                               SpinButtonPlacementMode="Inline" Minimum="1" Maximum="10"
+                               Visibility="{x:Bind IsEditMode, Mode=OneWay}" />
 
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Channel/Track:" FontWeight="SemiBold" />
-                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                                Visibility="{x:Bind IsViewMode, Mode=OneWay}">
                         <TextBlock Text="{x:Bind Song.Instrumental, Mode=OneWay}" />
                         <TextBlock Text="(0 = Vocal, 1 = Instrumental)"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                                Visibility="{x:Bind IsEditMode, Mode=OneWay}">
+                        <NumberBox x:Name="InstrumentalNumberBox" Value="{x:Bind EditedInstrumental, Mode=TwoWay}"
+                                   SpinButtonPlacementMode="Inline" Minimum="0" Maximum="1" Width="120" />
+                        <TextBlock Text="(0 = Vocal, 1 = Instrumental)" VerticalAlignment="Center"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" />
                     </StackPanel>
 

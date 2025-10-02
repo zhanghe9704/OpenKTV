@@ -830,6 +830,11 @@ D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\x64\Debug\net8.0-windows10.0.19041.0\
 D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\x64\Debug\net8.0-windows10.0.19041.0\libvlc\win-x64\plugins\visualization\libgoom_plugin.dll
 D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\x64\Debug\net8.0-windows10.0.19041.0\libvlc\win-x64\plugins\visualization\libprojectm_plugin.dll
 D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\x64\Debug\net8.0-windows10.0.19041.0\libvlc\win-x64\plugins\visualization\libvisual_plugin.dll
+D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\x64\Debug\net8.0-windows10.0.19041.0\Views\SongDetailsDialog.xbf
+D:\Work\Code\karaoke\src\UI\Karaoke.UI\obj\x64\Debug\net8.0-windows10.0.19041.0\Views\SongDetailsDialog.g.i.cs
+D:\Work\Code\karaoke\src\UI\Karaoke.UI\obj\x64\Debug\net8.0-windows10.0.19041.0\Views\SongDetailsDialog.g.cs
+D:\Work\Code\karaoke\src\UI\Karaoke.UI\obj\x64\Debug\net8.0-windows10.0.19041.0\Views\SongDetailsDialog.xaml
+D:\Work\Code\karaoke\src\UI\Karaoke.UI\obj\x64\Debug\net8.0-windows10.0.19041.0\Views\SongDetailsDialog.xbf
 D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\x64\Debug\net8.0-windows10.0.19041.0\libvlc\win-x86\libvlc.dll
 D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\x64\Debug\net8.0-windows10.0.19041.0\libvlc\win-x86\libvlc.lib
 D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\x64\Debug\net8.0-windows10.0.19041.0\libvlc\win-x86\libvlccore.dll

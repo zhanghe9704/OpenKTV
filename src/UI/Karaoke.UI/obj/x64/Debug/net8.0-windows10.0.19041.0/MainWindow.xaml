@@ -16,55 +16,55 @@
                 FontSize="24"
                 HorizontalAlignment="Center" />
             <CommandBar DefaultLabelPosition="Right" IsOpen="False">
-                <AppBarButton x:ConnectionId='28' Icon="Setting" Label="Settings (s)"                          >
+                <AppBarButton x:ConnectionId='29' Icon="Setting" Label="Settings (s)"                          >
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="S" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
                 <AppBarSeparator />
-                <AppBarButton x:ConnectionId='29' Icon="Play" Label="Play (p)"                      >
+                <AppBarButton x:ConnectionId='30' Icon="Play" Label="Play (p)"                      >
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="P" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton x:ConnectionId='30' Icon="Pause" Label="Pause (SPACE)"                       >
+                <AppBarButton x:ConnectionId='31' Icon="Pause" Label="Pause (SPACE)"                       >
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Key="Space" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton x:ConnectionId='31' Icon="Stop" Label="Stop (ESP)"                      >
+                <AppBarButton x:ConnectionId='32' Icon="Stop" Label="Stop (ESP)"                      >
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Key="Escape" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton x:ConnectionId='32' Icon="Next" Label="Next (n)"                      >
+                <AppBarButton x:ConnectionId='33' Icon="Next" Label="Next (n)"                      >
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="N" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton x:ConnectionId='33' Icon="RepeatOne" Label="Repeat (n)"                        >
+                <AppBarButton x:ConnectionId='34' Icon="RepeatOne" Label="Repeat (n)"                        >
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="R" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton x:ConnectionId='34' Icon="Volume" Label="Vocal (v)"                       >
+                <AppBarButton x:ConnectionId='35' Icon="Volume" Label="Vocal (v)"                       >
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="V" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
                 <AppBarSeparator />
-                <AppBarButton x:ConnectionId='35' Icon="FullScreen" Label="Full Screen (f)"                            >
+                <AppBarButton x:ConnectionId='36' Icon="FullScreen" Label="Full Screen (f)"                            >
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="F" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
                 <AppBarSeparator />
-                <AppBarButton x:ConnectionId='36' Icon="Up" Label="Up (up)"                        >
+                <AppBarButton x:ConnectionId='37' Icon="Up" Label="Up (up)"                        >
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="Up" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton x:ConnectionId='37' Label="Down (dn)"                          >
+                <AppBarButton x:ConnectionId='38' Label="Down (dn)"                          >
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="Down" />
                     </AppBarButton.KeyboardAccelerators>
@@ -79,7 +79,7 @@
                         </SymbolIcon>
                     </AppBarButton.Icon>
                 </AppBarButton>
-              <AppBarButton x:ConnectionId='38' Label="Top (lf)"                         >
+              <AppBarButton x:ConnectionId='39' Label="Top (lf)"                         >
                 <AppBarButton.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Control" Key="Left" />
                 </AppBarButton.KeyboardAccelerators>
@@ -94,7 +94,7 @@
                   </SymbolIcon>
                 </AppBarButton.Icon>
               </AppBarButton>
-                <AppBarButton x:ConnectionId='39' Label="Bottom (rt)"                            >
+                <AppBarButton x:ConnectionId='40' Label="Bottom (rt)"                            >
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="Right" />
                     </AppBarButton.KeyboardAccelerators>
@@ -110,13 +110,13 @@
                     </AppBarButton.Icon>
                 </AppBarButton>
                 <AppBarSeparator />
-                <AppBarButton x:ConnectionId='40' Icon="Delete" Label="Delete (Ctrl+D)"                        >
+                <AppBarButton x:ConnectionId='41' Icon="Delete" Label="Delete (Ctrl+D)"                        >
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="D" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
             </CommandBar>
-            <ProgressRing x:ConnectionId='27'
+            <ProgressRing x:ConnectionId='28'
                 HorizontalAlignment="Right"
                                                                     
                                                                               
@@ -142,15 +142,15 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBox x:ConnectionId='25'
+                    <TextBox x:ConnectionId='26'
                         Grid.Column="0"
                                                                                                                     
                         PlaceholderText="Search artists" />
-                    <Button x:ConnectionId='26' Grid.Column="1"                                                   Padding="12,0">
+                    <Button x:ConnectionId='27' Grid.Column="1"                                                   Padding="12,0">
                         <SymbolIcon Symbol="Find" />
                     </Button>
                 </Grid>
-                <ListView x:ConnectionId='20'
+                <ListView x:ConnectionId='21'
                     Grid.Row="2"
                                                                          
                                                                                  
@@ -162,20 +162,20 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Button x:ConnectionId='21' Grid.Column="0"                                                        >
+                    <Button x:ConnectionId='22' Grid.Column="0"                                                        >
                         <SymbolIcon Symbol="Back" />
                     </Button>
-                    <NumberBox x:ConnectionId='22'
+                    <NumberBox x:ConnectionId='23'
                         Grid.Column="1"
                         Width="40"
                         Minimum="1"
                                                                                    
                                                                                  
                         SpinButtonPlacementMode="Hidden" />
-                    <Button x:ConnectionId='23' Grid.Column="2"                                                    >
+                    <Button x:ConnectionId='24' Grid.Column="2"                                                    >
                         <SymbolIcon Symbol="Forward" />
                     </Button>
-                    <TextBlock x:ConnectionId='24'
+                    <TextBlock x:ConnectionId='25'
                         Grid.Column="3"
                                                                                  
                         VerticalAlignment="Center" />
@@ -194,11 +194,11 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBox x:ConnectionId='18'
+                    <TextBox x:ConnectionId='19'
                         Grid.Column="0"
                                                                                                                   
                         PlaceholderText="Search songs" />
-                    <Button x:ConnectionId='19' Grid.Column="1"                                                 Padding="12,0">
+                    <Button x:ConnectionId='20' Grid.Column="1"                                                 Padding="12,0">
                         <SymbolIcon Symbol="Find" />
                     </Button>
                 </Grid>
@@ -208,7 +208,17 @@
                                                
                                                                                
                                                                                
-                    SelectionMode="Single">
+                    SelectionMode="Single"
+                                                   >
+                    <ListView.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem x:ConnectionId='17' Text="View Details"                          >
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="Document" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </ListView.ContextFlyout>
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Spacing="4" Padding="8">
@@ -271,7 +281,8 @@
                                                                        
                                                                                      
                                                                                            
-                    SelectionMode="Single">
+                    SelectionMode="Single"
+                                                    >
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Spacing="4" Padding="8">
