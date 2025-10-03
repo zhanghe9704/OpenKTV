@@ -1234,6 +1234,17 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             if (_waveIn != null)
             {
                 _waveIn.StopRecording();
+
+                // Wait a bit for the RecordingStopped event to complete
+                System.Threading.Thread.Sleep(100);
+
+                // Ensure writer is disposed and flushed
+                _waveWriter?.Dispose();
+                _waveWriter = null;
+
+                _waveIn?.Dispose();
+                _waveIn = null;
+
                 _logger.LogInformation("Stopped recording: {Path}", _currentRecordingPath);
             }
         }
