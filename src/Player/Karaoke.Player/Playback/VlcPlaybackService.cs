@@ -1104,7 +1104,22 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             return Task.CompletedTask;
         }
 
-        _mediaPlayer.Volume = clampedVolume;
+        // If a song is currently playing and normalization is enabled, re-apply normalization with the new base volume
+        if (_currentSong != null && _volumeNormalizationEnabled && _currentSong.GainDb.HasValue)
+        {
+            var gainDb = _currentSong.GainDb.Value;
+            var gainLinear = Math.Pow(10.0, gainDb / 20.0);
+            var normalizedVolume = (int)Math.Round(clampedVolume * gainLinear);
+            normalizedVolume = Math.Clamp(normalizedVolume, 0, 100);
+
+            _mediaPlayer.Volume = normalizedVolume;
+            _logger.LogInformation("Volume changed during playback - Re-applying normalization: GainDb={GainDb}, BaseVolume={BaseVolume}, NormalizedVolume={NormalizedVolume}",
+                gainDb, clampedVolume, normalizedVolume);
+        }
+        else
+        {
+            _mediaPlayer.Volume = clampedVolume;
+        }
 
         VolumeChanged?.Invoke(this, clampedVolume);
 
