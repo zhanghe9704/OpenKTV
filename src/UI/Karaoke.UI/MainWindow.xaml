@@ -31,7 +31,8 @@
                     <TextBlock Grid.Column="0"
                                Text="Volume:"
                                VerticalAlignment="Center"
-                               Margin="0,0,8,0" />
+                               Margin="0,0,8,0"
+                               FontSize="12" />
 
                     <Slider x:Name="VolumeSlider"
                             Grid.Column="1"
@@ -46,7 +47,8 @@
                     <TextBlock Grid.Column="2"
                                VerticalAlignment="Center"
                                Margin="8,0,16,0"
-                               MinWidth="40">
+                               MinWidth="40"
+                               FontSize="12">
                       <Run Text="{x:Bind VolumeSlider.Value, Mode=OneWay}" />
                       <Run Text="%" />
                     </TextBlock>
@@ -58,7 +60,8 @@
                               Checked="OnVolumeNormChanged"
                               Unchecked="OnVolumeNormChanged"
                               VerticalAlignment="Center"
-                              Margin="0,0,8,0">
+                              Margin="0,0,8,0"
+                              FontSize="12">
                       <CheckBox.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="V" />
                       </CheckBox.KeyboardAccelerators>
