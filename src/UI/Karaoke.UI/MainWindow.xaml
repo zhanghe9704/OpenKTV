@@ -38,12 +38,12 @@
                           Grid.Column="1"
                           Minimum="0"
                           Maximum="100"
-                          Value="100"
+                          Value="60"
                           TickFrequency="10"
                           TickPlacement="BottomRight"
                           ValueChanged="OnVolumeChanged"
                           VerticalAlignment="Center"
-                          Height="32" 
+                          Height="32"
                           Width="100"/>
 
                   <TextBlock Grid.Column="2"
