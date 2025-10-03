@@ -17,64 +17,66 @@
                 HorizontalAlignment="Center" />
 
             <CommandBar DefaultLabelPosition="Right" IsOpen="False">
-                <!-- Volume Control -->
-                <CommandBar.Content>
-                  <Grid Margin="0,4,0,0">
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="Auto" />
-                      <ColumnDefinition Width="200" />
-                      <ColumnDefinition Width="Auto" />
-                      <ColumnDefinition Width="Auto" />
-                      <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+              <!-- Volume Control -->
+              <CommandBar.Content>
+                <Grid Margin="0,4,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0"
-                               Text="Volume:"
-                               VerticalAlignment="Center"
-                               Margin="0,0,8,0"
-                               FontSize="12" />
+                  <TextBlock Grid.Column="0"
+                             Text="Volume:"
+                             VerticalAlignment="Center"
+                             Margin="0,0,8,0"
+                             FontSize="12" />
 
-                    <Slider x:Name="VolumeSlider"
-                            Grid.Column="1"
-                            Minimum="0"
-                            Maximum="100"
-                            Value="100"
-                            TickFrequency="10"
-                            TickPlacement="BottomRight"
-                            ValueChanged="OnVolumeChanged"
+                  <Slider x:Name="VolumeSlider"
+                          Grid.Column="1"
+                          Minimum="0"
+                          Maximum="100"
+                          Value="100"
+                          TickFrequency="10"
+                          TickPlacement="BottomRight"
+                          ValueChanged="OnVolumeChanged"
+                          VerticalAlignment="Center"
+                          Height="32" 
+                          Width="100"/>
+
+                  <TextBlock Grid.Column="2"
+                             VerticalAlignment="Center"
+                             Margin="8,0,16,0"
+                             MinWidth="40"
+                             FontSize="12">
+                    <Run Text="{x:Bind VolumeSlider.Value, Mode=OneWay}" />
+                    <Run Text="%" />
+                  </TextBlock>
+
+                  <CheckBox x:Name="VolumeNormCheckBox"
+                            Grid.Column="3"
+                            Content="Volume Norm (o)"
+                            IsChecked="True"
+                            Checked="OnVolumeNormChanged"
+                            Unchecked="OnVolumeNormChanged"
                             VerticalAlignment="Center"
-                            Height="20" />
-
-                    <TextBlock Grid.Column="2"
-                               VerticalAlignment="Center"
-                               Margin="8,0,16,0"
-                               MinWidth="40"
-                               FontSize="12">
-                      <Run Text="{x:Bind VolumeSlider.Value, Mode=OneWay}" />
-                      <Run Text="%" />
-                    </TextBlock>
-
-                    <CheckBox x:Name="VolumeNormCheckBox"
-                              Grid.Column="3"
-                              Content="Volume Norm (o)"
-                              IsChecked="True"
-                              Checked="OnVolumeNormChanged"
-                              Unchecked="OnVolumeNormChanged"
-                              VerticalAlignment="Center"
-                              Margin="0,0,8,0"
-                              FontSize="12"
-                              MinWidth="0"
-                              MinHeight="0"
-                              RenderTransformOrigin="0.5,0.5">
-                      <CheckBox.RenderTransform>
-                        <ScaleTransform ScaleX="0.85" ScaleY="0.85" />
-                      </CheckBox.RenderTransform>
-                      <CheckBox.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Control" Key="O" />
-                      </CheckBox.KeyboardAccelerators>
-                    </CheckBox>
-                  </Grid>
-                </CommandBar.Content>
+                            Margin="0,0,8,0"
+                            FontSize="14"
+                            MinWidth="0"
+                            MinHeight="0"
+                            RenderTransformOrigin="0.5,0.5">
+                    <CheckBox.RenderTransform>
+                      <ScaleTransform ScaleX="0.85" ScaleY="0.85" />
+                    </CheckBox.RenderTransform>
+                    <CheckBox.KeyboardAccelerators>
+                      <KeyboardAccelerator Modifiers="Control" Key="O" />
+                    </CheckBox.KeyboardAccelerators>
+                  </CheckBox>
+                </Grid>
+              </CommandBar.Content>
+              
                 <AppBarButton Icon="Setting" Label="Settings (s)" Click="OnSettingsClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="S" />
