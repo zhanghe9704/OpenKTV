@@ -1213,52 +1213,14 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _systemAudioCapture = new NAudio.Wave.WasapiLoopbackCapture();
             var systemFormat = _systemAudioCapture.WaveFormat;
 
-            // Try to initialize microphone capture
-            bool micAvailable = false;
-            try
-            {
-                _micCapture = new NAudio.Wave.WaveIn();
-                _micCapture.WaveFormat = new NAudio.Wave.WaveFormat(
-                    systemFormat.SampleRate,
-                    systemFormat.BitsPerSample,
-                    systemFormat.Channels);
-                _micCapture.BufferMilliseconds = 100;
-
-                micAvailable = true;
-                _logger.LogInformation("Microphone initialized for recording");
-            }
-            catch (Exception micEx)
-            {
-                _logger.LogWarning(micEx, "Failed to initialize microphone, recording system audio only");
-                _micCapture?.Dispose();
-                _micCapture = null;
-            }
-
             // Create wave writer with system audio format
             _waveWriter = new NAudio.Wave.WaveFileWriter(_currentRecordingPath, systemFormat);
 
-            if (micAvailable && _micCapture != null)
-            {
-                // Both system audio and mic - set up mixing
-                _systemAudioBuffer = new byte[systemFormat.SampleRate * systemFormat.BlockAlign];
-                _micAudioBuffer = new byte[systemFormat.SampleRate * systemFormat.BlockAlign];
-                _systemAudioBufferPosition = 0;
-                _micAudioBufferPosition = 0;
-
-                _systemAudioCapture.DataAvailable += OnSystemAudioDataAvailableWithMic;
-                _micCapture.DataAvailable += OnMicAudioDataAvailable;
-
-                _systemAudioCapture.StartRecording();
-                _micCapture.StartRecording();
-                _logger.LogInformation("Started recording with microphone to: {Path}", _currentRecordingPath);
-            }
-            else
-            {
-                // System audio only
-                _systemAudioCapture.DataAvailable += OnSystemAudioDataAvailableOnly;
-                _systemAudioCapture.StartRecording();
-                _logger.LogInformation("Started recording (system audio only) to: {Path}", _currentRecordingPath);
-            }
+            // For now, only record system audio (loopback)
+            // Microphone mixing requires more complex implementation
+            _systemAudioCapture.DataAvailable += OnSystemAudioDataAvailableOnly;
+            _systemAudioCapture.StartRecording();
+            _logger.LogInformation("Started recording to: {Path}", _currentRecordingPath);
         }
         catch (Exception ex)
         {
@@ -1340,13 +1302,20 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         if (_systemAudioBuffer == null || _micAudioBuffer == null || _waveWriter == null)
             return;
 
-        // We need at least 1KB of system audio to proceed
-        if (_systemAudioBufferPosition < 1024)
+        // We need at least some data to proceed
+        if (_systemAudioBufferPosition < 100)
             return;
 
-        // Calculate how much we can mix based on system audio
-        // (mic buffer might be empty/silent, that's OK)
-        int bytesToMix = _systemAudioBufferPosition;
+        // Calculate how much we should mix this time
+        // Process the minimum of what we have, up to a reasonable chunk size
+        int maxChunkSize = 8192; // 8KB chunks
+        int bytesToMix = Math.Min(_systemAudioBufferPosition, maxChunkSize);
+
+        // If we have mic data, don't exceed what mic has available (to keep them synced)
+        if (_micAudioBufferPosition > 0)
+        {
+            bytesToMix = Math.Min(bytesToMix, _micAudioBufferPosition);
+        }
 
         // Round down to nearest sample boundary
         int bytesPerSample = _waveWriter.WaveFormat.BlockAlign;
@@ -1365,7 +1334,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             {
                 short sample1 = BitConverter.ToInt16(_systemAudioBuffer, i);
                 // Use mic audio if available, otherwise use silence (0)
-                short sample2 = (i < _micAudioBufferPosition) ? BitConverter.ToInt16(_micAudioBuffer, i) : (short)0;
+                short sample2 = (i + 1 < _micAudioBufferPosition) ? BitConverter.ToInt16(_micAudioBuffer, i) : (short)0;
                 int mixed = sample1 + sample2;
                 mixed = Math.Clamp(mixed, short.MinValue, short.MaxValue);
                 BitConverter.TryWriteBytes(new Span<byte>(mixedBuffer, i, 2), (short)mixed);
@@ -1378,7 +1347,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             {
                 float sample1 = BitConverter.ToSingle(_systemAudioBuffer, i);
                 // Use mic audio if available, otherwise use silence (0.0f)
-                float sample2 = (i < _micAudioBufferPosition) ? BitConverter.ToSingle(_micAudioBuffer, i) : 0.0f;
+                float sample2 = (i + 3 < _micAudioBufferPosition) ? BitConverter.ToSingle(_micAudioBuffer, i) : 0.0f;
                 float mixed = sample1 + sample2;
                 mixed = Math.Clamp(mixed, -1.0f, 1.0f);
                 BitConverter.TryWriteBytes(new Span<byte>(mixedBuffer, i, 4), mixed);
