@@ -77,6 +77,10 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     private System.Drawing.Point _originalLocation;
     private bool _volumeNormalizationEnabled = true;
     private int _currentVolume = 100;
+    private bool _recordingEnabled = false;
+    private NAudio.Wave.WasapiLoopbackCapture? _waveIn;
+    private NAudio.Wave.WaveFileWriter? _waveWriter;
+    private string? _currentRecordingPath;
 
     public event EventHandler<SongDto>? SongChanged;
     public event EventHandler<PlaybackState>? StateChanged;
@@ -480,7 +484,10 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     private async Task<SongDto?> MoveNextInternalAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("MoveNextInternalAsync: Starting...");
-        
+
+        // Stop any ongoing recording before moving to next song
+        StopRecording();
+
         if (_queue.TryDequeue(out var nextSong))
         {
             _logger.LogInformation("MoveNextInternalAsync: Found song {SongId}, setting as current", nextSong.Id);
@@ -839,6 +846,9 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _logger.LogInformation("Instrumental Value: {Instrumental}", _currentSong.Instrumental);
             _logger.LogInformation("Channel Configuration: {ChannelConfig}", _currentSong.ChannelConfiguration);
 
+            // Start recording if enabled
+            StartRecording(_currentSong.Title ?? Path.GetFileNameWithoutExtension(_currentSong.MediaPath));
+
             // Apply volume normalization if enabled and gain data is available
             if (_volumeNormalizationEnabled && _currentSong.GainDb.HasValue)
             {
@@ -1059,6 +1069,9 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
         _disposed = true;
 
+        // Stop any ongoing recording
+        StopRecording();
+
         try
         {
             if (_mediaPlayer != null)
@@ -1146,5 +1159,87 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(_volumeNormalizationEnabled);
+    }
+
+    public Task SetRecordingEnabledAsync(bool enabled, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _recordingEnabled = enabled;
+        _logger.LogInformation("Recording {Status}", enabled ? "enabled" : "disabled");
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> GetRecordingEnabledAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(_recordingEnabled);
+    }
+
+    private void StartRecording(string songName)
+    {
+        try
+        {
+            if (!_recordingEnabled)
+                return;
+
+            // Create record directory if it doesn't exist
+            var recordDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "record");
+            Directory.CreateDirectory(recordDir);
+
+            // Generate filename with timestamp if file exists
+            var sanitizedName = string.Join("_", songName.Split(Path.GetInvalidFileNameChars()));
+            var baseFileName = Path.Combine(recordDir, $"{sanitizedName}.wav");
+            _currentRecordingPath = baseFileName;
+
+            if (File.Exists(baseFileName))
+            {
+                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                _currentRecordingPath = Path.Combine(recordDir, $"{sanitizedName}_{timestamp}.wav");
+            }
+
+            // Initialize WASAPI loopback capture (captures system audio output)
+            _waveIn = new NAudio.Wave.WasapiLoopbackCapture();
+            _waveWriter = new NAudio.Wave.WaveFileWriter(_currentRecordingPath, _waveIn.WaveFormat);
+
+            _waveIn.DataAvailable += (s, e) =>
+            {
+                _waveWriter?.Write(e.Buffer, 0, e.BytesRecorded);
+            };
+
+            _waveIn.RecordingStopped += (s, e) =>
+            {
+                _waveWriter?.Dispose();
+                _waveWriter = null;
+                _waveIn?.Dispose();
+                _waveIn = null;
+            };
+
+            _waveIn.StartRecording();
+            _logger.LogInformation("Started recording to: {Path}", _currentRecordingPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to start recording");
+            _waveWriter?.Dispose();
+            _waveWriter = null;
+            _waveIn?.Dispose();
+            _waveIn = null;
+        }
+    }
+
+    private void StopRecording()
+    {
+        try
+        {
+            if (_waveIn != null)
+            {
+                _waveIn.StopRecording();
+                _logger.LogInformation("Stopped recording: {Path}", _currentRecordingPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error stopping recording");
+        }
     }
 }

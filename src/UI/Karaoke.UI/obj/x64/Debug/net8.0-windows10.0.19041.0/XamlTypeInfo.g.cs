@@ -224,7 +224,7 @@ namespace Karaoke.UI.Karaoke_UI_XamlTypeInfo
 
         private void InitTypeTables()
         {
-            _typeNameTable = new string[44];
+            _typeNameTable = new string[49];
             _typeNameTable[0] = "Microsoft.UI.Xaml.Controls.XamlControlsResources";
             _typeNameTable[1] = "Microsoft.UI.Xaml.ResourceDictionary";
             _typeNameTable[2] = "Object";
@@ -264,13 +264,18 @@ namespace Karaoke.UI.Karaoke_UI_XamlTypeInfo
             _typeNameTable[36] = "Karaoke.UI.Views.SettingsDialog";
             _typeNameTable[37] = "Microsoft.UI.Xaml.Controls.ContentDialog";
             _typeNameTable[38] = "Karaoke.UI.ViewModels.Settings.LibrarySettingsViewModel";
-            _typeNameTable[39] = "Karaoke.UI.Views.SongDetailsDialog";
-            _typeNameTable[40] = "Karaoke.Common.Models.SongDto";
-            _typeNameTable[41] = "Microsoft.UI.Xaml.Visibility";
-            _typeNameTable[42] = "Microsoft.UI.Xaml.Controls.TreeViewNode";
-            _typeNameTable[43] = "System.Collections.Generic.IList`1<Microsoft.UI.Xaml.Controls.TreeViewNode>";
+            _typeNameTable[39] = "Microsoft.UI.Xaml.Controls.InfoBar";
+            _typeNameTable[40] = "Microsoft.UI.Xaml.Controls.InfoBarSeverity";
+            _typeNameTable[41] = "Microsoft.UI.Xaml.Controls.Primitives.ButtonBase";
+            _typeNameTable[42] = "Microsoft.UI.Xaml.Style";
+            _typeNameTable[43] = "Microsoft.UI.Xaml.Controls.InfoBarTemplateSettings";
+            _typeNameTable[44] = "Karaoke.UI.Views.SongDetailsDialog";
+            _typeNameTable[45] = "Karaoke.Common.Models.SongDto";
+            _typeNameTable[46] = "Microsoft.UI.Xaml.Visibility";
+            _typeNameTable[47] = "Microsoft.UI.Xaml.Controls.TreeViewNode";
+            _typeNameTable[48] = "System.Collections.Generic.IList`1<Microsoft.UI.Xaml.Controls.TreeViewNode>";
 
-            _typeTable = new global::System.Type[44];
+            _typeTable = new global::System.Type[49];
             _typeTable[0] = typeof(global::Microsoft.UI.Xaml.Controls.XamlControlsResources);
             _typeTable[1] = typeof(global::Microsoft.UI.Xaml.ResourceDictionary);
             _typeTable[2] = typeof(global::System.Object);
@@ -310,11 +315,16 @@ namespace Karaoke.UI.Karaoke_UI_XamlTypeInfo
             _typeTable[36] = typeof(global::Karaoke.UI.Views.SettingsDialog);
             _typeTable[37] = typeof(global::Microsoft.UI.Xaml.Controls.ContentDialog);
             _typeTable[38] = typeof(global::Karaoke.UI.ViewModels.Settings.LibrarySettingsViewModel);
-            _typeTable[39] = typeof(global::Karaoke.UI.Views.SongDetailsDialog);
-            _typeTable[40] = typeof(global::Karaoke.Common.Models.SongDto);
-            _typeTable[41] = typeof(global::Microsoft.UI.Xaml.Visibility);
-            _typeTable[42] = typeof(global::Microsoft.UI.Xaml.Controls.TreeViewNode);
-            _typeTable[43] = typeof(global::System.Collections.Generic.IList<global::Microsoft.UI.Xaml.Controls.TreeViewNode>);
+            _typeTable[39] = typeof(global::Microsoft.UI.Xaml.Controls.InfoBar);
+            _typeTable[40] = typeof(global::Microsoft.UI.Xaml.Controls.InfoBarSeverity);
+            _typeTable[41] = typeof(global::Microsoft.UI.Xaml.Controls.Primitives.ButtonBase);
+            _typeTable[42] = typeof(global::Microsoft.UI.Xaml.Style);
+            _typeTable[43] = typeof(global::Microsoft.UI.Xaml.Controls.InfoBarTemplateSettings);
+            _typeTable[44] = typeof(global::Karaoke.UI.Views.SongDetailsDialog);
+            _typeTable[45] = typeof(global::Karaoke.Common.Models.SongDto);
+            _typeTable[46] = typeof(global::Microsoft.UI.Xaml.Visibility);
+            _typeTable[47] = typeof(global::Microsoft.UI.Xaml.Controls.TreeViewNode);
+            _typeTable[48] = typeof(global::System.Collections.Generic.IList<global::Microsoft.UI.Xaml.Controls.TreeViewNode>);
         }
 
         private int LookupTypeIndexByName(string typeName)
@@ -355,7 +365,9 @@ namespace Karaoke.UI.Karaoke_UI_XamlTypeInfo
         private object Activate_24_TabView() { return new global::Microsoft.UI.Xaml.Controls.TabView(); }
         private object Activate_31_TabViewItem() { return new global::Microsoft.UI.Xaml.Controls.TabViewItem(); }
         private object Activate_35_TabViewItemTemplateSettings() { return new global::Microsoft.UI.Xaml.Controls.TabViewItemTemplateSettings(); }
-        private object Activate_42_TreeViewNode() { return new global::Microsoft.UI.Xaml.Controls.TreeViewNode(); }
+        private object Activate_39_InfoBar() { return new global::Microsoft.UI.Xaml.Controls.InfoBar(); }
+        private object Activate_43_InfoBarTemplateSettings() { return new global::Microsoft.UI.Xaml.Controls.InfoBarTemplateSettings(); }
+        private object Activate_47_TreeViewNode() { return new global::Microsoft.UI.Xaml.Controls.TreeViewNode(); }
         private void MapAdd_0_XamlControlsResources(object instance, object key, object item)
         {
             var collection = (global::System.Collections.Generic.IDictionary<global::System.Object, global::System.Object>)instance;
@@ -369,7 +381,7 @@ namespace Karaoke.UI.Karaoke_UI_XamlTypeInfo
             var newItem = (global::System.Object)item;
             collection.Add(newItem);
         }
-        private void VectorAdd_43_IList(object instance, object item)
+        private void VectorAdd_48_IList(object instance, object item)
         {
             var collection = (global::System.Collections.Generic.ICollection<global::Microsoft.UI.Xaml.Controls.TreeViewNode>)instance;
             var newItem = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)item;
@@ -644,7 +656,51 @@ namespace Karaoke.UI.Karaoke_UI_XamlTypeInfo
                 xamlType = userType;
                 break;
 
-            case 39:   //  Karaoke.UI.Views.SongDetailsDialog
+            case 39:   //  Microsoft.UI.Xaml.Controls.InfoBar
+                userType = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.Controls.Control"));
+                userType.Activator = Activate_39_InfoBar;
+                userType.SetContentPropertyName("Microsoft.UI.Xaml.Controls.InfoBar.Content");
+                userType.AddMemberName("Content");
+                userType.AddMemberName("IsOpen");
+                userType.AddMemberName("Severity");
+                userType.AddMemberName("Title");
+                userType.AddMemberName("Message");
+                userType.AddMemberName("IsClosable");
+                userType.AddMemberName("ActionButton");
+                userType.AddMemberName("CloseButtonCommand");
+                userType.AddMemberName("CloseButtonCommandParameter");
+                userType.AddMemberName("CloseButtonStyle");
+                userType.AddMemberName("ContentTemplate");
+                userType.AddMemberName("IconSource");
+                userType.AddMemberName("IsIconVisible");
+                userType.AddMemberName("TemplateSettings");
+                xamlType = userType;
+                break;
+
+            case 40:   //  Microsoft.UI.Xaml.Controls.InfoBarSeverity
+                userType = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("System.Enum"));
+                userType.AddEnumValue("Informational", global::Microsoft.UI.Xaml.Controls.InfoBarSeverity.Informational);
+                userType.AddEnumValue("Success", global::Microsoft.UI.Xaml.Controls.InfoBarSeverity.Success);
+                userType.AddEnumValue("Warning", global::Microsoft.UI.Xaml.Controls.InfoBarSeverity.Warning);
+                userType.AddEnumValue("Error", global::Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error);
+                xamlType = userType;
+                break;
+
+            case 41:   //  Microsoft.UI.Xaml.Controls.Primitives.ButtonBase
+                xamlType = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlSystemBaseType(typeName, type);
+                break;
+
+            case 42:   //  Microsoft.UI.Xaml.Style
+                xamlType = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlSystemBaseType(typeName, type);
+                break;
+
+            case 43:   //  Microsoft.UI.Xaml.Controls.InfoBarTemplateSettings
+                userType = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.DependencyObject"));
+                userType.SetIsReturnTypeStub();
+                xamlType = userType;
+                break;
+
+            case 44:   //  Karaoke.UI.Views.SongDetailsDialog
                 userType = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.Controls.ContentDialog"));
                 userType.AddMemberName("Song");
                 userType.AddMemberName("IsEditMode");
@@ -658,6 +714,10 @@ namespace Karaoke.UI.Karaoke_UI_XamlTypeInfo
                 userType.AddMemberName("EditedComment");
                 userType.AddMemberName("EditedPriority");
                 userType.AddMemberName("EditedInstrumental");
+                userType.AddMemberName("ShowStatusMessage");
+                userType.AddMemberName("StatusSeverity");
+                userType.AddMemberName("StatusTitle");
+                userType.AddMemberName("StatusMessage");
                 userType.AddMemberName("LoudnessText");
                 userType.AddMemberName("GainText");
                 userType.AddMemberName("NormalizationStatus");
@@ -666,19 +726,19 @@ namespace Karaoke.UI.Karaoke_UI_XamlTypeInfo
                 xamlType = userType;
                 break;
 
-            case 40:   //  Karaoke.Common.Models.SongDto
+            case 45:   //  Karaoke.Common.Models.SongDto
                 userType = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Object"));
                 userType.SetIsReturnTypeStub();
                 xamlType = userType;
                 break;
 
-            case 41:   //  Microsoft.UI.Xaml.Visibility
+            case 46:   //  Microsoft.UI.Xaml.Visibility
                 xamlType = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlSystemBaseType(typeName, type);
                 break;
 
-            case 42:   //  Microsoft.UI.Xaml.Controls.TreeViewNode
+            case 47:   //  Microsoft.UI.Xaml.Controls.TreeViewNode
                 userType = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.DependencyObject"));
-                userType.Activator = Activate_42_TreeViewNode;
+                userType.Activator = Activate_47_TreeViewNode;
                 userType.AddMemberName("Children");
                 userType.AddMemberName("Content");
                 userType.AddMemberName("Depth");
@@ -690,9 +750,9 @@ namespace Karaoke.UI.Karaoke_UI_XamlTypeInfo
                 xamlType = userType;
                 break;
 
-            case 43:   //  System.Collections.Generic.IList`1<Microsoft.UI.Xaml.Controls.TreeViewNode>
+            case 48:   //  System.Collections.Generic.IList`1<Microsoft.UI.Xaml.Controls.TreeViewNode>
                 userType = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType(this, typeName, type, null);
-                userType.CollectionAdd = VectorAdd_43_IList;
+                userType.CollectionAdd = VectorAdd_48_IList;
                 userType.SetIsReturnTypeStub();
                 xamlType = userType;
                 break;
@@ -1242,172 +1302,347 @@ namespace Karaoke.UI.Karaoke_UI_XamlTypeInfo
             var that = (global::Karaoke.UI.Views.SettingsDialog)instance;
             return that.ViewModel;
         }
-        private object get_51_SongDetailsDialog_Song(object instance)
+        private object get_51_InfoBar_Content(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.Content;
+        }
+        private void set_51_InfoBar_Content(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.Content = (global::System.Object)Value;
+        }
+        private object get_52_InfoBar_IsOpen(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.IsOpen;
+        }
+        private void set_52_InfoBar_IsOpen(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.IsOpen = (global::System.Boolean)Value;
+        }
+        private object get_53_InfoBar_Severity(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.Severity;
+        }
+        private void set_53_InfoBar_Severity(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.Severity = (global::Microsoft.UI.Xaml.Controls.InfoBarSeverity)Value;
+        }
+        private object get_54_InfoBar_Title(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.Title;
+        }
+        private void set_54_InfoBar_Title(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.Title = (global::System.String)Value;
+        }
+        private object get_55_InfoBar_Message(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.Message;
+        }
+        private void set_55_InfoBar_Message(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.Message = (global::System.String)Value;
+        }
+        private object get_56_InfoBar_IsClosable(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.IsClosable;
+        }
+        private void set_56_InfoBar_IsClosable(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.IsClosable = (global::System.Boolean)Value;
+        }
+        private object get_57_InfoBar_ActionButton(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.ActionButton;
+        }
+        private void set_57_InfoBar_ActionButton(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.ActionButton = (global::Microsoft.UI.Xaml.Controls.Primitives.ButtonBase)Value;
+        }
+        private object get_58_InfoBar_CloseButtonCommand(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.CloseButtonCommand;
+        }
+        private void set_58_InfoBar_CloseButtonCommand(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.CloseButtonCommand = (global::System.Windows.Input.ICommand)Value;
+        }
+        private object get_59_InfoBar_CloseButtonCommandParameter(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.CloseButtonCommandParameter;
+        }
+        private void set_59_InfoBar_CloseButtonCommandParameter(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.CloseButtonCommandParameter = (global::System.Object)Value;
+        }
+        private object get_60_InfoBar_CloseButtonStyle(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.CloseButtonStyle;
+        }
+        private void set_60_InfoBar_CloseButtonStyle(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.CloseButtonStyle = (global::Microsoft.UI.Xaml.Style)Value;
+        }
+        private object get_61_InfoBar_ContentTemplate(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.ContentTemplate;
+        }
+        private void set_61_InfoBar_ContentTemplate(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.ContentTemplate = (global::Microsoft.UI.Xaml.DataTemplate)Value;
+        }
+        private object get_62_InfoBar_IconSource(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.IconSource;
+        }
+        private void set_62_InfoBar_IconSource(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.IconSource = (global::Microsoft.UI.Xaml.Controls.IconSource)Value;
+        }
+        private object get_63_InfoBar_IsIconVisible(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.IsIconVisible;
+        }
+        private void set_63_InfoBar_IsIconVisible(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            that.IsIconVisible = (global::System.Boolean)Value;
+        }
+        private object get_64_InfoBar_TemplateSettings(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.InfoBar)instance;
+            return that.TemplateSettings;
+        }
+        private object get_65_SongDetailsDialog_Song(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.Song;
         }
-        private object get_52_SongDetailsDialog_IsEditMode(object instance)
+        private object get_66_SongDetailsDialog_IsEditMode(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.IsEditMode;
         }
-        private void set_52_SongDetailsDialog_IsEditMode(object instance, object Value)
+        private void set_66_SongDetailsDialog_IsEditMode(object instance, object Value)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             that.IsEditMode = (global::System.Boolean)Value;
         }
-        private object get_53_SongDetailsDialog_IsViewMode(object instance)
+        private object get_67_SongDetailsDialog_IsViewMode(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.IsViewMode;
         }
-        private object get_54_SongDetailsDialog_PrimaryButtonText(object instance)
+        private object get_68_SongDetailsDialog_PrimaryButtonText(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.PrimaryButtonText;
         }
-        private object get_55_SongDetailsDialog_SecondaryButtonText(object instance)
+        private object get_69_SongDetailsDialog_SecondaryButtonText(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.SecondaryButtonText;
         }
-        private object get_56_SongDetailsDialog_EditedTitle(object instance)
+        private object get_70_SongDetailsDialog_EditedTitle(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.EditedTitle;
         }
-        private void set_56_SongDetailsDialog_EditedTitle(object instance, object Value)
+        private void set_70_SongDetailsDialog_EditedTitle(object instance, object Value)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             that.EditedTitle = (global::System.String)Value;
         }
-        private object get_57_SongDetailsDialog_EditedArtist(object instance)
+        private object get_71_SongDetailsDialog_EditedArtist(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.EditedArtist;
         }
-        private void set_57_SongDetailsDialog_EditedArtist(object instance, object Value)
+        private void set_71_SongDetailsDialog_EditedArtist(object instance, object Value)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             that.EditedArtist = (global::System.String)Value;
         }
-        private object get_58_SongDetailsDialog_EditedLanguage(object instance)
+        private object get_72_SongDetailsDialog_EditedLanguage(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.EditedLanguage;
         }
-        private void set_58_SongDetailsDialog_EditedLanguage(object instance, object Value)
+        private void set_72_SongDetailsDialog_EditedLanguage(object instance, object Value)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             that.EditedLanguage = (global::System.String)Value;
         }
-        private object get_59_SongDetailsDialog_EditedGenre(object instance)
+        private object get_73_SongDetailsDialog_EditedGenre(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.EditedGenre;
         }
-        private void set_59_SongDetailsDialog_EditedGenre(object instance, object Value)
+        private void set_73_SongDetailsDialog_EditedGenre(object instance, object Value)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             that.EditedGenre = (global::System.String)Value;
         }
-        private object get_60_SongDetailsDialog_EditedComment(object instance)
+        private object get_74_SongDetailsDialog_EditedComment(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.EditedComment;
         }
-        private void set_60_SongDetailsDialog_EditedComment(object instance, object Value)
+        private void set_74_SongDetailsDialog_EditedComment(object instance, object Value)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             that.EditedComment = (global::System.String)Value;
         }
-        private object get_61_SongDetailsDialog_EditedPriority(object instance)
+        private object get_75_SongDetailsDialog_EditedPriority(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.EditedPriority;
         }
-        private void set_61_SongDetailsDialog_EditedPriority(object instance, object Value)
+        private void set_75_SongDetailsDialog_EditedPriority(object instance, object Value)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             that.EditedPriority = (global::System.Double)Value;
         }
-        private object get_62_SongDetailsDialog_EditedInstrumental(object instance)
+        private object get_76_SongDetailsDialog_EditedInstrumental(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.EditedInstrumental;
         }
-        private void set_62_SongDetailsDialog_EditedInstrumental(object instance, object Value)
+        private void set_76_SongDetailsDialog_EditedInstrumental(object instance, object Value)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             that.EditedInstrumental = (global::System.Double)Value;
         }
-        private object get_63_SongDetailsDialog_LoudnessText(object instance)
+        private object get_77_SongDetailsDialog_ShowStatusMessage(object instance)
+        {
+            var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
+            return that.ShowStatusMessage;
+        }
+        private void set_77_SongDetailsDialog_ShowStatusMessage(object instance, object Value)
+        {
+            var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
+            that.ShowStatusMessage = (global::System.Boolean)Value;
+        }
+        private object get_78_SongDetailsDialog_StatusSeverity(object instance)
+        {
+            var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
+            return that.StatusSeverity;
+        }
+        private void set_78_SongDetailsDialog_StatusSeverity(object instance, object Value)
+        {
+            var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
+            that.StatusSeverity = (global::Microsoft.UI.Xaml.Controls.InfoBarSeverity)Value;
+        }
+        private object get_79_SongDetailsDialog_StatusTitle(object instance)
+        {
+            var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
+            return that.StatusTitle;
+        }
+        private void set_79_SongDetailsDialog_StatusTitle(object instance, object Value)
+        {
+            var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
+            that.StatusTitle = (global::System.String)Value;
+        }
+        private object get_80_SongDetailsDialog_StatusMessage(object instance)
+        {
+            var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
+            return that.StatusMessage;
+        }
+        private void set_80_SongDetailsDialog_StatusMessage(object instance, object Value)
+        {
+            var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
+            that.StatusMessage = (global::System.String)Value;
+        }
+        private object get_81_SongDetailsDialog_LoudnessText(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.LoudnessText;
         }
-        private object get_64_SongDetailsDialog_GainText(object instance)
+        private object get_82_SongDetailsDialog_GainText(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.GainText;
         }
-        private object get_65_SongDetailsDialog_NormalizationStatus(object instance)
+        private object get_83_SongDetailsDialog_NormalizationStatus(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.NormalizationStatus;
         }
-        private object get_66_SongDetailsDialog_NormalizationStatusColor(object instance)
+        private object get_84_SongDetailsDialog_NormalizationStatusColor(object instance)
         {
             var that = (global::Karaoke.UI.Views.SongDetailsDialog)instance;
             return that.NormalizationStatusColor;
         }
-        private object get_67_TreeViewNode_Children(object instance)
+        private object get_85_TreeViewNode_Children(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.Children;
         }
-        private object get_68_TreeViewNode_Content(object instance)
+        private object get_86_TreeViewNode_Content(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.Content;
         }
-        private void set_68_TreeViewNode_Content(object instance, object Value)
+        private void set_86_TreeViewNode_Content(object instance, object Value)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             that.Content = (global::System.Object)Value;
         }
-        private object get_69_TreeViewNode_Depth(object instance)
+        private object get_87_TreeViewNode_Depth(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.Depth;
         }
-        private object get_70_TreeViewNode_HasChildren(object instance)
+        private object get_88_TreeViewNode_HasChildren(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.HasChildren;
         }
-        private object get_71_TreeViewNode_HasUnrealizedChildren(object instance)
+        private object get_89_TreeViewNode_HasUnrealizedChildren(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.HasUnrealizedChildren;
         }
-        private void set_71_TreeViewNode_HasUnrealizedChildren(object instance, object Value)
+        private void set_89_TreeViewNode_HasUnrealizedChildren(object instance, object Value)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             that.HasUnrealizedChildren = (global::System.Boolean)Value;
         }
-        private object get_72_TreeViewNode_IsExpanded(object instance)
+        private object get_90_TreeViewNode_IsExpanded(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.IsExpanded;
         }
-        private void set_72_TreeViewNode_IsExpanded(object instance, object Value)
+        private void set_90_TreeViewNode_IsExpanded(object instance, object Value)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             that.IsExpanded = (global::System.Boolean)Value;
         }
-        private object get_73_TreeViewNode_Parent(object instance)
+        private object get_91_TreeViewNode_Parent(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.Parent;
@@ -1774,148 +2009,270 @@ namespace Karaoke.UI.Karaoke_UI_XamlTypeInfo
                 xamlMember.Getter = get_50_SettingsDialog_ViewModel;
                 xamlMember.SetIsReadOnly();
                 break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.Content":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "Content", "Object");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_51_InfoBar_Content;
+                xamlMember.Setter = set_51_InfoBar_Content;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.IsOpen":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "IsOpen", "Boolean");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_52_InfoBar_IsOpen;
+                xamlMember.Setter = set_52_InfoBar_IsOpen;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.Severity":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "Severity", "Microsoft.UI.Xaml.Controls.InfoBarSeverity");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_53_InfoBar_Severity;
+                xamlMember.Setter = set_53_InfoBar_Severity;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.Title":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "Title", "String");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_54_InfoBar_Title;
+                xamlMember.Setter = set_54_InfoBar_Title;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.Message":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "Message", "String");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_55_InfoBar_Message;
+                xamlMember.Setter = set_55_InfoBar_Message;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.IsClosable":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "IsClosable", "Boolean");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_56_InfoBar_IsClosable;
+                xamlMember.Setter = set_56_InfoBar_IsClosable;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.ActionButton":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "ActionButton", "Microsoft.UI.Xaml.Controls.Primitives.ButtonBase");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_57_InfoBar_ActionButton;
+                xamlMember.Setter = set_57_InfoBar_ActionButton;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.CloseButtonCommand":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "CloseButtonCommand", "System.Windows.Input.ICommand");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_58_InfoBar_CloseButtonCommand;
+                xamlMember.Setter = set_58_InfoBar_CloseButtonCommand;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.CloseButtonCommandParameter":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "CloseButtonCommandParameter", "Object");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_59_InfoBar_CloseButtonCommandParameter;
+                xamlMember.Setter = set_59_InfoBar_CloseButtonCommandParameter;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.CloseButtonStyle":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "CloseButtonStyle", "Microsoft.UI.Xaml.Style");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_60_InfoBar_CloseButtonStyle;
+                xamlMember.Setter = set_60_InfoBar_CloseButtonStyle;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.ContentTemplate":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "ContentTemplate", "Microsoft.UI.Xaml.DataTemplate");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_61_InfoBar_ContentTemplate;
+                xamlMember.Setter = set_61_InfoBar_ContentTemplate;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.IconSource":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "IconSource", "Microsoft.UI.Xaml.Controls.IconSource");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_62_InfoBar_IconSource;
+                xamlMember.Setter = set_62_InfoBar_IconSource;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.IsIconVisible":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "IsIconVisible", "Boolean");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_63_InfoBar_IsIconVisible;
+                xamlMember.Setter = set_63_InfoBar_IsIconVisible;
+                break;
+            case "Microsoft.UI.Xaml.Controls.InfoBar.TemplateSettings":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.InfoBar");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "TemplateSettings", "Microsoft.UI.Xaml.Controls.InfoBarTemplateSettings");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_64_InfoBar_TemplateSettings;
+                xamlMember.SetIsReadOnly();
+                break;
             case "Karaoke.UI.Views.SongDetailsDialog.Song":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "Song", "Karaoke.Common.Models.SongDto");
-                xamlMember.Getter = get_51_SongDetailsDialog_Song;
+                xamlMember.Getter = get_65_SongDetailsDialog_Song;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.IsEditMode":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "IsEditMode", "Boolean");
-                xamlMember.Getter = get_52_SongDetailsDialog_IsEditMode;
-                xamlMember.Setter = set_52_SongDetailsDialog_IsEditMode;
+                xamlMember.Getter = get_66_SongDetailsDialog_IsEditMode;
+                xamlMember.Setter = set_66_SongDetailsDialog_IsEditMode;
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.IsViewMode":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "IsViewMode", "Microsoft.UI.Xaml.Visibility");
-                xamlMember.Getter = get_53_SongDetailsDialog_IsViewMode;
+                xamlMember.Getter = get_67_SongDetailsDialog_IsViewMode;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.PrimaryButtonText":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "PrimaryButtonText", "String");
                 xamlMember.SetIsDependencyProperty();
-                xamlMember.Getter = get_54_SongDetailsDialog_PrimaryButtonText;
+                xamlMember.Getter = get_68_SongDetailsDialog_PrimaryButtonText;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.SecondaryButtonText":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "SecondaryButtonText", "String");
                 xamlMember.SetIsDependencyProperty();
-                xamlMember.Getter = get_55_SongDetailsDialog_SecondaryButtonText;
+                xamlMember.Getter = get_69_SongDetailsDialog_SecondaryButtonText;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.EditedTitle":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "EditedTitle", "String");
-                xamlMember.Getter = get_56_SongDetailsDialog_EditedTitle;
-                xamlMember.Setter = set_56_SongDetailsDialog_EditedTitle;
+                xamlMember.Getter = get_70_SongDetailsDialog_EditedTitle;
+                xamlMember.Setter = set_70_SongDetailsDialog_EditedTitle;
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.EditedArtist":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "EditedArtist", "String");
-                xamlMember.Getter = get_57_SongDetailsDialog_EditedArtist;
-                xamlMember.Setter = set_57_SongDetailsDialog_EditedArtist;
+                xamlMember.Getter = get_71_SongDetailsDialog_EditedArtist;
+                xamlMember.Setter = set_71_SongDetailsDialog_EditedArtist;
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.EditedLanguage":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "EditedLanguage", "String");
-                xamlMember.Getter = get_58_SongDetailsDialog_EditedLanguage;
-                xamlMember.Setter = set_58_SongDetailsDialog_EditedLanguage;
+                xamlMember.Getter = get_72_SongDetailsDialog_EditedLanguage;
+                xamlMember.Setter = set_72_SongDetailsDialog_EditedLanguage;
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.EditedGenre":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "EditedGenre", "String");
-                xamlMember.Getter = get_59_SongDetailsDialog_EditedGenre;
-                xamlMember.Setter = set_59_SongDetailsDialog_EditedGenre;
+                xamlMember.Getter = get_73_SongDetailsDialog_EditedGenre;
+                xamlMember.Setter = set_73_SongDetailsDialog_EditedGenre;
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.EditedComment":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "EditedComment", "String");
-                xamlMember.Getter = get_60_SongDetailsDialog_EditedComment;
-                xamlMember.Setter = set_60_SongDetailsDialog_EditedComment;
+                xamlMember.Getter = get_74_SongDetailsDialog_EditedComment;
+                xamlMember.Setter = set_74_SongDetailsDialog_EditedComment;
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.EditedPriority":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "EditedPriority", "Double");
-                xamlMember.Getter = get_61_SongDetailsDialog_EditedPriority;
-                xamlMember.Setter = set_61_SongDetailsDialog_EditedPriority;
+                xamlMember.Getter = get_75_SongDetailsDialog_EditedPriority;
+                xamlMember.Setter = set_75_SongDetailsDialog_EditedPriority;
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.EditedInstrumental":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "EditedInstrumental", "Double");
-                xamlMember.Getter = get_62_SongDetailsDialog_EditedInstrumental;
-                xamlMember.Setter = set_62_SongDetailsDialog_EditedInstrumental;
+                xamlMember.Getter = get_76_SongDetailsDialog_EditedInstrumental;
+                xamlMember.Setter = set_76_SongDetailsDialog_EditedInstrumental;
+                break;
+            case "Karaoke.UI.Views.SongDetailsDialog.ShowStatusMessage":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "ShowStatusMessage", "Boolean");
+                xamlMember.Getter = get_77_SongDetailsDialog_ShowStatusMessage;
+                xamlMember.Setter = set_77_SongDetailsDialog_ShowStatusMessage;
+                break;
+            case "Karaoke.UI.Views.SongDetailsDialog.StatusSeverity":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "StatusSeverity", "Microsoft.UI.Xaml.Controls.InfoBarSeverity");
+                xamlMember.Getter = get_78_SongDetailsDialog_StatusSeverity;
+                xamlMember.Setter = set_78_SongDetailsDialog_StatusSeverity;
+                break;
+            case "Karaoke.UI.Views.SongDetailsDialog.StatusTitle":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "StatusTitle", "String");
+                xamlMember.Getter = get_79_SongDetailsDialog_StatusTitle;
+                xamlMember.Setter = set_79_SongDetailsDialog_StatusTitle;
+                break;
+            case "Karaoke.UI.Views.SongDetailsDialog.StatusMessage":
+                userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
+                xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "StatusMessage", "String");
+                xamlMember.Getter = get_80_SongDetailsDialog_StatusMessage;
+                xamlMember.Setter = set_80_SongDetailsDialog_StatusMessage;
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.LoudnessText":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "LoudnessText", "String");
-                xamlMember.Getter = get_63_SongDetailsDialog_LoudnessText;
+                xamlMember.Getter = get_81_SongDetailsDialog_LoudnessText;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.GainText":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "GainText", "String");
-                xamlMember.Getter = get_64_SongDetailsDialog_GainText;
+                xamlMember.Getter = get_82_SongDetailsDialog_GainText;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.NormalizationStatus":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "NormalizationStatus", "String");
-                xamlMember.Getter = get_65_SongDetailsDialog_NormalizationStatus;
+                xamlMember.Getter = get_83_SongDetailsDialog_NormalizationStatus;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Karaoke.UI.Views.SongDetailsDialog.NormalizationStatusColor":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Karaoke.UI.Views.SongDetailsDialog");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "NormalizationStatusColor", "Microsoft.UI.Xaml.Media.SolidColorBrush");
-                xamlMember.Getter = get_66_SongDetailsDialog_NormalizationStatusColor;
+                xamlMember.Getter = get_84_SongDetailsDialog_NormalizationStatusColor;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.Children":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "Children", "System.Collections.Generic.IList`1<Microsoft.UI.Xaml.Controls.TreeViewNode>");
-                xamlMember.Getter = get_67_TreeViewNode_Children;
+                xamlMember.Getter = get_85_TreeViewNode_Children;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.Content":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "Content", "Object");
                 xamlMember.SetIsDependencyProperty();
-                xamlMember.Getter = get_68_TreeViewNode_Content;
-                xamlMember.Setter = set_68_TreeViewNode_Content;
+                xamlMember.Getter = get_86_TreeViewNode_Content;
+                xamlMember.Setter = set_86_TreeViewNode_Content;
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.Depth":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "Depth", "Int32");
                 xamlMember.SetIsDependencyProperty();
-                xamlMember.Getter = get_69_TreeViewNode_Depth;
+                xamlMember.Getter = get_87_TreeViewNode_Depth;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.HasChildren":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "HasChildren", "Boolean");
                 xamlMember.SetIsDependencyProperty();
-                xamlMember.Getter = get_70_TreeViewNode_HasChildren;
+                xamlMember.Getter = get_88_TreeViewNode_HasChildren;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.HasUnrealizedChildren":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "HasUnrealizedChildren", "Boolean");
-                xamlMember.Getter = get_71_TreeViewNode_HasUnrealizedChildren;
-                xamlMember.Setter = set_71_TreeViewNode_HasUnrealizedChildren;
+                xamlMember.Getter = get_89_TreeViewNode_HasUnrealizedChildren;
+                xamlMember.Setter = set_89_TreeViewNode_HasUnrealizedChildren;
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.IsExpanded":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "IsExpanded", "Boolean");
                 xamlMember.SetIsDependencyProperty();
-                xamlMember.Getter = get_72_TreeViewNode_IsExpanded;
-                xamlMember.Setter = set_72_TreeViewNode_IsExpanded;
+                xamlMember.Getter = get_90_TreeViewNode_IsExpanded;
+                xamlMember.Setter = set_90_TreeViewNode_IsExpanded;
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.Parent":
                 userType = (global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::Karaoke.UI.Karaoke_UI_XamlTypeInfo.XamlMember(this, "Parent", "Microsoft.UI.Xaml.Controls.TreeViewNode");
-                xamlMember.Getter = get_73_TreeViewNode_Parent;
+                xamlMember.Getter = get_91_TreeViewNode_Parent;
                 xamlMember.SetIsReadOnly();
                 break;
             }

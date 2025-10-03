@@ -265,6 +265,10 @@
               "target": "Package",
               "version": "[8.0.0, )"
             },
+            "NAudio": {
+              "target": "Package",
+              "version": "[2.2.1, )"
+            },
             "VideoLAN.LibVLC.Windows": {
               "target": "Package",
               "version": "[3.0.20, )"

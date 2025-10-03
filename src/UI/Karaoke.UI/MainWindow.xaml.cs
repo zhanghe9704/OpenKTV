@@ -666,4 +666,23 @@ public sealed partial class MainWindow : Window
             System.Diagnostics.Debug.WriteLine($"Error changing volume normalization: {ex}");
         }
     }
+
+    private async void OnRecordChanged(object sender, RoutedEventArgs e)
+    {
+        if (_playbackService == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var isEnabled = RecordCheckBox.IsChecked ?? false;
+            await _playbackService.SetRecordingEnabledAsync(isEnabled, CancellationToken.None);
+            System.Diagnostics.Debug.WriteLine($"Recording {(isEnabled ? "enabled" : "disabled")}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error changing recording state: {ex}");
+        }
+    }
 }

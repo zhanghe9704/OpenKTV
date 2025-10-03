@@ -279,4 +279,17 @@ public sealed class InMemoryPlaybackService : IPlaybackService
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(_volumeNormalizationEnabled);
     }
+
+    public Task SetRecordingEnabledAsync(bool enabled, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        // In-memory service doesn't actually record, just store the state
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> GetRecordingEnabledAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(false);
+    }
 }

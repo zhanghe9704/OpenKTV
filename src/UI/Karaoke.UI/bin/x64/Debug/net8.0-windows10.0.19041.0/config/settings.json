@@ -15,10 +15,7 @@
         "Path": "F:/ktv/ktv_old",
         "DefaultPriority": 2,
         "DefaultChannel": "Stereo",
-        "DriveOverride": null,
-        "KeywordFormat": null,
-        "Instrumental": 0,
-        "VolumeNormalization": false
+        "DriveOverride": null
       },
       {
         "Name": "test_data",
@@ -26,9 +23,7 @@
         "DefaultPriority": 1,
         "DefaultChannel": "Stereo",
         "DriveOverride": null,
-        "KeywordFormat": "artist-song-language-genre",
-        "Instrumental": 0,
-        "VolumeNormalization": false
+        "KeywordFormat": "artist-song-language-genre"
       }
     ],
     "SupportedExtensions": [
@@ -42,15 +37,7 @@
       ".rmvb",
       ".rm",
       ".mpeg"
-    ],
-    "DisplayOptions": {
-      "ShowArtist": true,
-      "ShowLanguage": false,
-      "ShowGenre": false,
-      "ShowComment": false,
-      "ShowChannel": false,
-      "ShowPriority": true
-    }
+    ]
   },
   "Logging": {
     "LogLevel": {
