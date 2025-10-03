@@ -1047,16 +1047,37 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
     private async void OnPlaybackFormKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.KeyCode == Keys.Escape && _isFullScreen)
+        try
         {
-            try
+            // ESC - Exit full screen
+            if (e.KeyCode == Keys.Escape && _isFullScreen)
             {
                 await ToggleFullScreenAsync(CancellationToken.None).ConfigureAwait(false);
+                e.Handled = true;
             }
-            catch (Exception ex)
+            // Ctrl+F - Toggle full screen
+            else if (e.KeyCode == Keys.F && e.Control)
             {
-                _logger.LogError(ex, "Error exiting full screen with ESC key");
+                await ToggleFullScreenAsync(CancellationToken.None).ConfigureAwait(false);
+                e.Handled = true;
             }
+            // Space - Toggle pause/play
+            else if (e.KeyCode == Keys.Space)
+            {
+                if (_currentState == PlaybackState.Playing)
+                {
+                    await PauseAsync(CancellationToken.None).ConfigureAwait(false);
+                }
+                else if (_currentState == PlaybackState.Paused)
+                {
+                    await PlayAsync(CancellationToken.None).ConfigureAwait(false);
+                }
+                e.Handled = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling keyboard shortcut in playback window");
         }
     }
 
