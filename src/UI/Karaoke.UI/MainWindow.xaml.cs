@@ -751,9 +751,9 @@ public sealed partial class MainWindow : Window
         var availableHeight = ArtistsListView.ActualHeight;
         if (availableHeight <= 0) return;
 
-        // Estimate item height: simple text item is approximately 40-48 pixels
-        const double estimatedItemHeight = 44.0;
-        var itemsPerPage = (int)Math.Floor(availableHeight / estimatedItemHeight);
+        // Estimate item height: simple text item is approximately 42 pixels
+        const double estimatedItemHeight = 42.0;
+        var itemsPerPage = (int)Math.Ceiling(availableHeight / estimatedItemHeight);
 
         // Ensure at least 1 item per page
         itemsPerPage = Math.Max(1, itemsPerPage);
@@ -768,9 +768,9 @@ public sealed partial class MainWindow : Window
         var availableHeight = SongsListView.ActualHeight;
         if (availableHeight <= 0) return;
 
-        // Estimate item height: songs have 2 lines (title/details + path), approximately 70-80 pixels
-        const double estimatedItemHeight = 76.0;
-        var itemsPerPage = (int)Math.Floor(availableHeight / estimatedItemHeight);
+        // Estimate item height: songs have 2 lines (title/details + path), approximately 60 pixels
+        const double estimatedItemHeight = 60.0;
+        var itemsPerPage = (int)Math.Ceiling(availableHeight / estimatedItemHeight);
 
         // Ensure at least 1 item per page
         itemsPerPage = Math.Max(1, itemsPerPage);
@@ -785,9 +785,9 @@ public sealed partial class MainWindow : Window
         var availableHeight = QueueListView.ActualHeight;
         if (availableHeight <= 0) return;
 
-        // Estimate item height: queue items have 2 lines (title + artist), approximately 60-68 pixels
-        const double estimatedItemHeight = 64.0;
-        var itemsPerPage = (int)Math.Floor(availableHeight / estimatedItemHeight);
+        // Estimate item height: queue items have 2 lines (title + artist), approximately 58-62 pixels
+        const double estimatedItemHeight = 60.0;
+        var itemsPerPage = (int)Math.Ceiling(availableHeight / estimatedItemHeight);
 
         // Ensure at least 1 item per page
         itemsPerPage = Math.Max(1, itemsPerPage);
