@@ -287,8 +287,26 @@ public partial class MainViewModel : ObservableObject
         if (pageSize < 1) return;
         if (_artistsPageSize == pageSize) return;
 
+        // Before changing page size, remember the selected artist
+        var selectedArtist = SelectedArtist;
         _artistsPageSize = pageSize;
+
         ApplyArtistSearch(resetPage: false);
+
+        // After rebuilding the filtered source, navigate to the page containing the selected artist
+        if (selectedArtist != null && _filteredArtistsSource.Count > 0)
+        {
+            var index = _filteredArtistsSource.IndexOf(selectedArtist);
+            if (index >= 0)
+            {
+                var newPageIndex = index / pageSize;
+                if (newPageIndex != _artistsPageIndex)
+                {
+                    _artistsPageIndex = newPageIndex;
+                    UpdateArtistsPage();
+                }
+            }
+        }
     }
 
     public void SetSongsPageSize(int pageSize)
@@ -296,8 +314,26 @@ public partial class MainViewModel : ObservableObject
         if (pageSize < 1) return;
         if (_songsPageSize == pageSize) return;
 
+        // Before changing page size, remember the selected song
+        var selectedSong = SelectedSong;
         _songsPageSize = pageSize;
+
         UpdateFilteredSongs(resetPage: false);
+
+        // After rebuilding the filtered source, navigate to the page containing the selected song
+        if (selectedSong != null && _filteredSongsSource.Count > 0)
+        {
+            var index = _filteredSongsSource.IndexOf(selectedSong);
+            if (index >= 0)
+            {
+                var newPageIndex = index / pageSize;
+                if (newPageIndex != _songsPageIndex)
+                {
+                    _songsPageIndex = newPageIndex;
+                    UpdateSongsPage();
+                }
+            }
+        }
     }
 
     public void SetQueuePageSize(int pageSize)
@@ -305,9 +341,28 @@ public partial class MainViewModel : ObservableObject
         if (pageSize < 1) return;
         if (_queuePageSize == pageSize) return;
 
+        // Before changing page size, remember the selected queued song
+        var selectedQueuedSong = SelectedQueuedSong;
         _queuePageSize = pageSize;
+
         UpdateQueuePage();
         RaiseQueuePagingNotifications();
+
+        // After updating the queue, navigate to the page containing the selected song
+        if (selectedQueuedSong != null && _queueItems.Count > 0)
+        {
+            var index = _queueItems.IndexOf(selectedQueuedSong);
+            if (index >= 0)
+            {
+                var newPageIndex = index / pageSize;
+                if (newPageIndex != _queuePageIndex)
+                {
+                    _queuePageIndex = newPageIndex;
+                    UpdateQueuePage();
+                    RaiseQueuePagingNotifications();
+                }
+            }
+        }
     }
 
     public async Task InitializeAsync(CancellationToken cancellationToken)
@@ -872,6 +927,9 @@ public partial class MainViewModel : ObservableObject
 
     private void UpdateArtistsPage()
     {
+        // Remember the current selection before clearing
+        var previousSelection = SelectedArtist;
+
         Artists.Clear();
 
         foreach (var artist in GetPageItems(_filteredArtistsSource, _artistsPageIndex, _artistsPageSize))
@@ -879,7 +937,13 @@ public partial class MainViewModel : ObservableObject
             Artists.Add(artist);
         }
 
-        if (Artists.Count > 0 && (SelectedArtist is null || !Artists.Contains(SelectedArtist)))
+        // Restore the selection if it's still valid
+        if (previousSelection != null && Artists.Contains(previousSelection))
+        {
+            SelectedArtist = previousSelection;
+        }
+        // Only auto-select first artist if there was no previous selection
+        else if (Artists.Count > 0 && previousSelection is null)
         {
             SelectedArtist = Artists.First();
         }
@@ -940,6 +1004,9 @@ public partial class MainViewModel : ObservableObject
 
     private void UpdateSongsPage()
     {
+        // Remember the current selection before clearing
+        var previousSelection = SelectedSong;
+
         FilteredSongs.Clear();
 
         foreach (var song in GetPageItems(_filteredSongsSource, _songsPageIndex, _songsPageSize))
@@ -947,7 +1014,13 @@ public partial class MainViewModel : ObservableObject
             FilteredSongs.Add(song);
         }
 
-        if (FilteredSongs.Count > 0 && (SelectedSong is null || !FilteredSongs.Contains(SelectedSong)))
+        // Restore the selection if it's still valid
+        if (previousSelection != null && FilteredSongs.Contains(previousSelection))
+        {
+            SelectedSong = previousSelection;
+        }
+        // Only auto-select first song if there was no previous selection
+        else if (FilteredSongs.Count > 0 && previousSelection is null)
         {
             SelectedSong = FilteredSongs.First();
         }
@@ -973,13 +1046,22 @@ public partial class MainViewModel : ObservableObject
     {
         EnsurePageIndex(ref _queuePageIndex, _queueItems.Count, _queuePageSize);
 
+        // Remember the current selection before clearing
+        var previousSelection = SelectedQueuedSong;
+
         Queue.Clear();
         foreach (var song in GetPageItems(_queueItems, _queuePageIndex, _queuePageSize))
         {
             Queue.Add(song);
         }
 
-        if (Queue.Count > 0 && (SelectedQueuedSong is null || !Queue.Contains(SelectedQueuedSong)))
+        // Restore the selection if it's still valid
+        if (previousSelection != null && Queue.Contains(previousSelection))
+        {
+            SelectedQueuedSong = previousSelection;
+        }
+        // Only auto-select first queued song if there was no previous selection
+        else if (Queue.Count > 0 && previousSelection is null)
         {
             SelectedQueuedSong = Queue.First();
         }
