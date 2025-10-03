@@ -1282,6 +1282,20 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
         lock (_recordingLock)
         {
+            // Check if buffer has enough space
+            if (_systemAudioBufferPosition + e.BytesRecorded > _systemAudioBuffer.Length)
+            {
+                // Buffer full, flush what we have and reset
+                TryMixAndWrite();
+
+                // If still not enough space after flush, skip this data
+                if (_systemAudioBufferPosition + e.BytesRecorded > _systemAudioBuffer.Length)
+                {
+                    _logger.LogWarning("System audio buffer overflow, skipping {Bytes} bytes", e.BytesRecorded);
+                    return;
+                }
+            }
+
             // Copy system audio to buffer
             Buffer.BlockCopy(e.Buffer, 0, _systemAudioBuffer, _systemAudioBufferPosition, e.BytesRecorded);
             _systemAudioBufferPosition += e.BytesRecorded;
@@ -1298,6 +1312,20 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
         lock (_recordingLock)
         {
+            // Check if buffer has enough space
+            if (_micAudioBufferPosition + e.BytesRecorded > _micAudioBuffer.Length)
+            {
+                // Buffer full, flush what we have and reset
+                TryMixAndWrite();
+
+                // If still not enough space after flush, skip this data
+                if (_micAudioBufferPosition + e.BytesRecorded > _micAudioBuffer.Length)
+                {
+                    _logger.LogWarning("Mic audio buffer overflow, skipping {Bytes} bytes", e.BytesRecorded);
+                    return;
+                }
+            }
+
             // Copy mic audio to buffer
             Buffer.BlockCopy(e.Buffer, 0, _micAudioBuffer, _micAudioBufferPosition, e.BytesRecorded);
             _micAudioBufferPosition += e.BytesRecorded;
