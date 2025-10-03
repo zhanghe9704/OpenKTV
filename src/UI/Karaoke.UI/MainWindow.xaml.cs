@@ -31,6 +31,9 @@ public sealed partial class MainWindow : Window
         _playbackService = playbackService;
         _libraryService = libraryService;
 
+        // Set initial volume from slider default value
+        _ = _playbackService.SetVolumeAsync((int)VolumeSlider.Value, CancellationToken.None);
+
         _currentSongRefreshTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(10) // Reduced frequency since we have event-driven updates
