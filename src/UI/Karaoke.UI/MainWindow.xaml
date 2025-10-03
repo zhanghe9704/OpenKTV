@@ -77,7 +77,7 @@
 
                   <CheckBox x:Name="RecordCheckBox"
                             Grid.Column="4"
-                            Content="R̲ecord"
+                            Content="Re̲cord"
                             IsChecked="False"
                             Checked="OnRecordChanged"
                             Unchecked="OnRecordChanged"

@@ -78,9 +78,10 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     private bool _volumeNormalizationEnabled = true;
     private int _currentVolume = 100;
     private bool _recordingEnabled = false;
-    private NAudio.Wave.WasapiLoopbackCapture? _waveIn;
+    private NAudio.Wave.WasapiLoopbackCapture? _systemAudioCapture;
     private NAudio.Wave.WaveFileWriter? _waveWriter;
     private string? _currentRecordingPath;
+    private bool _isRecording = false;
 
     public event EventHandler<SongDto>? SongChanged;
     public event EventHandler<PlaybackState>? StateChanged;
@@ -604,6 +605,9 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            // Stop any ongoing recording
+            StopRecording();
+
             if (_mediaPlayer != null)
             {
                 _mediaPlayer.Stop();
@@ -1179,8 +1183,10 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     {
         try
         {
-            if (!_recordingEnabled)
+            if (!_recordingEnabled || _isRecording)
                 return;
+
+            _isRecording = true;
 
             // Create record directory if it doesn't exist
             var recordDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "record");
@@ -1197,33 +1203,50 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 _currentRecordingPath = Path.Combine(recordDir, $"{sanitizedName}_{timestamp}.wav");
             }
 
-            // Initialize WASAPI loopback capture (captures system audio output)
-            _waveIn = new NAudio.Wave.WasapiLoopbackCapture();
-            _waveWriter = new NAudio.Wave.WaveFileWriter(_currentRecordingPath, _waveIn.WaveFormat);
+            // Initialize system audio capture (loopback)
+            // Note: This captures system audio output only. Microphone mixing
+            // would require more complex implementation with matching sample rates.
+            _systemAudioCapture = new NAudio.Wave.WasapiLoopbackCapture();
+            _waveWriter = new NAudio.Wave.WaveFileWriter(_currentRecordingPath, _systemAudioCapture.WaveFormat);
+            _systemAudioCapture.DataAvailable += OnSystemAudioDataAvailable;
 
-            _waveIn.DataAvailable += (s, e) =>
-            {
-                _waveWriter?.Write(e.Buffer, 0, e.BytesRecorded);
-            };
+            // Start capturing
+            _systemAudioCapture.StartRecording();
 
-            _waveIn.RecordingStopped += (s, e) =>
-            {
-                _waveWriter?.Dispose();
-                _waveWriter = null;
-                _waveIn?.Dispose();
-                _waveIn = null;
-            };
-
-            _waveIn.StartRecording();
             _logger.LogInformation("Started recording to: {Path}", _currentRecordingPath);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to start recording");
+            CleanupRecording();
+        }
+    }
+
+    private void OnSystemAudioDataAvailable(object? sender, NAudio.Wave.WaveInEventArgs e)
+    {
+        if (_waveWriter != null && _isRecording)
+        {
+            _waveWriter.Write(e.Buffer, 0, e.BytesRecorded);
+        }
+    }
+
+    private void CleanupRecording()
+    {
+        try
+        {
+            if (_systemAudioCapture != null)
+            {
+                _systemAudioCapture.DataAvailable -= OnSystemAudioDataAvailable;
+                _systemAudioCapture.Dispose();
+                _systemAudioCapture = null;
+            }
+
             _waveWriter?.Dispose();
             _waveWriter = null;
-            _waveIn?.Dispose();
-            _waveIn = null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during recording cleanup");
         }
     }
 
@@ -1231,26 +1254,40 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     {
         try
         {
-            if (_waveIn != null)
+            _logger.LogInformation("StopRecording called, isRecording: {IsRecording}, recording enabled: {Enabled}",
+                _isRecording, _recordingEnabled);
+
+            if (!_isRecording)
             {
-                _waveIn.StopRecording();
-
-                // Wait a bit for the RecordingStopped event to complete
-                System.Threading.Thread.Sleep(100);
-
-                // Ensure writer is disposed and flushed
-                _waveWriter?.Dispose();
-                _waveWriter = null;
-
-                _waveIn?.Dispose();
-                _waveIn = null;
-
-                _logger.LogInformation("Stopped recording: {Path}", _currentRecordingPath);
+                _logger.LogWarning("StopRecording called but recording is not active");
+                return;
             }
+
+            _isRecording = false;
+
+            // Stop capturing
+            try
+            {
+                _systemAudioCapture?.StopRecording();
+            }
+            catch (Exception stopEx)
+            {
+                _logger.LogWarning(stopEx, "Error stopping audio capture");
+            }
+
+            // Wait briefly for any pending data
+            System.Threading.Thread.Sleep(100);
+
+            // Clean up resources
+            CleanupRecording();
+
+            _logger.LogInformation("Stopped recording: {Path}", _currentRecordingPath);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error stopping recording");
+            _isRecording = false;
+            CleanupRecording();
         }
     }
 }

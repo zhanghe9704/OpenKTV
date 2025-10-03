@@ -1074,3 +1074,10 @@ D:\Work\Code\karaoke\src\UI\Karaoke.UI\obj\Debug\net8.0-windows10.0.19041.0\pri.
 D:\Work\Code\karaoke\src\UI\Karaoke.UI\obj\Debug\net8.0-windows10.0.19041.0\qualifiers.txt
 D:\Work\Code\karaoke\src\UI\Karaoke.UI\obj\Debug\net8.0-windows10.0.19041.0\qualifiers.txt.intermediate
 D:\Work\Code\karaoke\src\UI\Karaoke.UI\obj\Debug\net8.0-windows10.0.19041.0\MultipleQualifiersPerDimensionFound.txt
+D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\Debug\net8.0-windows10.0.19041.0\NAudio.dll
+D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\Debug\net8.0-windows10.0.19041.0\NAudio.Asio.dll
+D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\Debug\net8.0-windows10.0.19041.0\NAudio.Core.dll
+D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\Debug\net8.0-windows10.0.19041.0\NAudio.Midi.dll
+D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\Debug\net8.0-windows10.0.19041.0\NAudio.Wasapi.dll
+D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\Debug\net8.0-windows10.0.19041.0\NAudio.WinForms.dll
+D:\Work\Code\karaoke\src\UI\Karaoke.UI\bin\Debug\net8.0-windows10.0.19041.0\NAudio.WinMM.dll
