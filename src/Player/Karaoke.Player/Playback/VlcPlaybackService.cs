@@ -1340,11 +1340,13 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         if (_systemAudioBuffer == null || _micAudioBuffer == null || _waveWriter == null)
             return;
 
-        // Calculate how much we can mix (minimum of both buffers)
-        int bytesToMix = Math.Min(_systemAudioBufferPosition, _micAudioBufferPosition);
-
-        if (bytesToMix < 1024) // Wait for at least 1KB of data
+        // We need at least 1KB of system audio to proceed
+        if (_systemAudioBufferPosition < 1024)
             return;
+
+        // Calculate how much we can mix based on system audio
+        // (mic buffer might be empty/silent, that's OK)
+        int bytesToMix = _systemAudioBufferPosition;
 
         // Round down to nearest sample boundary
         int bytesPerSample = _waveWriter.WaveFormat.BlockAlign;
@@ -1362,7 +1364,8 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             for (int i = 0; i < bytesToMix; i += 2)
             {
                 short sample1 = BitConverter.ToInt16(_systemAudioBuffer, i);
-                short sample2 = BitConverter.ToInt16(_micAudioBuffer, i);
+                // Use mic audio if available, otherwise use silence (0)
+                short sample2 = (i < _micAudioBufferPosition) ? BitConverter.ToInt16(_micAudioBuffer, i) : (short)0;
                 int mixed = sample1 + sample2;
                 mixed = Math.Clamp(mixed, short.MinValue, short.MaxValue);
                 BitConverter.TryWriteBytes(new Span<byte>(mixedBuffer, i, 2), (short)mixed);
@@ -1374,7 +1377,8 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             for (int i = 0; i < bytesToMix; i += 4)
             {
                 float sample1 = BitConverter.ToSingle(_systemAudioBuffer, i);
-                float sample2 = BitConverter.ToSingle(_micAudioBuffer, i);
+                // Use mic audio if available, otherwise use silence (0.0f)
+                float sample2 = (i < _micAudioBufferPosition) ? BitConverter.ToSingle(_micAudioBuffer, i) : 0.0f;
                 float mixed = sample1 + sample2;
                 mixed = Math.Clamp(mixed, -1.0f, 1.0f);
                 BitConverter.TryWriteBytes(new Span<byte>(mixedBuffer, i, 4), mixed);
@@ -1386,7 +1390,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
         // Shift remaining data in buffers
         int systemRemaining = _systemAudioBufferPosition - bytesToMix;
-        int micRemaining = _micAudioBufferPosition - bytesToMix;
+        int micRemaining = Math.Max(0, _micAudioBufferPosition - bytesToMix);
 
         if (systemRemaining > 0)
             Buffer.BlockCopy(_systemAudioBuffer, bytesToMix, _systemAudioBuffer, 0, systemRemaining);
