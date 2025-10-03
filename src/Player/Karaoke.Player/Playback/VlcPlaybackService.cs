@@ -76,6 +76,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     private System.Drawing.Size _originalSize;
     private System.Drawing.Point _originalLocation;
     private bool _volumeNormalizationEnabled = true;
+    private int _currentVolume = 100;
 
     public event EventHandler<SongDto>? SongChanged;
     public event EventHandler<PlaybackState>? StateChanged;
@@ -841,7 +842,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             // Apply volume normalization if enabled and gain data is available
             if (_volumeNormalizationEnabled && _currentSong.GainDb.HasValue)
             {
-                var targetVolume = _mediaPlayer.Volume;
+                var targetVolume = _currentVolume;
                 var gainDb = _currentSong.GainDb.Value;
 
                 // Convert dB to linear scale and apply to current volume
@@ -1094,13 +1095,15 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        // VLC volume is 0-100
+        var clampedVolume = Math.Clamp(volume, 0, 100);
+        _currentVolume = clampedVolume;
+
         if (!_vlcInitialized || _mediaPlayer == null)
         {
             return Task.CompletedTask;
         }
 
-        // VLC volume is 0-100
-        var clampedVolume = Math.Clamp(volume, 0, 100);
         _mediaPlayer.Volume = clampedVolume;
 
         VolumeChanged?.Invoke(this, clampedVolume);
@@ -1111,13 +1114,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     public Task<int> GetVolumeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-
-        if (!_vlcInitialized || _mediaPlayer == null)
-        {
-            return Task.FromResult(100); // Default volume
-        }
-
-        return Task.FromResult(_mediaPlayer.Volume);
+        return Task.FromResult(_currentVolume);
     }
 
     public Task SetVolumeNormalizationAsync(bool enabled, CancellationToken cancellationToken)
