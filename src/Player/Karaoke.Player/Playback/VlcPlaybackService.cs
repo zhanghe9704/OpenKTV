@@ -77,17 +77,6 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     private System.Drawing.Point _originalLocation;
     private bool _volumeNormalizationEnabled = true;
     private int _currentVolume = 100;
-    private bool _recordingEnabled = false;
-    private NAudio.Wave.WasapiLoopbackCapture? _systemAudioCapture;
-    private NAudio.Wave.WaveIn? _micCapture;
-    private NAudio.Wave.WaveFileWriter? _waveWriter;
-    private string? _currentRecordingPath;
-    private bool _isRecording = false;
-    private readonly object _recordingLock = new object();
-    private byte[]? _systemAudioBuffer;
-    private byte[]? _micAudioBuffer;
-    private int _systemAudioBufferPosition = 0;
-    private int _micAudioBufferPosition = 0;
 
     public event EventHandler<SongDto>? SongChanged;
     public event EventHandler<PlaybackState>? StateChanged;
@@ -436,15 +425,31 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 _currentSong = _currentSong with { Instrumental = newInstrumental };
 
                 _mediaPlayer.Stop();
-                await Task.Delay(50, cancellationToken);
+                await Task.Delay(50, cancellationToken).ConfigureAwait(false);
 
                 await PlayCurrentSongAsync().ConfigureAwait(false);
-                await Task.Delay(100, cancellationToken);
 
+                // Wait for media to actually start playing before seeking
                 if (currentPosition > 0)
                 {
-                    _mediaPlayer.Time = currentPosition;
-                    _logger.LogInformation("Restored playback to {Time}ms", currentPosition);
+                    // Wait up to 2 seconds for playback to start
+                    var maxWait = 2000;
+                    var waited = 0;
+                    while (_mediaPlayer.State != VLCState.Playing && waited < maxWait)
+                    {
+                        await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+                        waited += 50;
+                    }
+
+                    if (_mediaPlayer.State == VLCState.Playing)
+                    {
+                        _mediaPlayer.Time = currentPosition;
+                        _logger.LogInformation("Restored playback to {Time}ms after {Wait}ms wait", currentPosition, waited);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to restore position - media not playing after {Wait}ms", waited);
+                    }
                 }
             }
 
@@ -491,9 +496,6 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     private async Task<SongDto?> MoveNextInternalAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("MoveNextInternalAsync: Starting...");
-
-        // Stop any ongoing recording before moving to next song
-        StopRecording();
 
         if (_queue.TryDequeue(out var nextSong))
         {
@@ -611,9 +613,6 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
         await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            // Stop any ongoing recording
-            StopRecording();
-
             if (_mediaPlayer != null)
             {
                 _mediaPlayer.Stop();
@@ -856,9 +855,6 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _logger.LogInformation("Instrumental Value: {Instrumental}", _currentSong.Instrumental);
             _logger.LogInformation("Channel Configuration: {ChannelConfig}", _currentSong.ChannelConfiguration);
 
-            // Start recording if enabled
-            StartRecording(_currentSong.Title ?? Path.GetFileNameWithoutExtension(_currentSong.MediaPath));
-
             // Apply volume normalization if enabled and gain data is available
             if (_volumeNormalizationEnabled && _currentSong.GainDb.HasValue)
             {
@@ -1079,9 +1075,6 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
         _disposed = true;
 
-        // Stop any ongoing recording
-        StopRecording();
-
         try
         {
             if (_mediaPlayer != null)
@@ -1169,280 +1162,5 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(_volumeNormalizationEnabled);
-    }
-
-    public Task SetRecordingEnabledAsync(bool enabled, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        _recordingEnabled = enabled;
-        _logger.LogInformation("Recording {Status}", enabled ? "enabled" : "disabled");
-        return Task.CompletedTask;
-    }
-
-    public Task<bool> GetRecordingEnabledAsync(CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(_recordingEnabled);
-    }
-
-    private void StartRecording(string songName)
-    {
-        try
-        {
-            if (!_recordingEnabled || _isRecording)
-                return;
-
-            _isRecording = true;
-
-            // Create record directory if it doesn't exist
-            var recordDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "record");
-            Directory.CreateDirectory(recordDir);
-
-            // Generate filename with timestamp if file exists
-            var sanitizedName = string.Join("_", songName.Split(Path.GetInvalidFileNameChars()));
-            var baseFileName = Path.Combine(recordDir, $"{sanitizedName}.wav");
-            _currentRecordingPath = baseFileName;
-
-            if (File.Exists(baseFileName))
-            {
-                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                _currentRecordingPath = Path.Combine(recordDir, $"{sanitizedName}_{timestamp}.wav");
-            }
-
-            // Initialize system audio capture (loopback)
-            _systemAudioCapture = new NAudio.Wave.WasapiLoopbackCapture();
-            var systemFormat = _systemAudioCapture.WaveFormat;
-
-            // Create wave writer with system audio format
-            _waveWriter = new NAudio.Wave.WaveFileWriter(_currentRecordingPath, systemFormat);
-
-            // For now, only record system audio (loopback)
-            // Microphone mixing requires more complex implementation
-            _systemAudioCapture.DataAvailable += OnSystemAudioDataAvailableOnly;
-            _systemAudioCapture.StartRecording();
-            _logger.LogInformation("Started recording to: {Path}", _currentRecordingPath);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to start recording");
-            CleanupRecording();
-        }
-    }
-
-    private void OnSystemAudioDataAvailableOnly(object? sender, NAudio.Wave.WaveInEventArgs e)
-    {
-        if (_waveWriter != null && _isRecording)
-        {
-            _waveWriter.Write(e.Buffer, 0, e.BytesRecorded);
-        }
-    }
-
-    private void OnSystemAudioDataAvailableWithMic(object? sender, NAudio.Wave.WaveInEventArgs e)
-    {
-        if (!_isRecording || _waveWriter == null || _systemAudioBuffer == null)
-            return;
-
-        lock (_recordingLock)
-        {
-            // Check if buffer has enough space
-            if (_systemAudioBufferPosition + e.BytesRecorded > _systemAudioBuffer.Length)
-            {
-                // Buffer full, flush what we have and reset
-                TryMixAndWrite();
-
-                // If still not enough space after flush, skip this data
-                if (_systemAudioBufferPosition + e.BytesRecorded > _systemAudioBuffer.Length)
-                {
-                    _logger.LogWarning("System audio buffer overflow, skipping {Bytes} bytes", e.BytesRecorded);
-                    return;
-                }
-            }
-
-            // Copy system audio to buffer
-            Buffer.BlockCopy(e.Buffer, 0, _systemAudioBuffer, _systemAudioBufferPosition, e.BytesRecorded);
-            _systemAudioBufferPosition += e.BytesRecorded;
-
-            // Try to mix and write
-            TryMixAndWrite();
-        }
-    }
-
-    private void OnMicAudioDataAvailable(object? sender, NAudio.Wave.WaveInEventArgs e)
-    {
-        if (!_isRecording || _waveWriter == null || _micAudioBuffer == null)
-            return;
-
-        lock (_recordingLock)
-        {
-            // Check if buffer has enough space
-            if (_micAudioBufferPosition + e.BytesRecorded > _micAudioBuffer.Length)
-            {
-                // Buffer full, flush what we have and reset
-                TryMixAndWrite();
-
-                // If still not enough space after flush, skip this data
-                if (_micAudioBufferPosition + e.BytesRecorded > _micAudioBuffer.Length)
-                {
-                    _logger.LogWarning("Mic audio buffer overflow, skipping {Bytes} bytes", e.BytesRecorded);
-                    return;
-                }
-            }
-
-            // Copy mic audio to buffer
-            Buffer.BlockCopy(e.Buffer, 0, _micAudioBuffer, _micAudioBufferPosition, e.BytesRecorded);
-            _micAudioBufferPosition += e.BytesRecorded;
-
-            // Try to mix and write
-            TryMixAndWrite();
-        }
-    }
-
-    private void TryMixAndWrite()
-    {
-        if (_systemAudioBuffer == null || _micAudioBuffer == null || _waveWriter == null)
-            return;
-
-        // We need at least some data to proceed
-        if (_systemAudioBufferPosition < 100)
-            return;
-
-        // Calculate how much we should mix this time
-        // Process the minimum of what we have, up to a reasonable chunk size
-        int maxChunkSize = 8192; // 8KB chunks
-        int bytesToMix = Math.Min(_systemAudioBufferPosition, maxChunkSize);
-
-        // If we have mic data, don't exceed what mic has available (to keep them synced)
-        if (_micAudioBufferPosition > 0)
-        {
-            bytesToMix = Math.Min(bytesToMix, _micAudioBufferPosition);
-        }
-
-        // Round down to nearest sample boundary
-        int bytesPerSample = _waveWriter.WaveFormat.BlockAlign;
-        bytesToMix = (bytesToMix / bytesPerSample) * bytesPerSample;
-
-        if (bytesToMix == 0)
-            return;
-
-        // Mix the audio (simple addition with clamping)
-        byte[] mixedBuffer = new byte[bytesToMix];
-
-        if (_waveWriter.WaveFormat.BitsPerSample == 16)
-        {
-            // 16-bit audio mixing
-            for (int i = 0; i < bytesToMix; i += 2)
-            {
-                short sample1 = BitConverter.ToInt16(_systemAudioBuffer, i);
-                // Use mic audio if available, otherwise use silence (0)
-                short sample2 = (i + 1 < _micAudioBufferPosition) ? BitConverter.ToInt16(_micAudioBuffer, i) : (short)0;
-                int mixed = sample1 + sample2;
-                mixed = Math.Clamp(mixed, short.MinValue, short.MaxValue);
-                BitConverter.TryWriteBytes(new Span<byte>(mixedBuffer, i, 2), (short)mixed);
-            }
-        }
-        else if (_waveWriter.WaveFormat.BitsPerSample == 32)
-        {
-            // 32-bit float audio mixing
-            for (int i = 0; i < bytesToMix; i += 4)
-            {
-                float sample1 = BitConverter.ToSingle(_systemAudioBuffer, i);
-                // Use mic audio if available, otherwise use silence (0.0f)
-                float sample2 = (i + 3 < _micAudioBufferPosition) ? BitConverter.ToSingle(_micAudioBuffer, i) : 0.0f;
-                float mixed = sample1 + sample2;
-                mixed = Math.Clamp(mixed, -1.0f, 1.0f);
-                BitConverter.TryWriteBytes(new Span<byte>(mixedBuffer, i, 4), mixed);
-            }
-        }
-
-        // Write mixed audio to file
-        _waveWriter.Write(mixedBuffer, 0, bytesToMix);
-
-        // Shift remaining data in buffers
-        int systemRemaining = _systemAudioBufferPosition - bytesToMix;
-        int micRemaining = Math.Max(0, _micAudioBufferPosition - bytesToMix);
-
-        if (systemRemaining > 0)
-            Buffer.BlockCopy(_systemAudioBuffer, bytesToMix, _systemAudioBuffer, 0, systemRemaining);
-        if (micRemaining > 0)
-            Buffer.BlockCopy(_micAudioBuffer, bytesToMix, _micAudioBuffer, 0, micRemaining);
-
-        _systemAudioBufferPosition = systemRemaining;
-        _micAudioBufferPosition = micRemaining;
-    }
-
-    private void CleanupRecording()
-    {
-        try
-        {
-            if (_systemAudioCapture != null)
-            {
-                _systemAudioCapture.DataAvailable -= OnSystemAudioDataAvailableOnly;
-                _systemAudioCapture.DataAvailable -= OnSystemAudioDataAvailableWithMic;
-                _systemAudioCapture.Dispose();
-                _systemAudioCapture = null;
-            }
-
-            if (_micCapture != null)
-            {
-                _micCapture.DataAvailable -= OnMicAudioDataAvailable;
-                _micCapture.StopRecording();
-                _micCapture.Dispose();
-                _micCapture = null;
-            }
-
-            _waveWriter?.Dispose();
-            _waveWriter = null;
-
-            _systemAudioBuffer = null;
-            _micAudioBuffer = null;
-            _systemAudioBufferPosition = 0;
-            _micAudioBufferPosition = 0;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during recording cleanup");
-        }
-    }
-
-    private void StopRecording()
-    {
-        try
-        {
-            _logger.LogInformation("StopRecording called, isRecording: {IsRecording}, recording enabled: {Enabled}",
-                _isRecording, _recordingEnabled);
-
-            if (!_isRecording)
-            {
-                _logger.LogWarning("StopRecording called but recording is not active");
-                return;
-            }
-
-            _isRecording = false;
-
-            // Stop capturing
-            try
-            {
-                _systemAudioCapture?.StopRecording();
-                _micCapture?.StopRecording();
-            }
-            catch (Exception stopEx)
-            {
-                _logger.LogWarning(stopEx, "Error stopping audio capture");
-            }
-
-            // Wait briefly for any pending data
-            System.Threading.Thread.Sleep(100);
-
-            // Clean up resources
-            CleanupRecording();
-
-            _logger.LogInformation("Stopped recording: {Path}", _currentRecordingPath);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error stopping recording");
-            _isRecording = false;
-            CleanupRecording();
-        }
     }
 }

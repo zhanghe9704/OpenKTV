@@ -242,6 +242,28 @@ public sealed partial class MainWindow : Window
     {
         try
         {
+            // Check if there are more songs in the queue
+            var current = await _playbackService.GetCurrentAsync(CancellationToken.None).ConfigureAwait(false);
+            if (current == null)
+            {
+                System.Diagnostics.Debug.WriteLine("Next: No current song");
+                return;
+            }
+
+            // Check if this is the last song by attempting to peek at the queue
+            // The queue in the viewmodel should reflect what's in the playback service
+            var queueCount = _viewModel.Queue.Count;
+            var currentPlayingIndex = _viewModel.CurrentPlayingQueueIndex;
+
+            System.Diagnostics.Debug.WriteLine($"Next: Queue count={queueCount}, Current index={currentPlayingIndex}");
+
+            // If current song is the last one in the queue, don't move next
+            if (currentPlayingIndex >= 0 && currentPlayingIndex >= queueCount - 1)
+            {
+                System.Diagnostics.Debug.WriteLine("Next: Already on last song, ignoring");
+                return;
+            }
+
             await _playbackService.MoveNextAsync(CancellationToken.None).ConfigureAwait(false);
             _viewModel.OnPlaybackNextSong();
             await _viewModel.RefreshCurrentPlayingSongAsync().ConfigureAwait(true);
@@ -667,22 +689,4 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private async void OnRecordChanged(object sender, RoutedEventArgs e)
-    {
-        if (_playbackService == null)
-        {
-            return;
-        }
-
-        try
-        {
-            var isEnabled = RecordCheckBox.IsChecked ?? false;
-            await _playbackService.SetRecordingEnabledAsync(isEnabled, CancellationToken.None);
-            System.Diagnostics.Debug.WriteLine($"Recording {(isEnabled ? "enabled" : "disabled")}");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error changing recording state: {ex}");
-        }
-    }
 }

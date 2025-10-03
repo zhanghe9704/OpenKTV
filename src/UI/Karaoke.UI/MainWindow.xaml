@@ -74,26 +74,6 @@
                       <KeyboardAccelerator Modifiers="Control" Key="O" />
                     </CheckBox.KeyboardAccelerators>
                   </CheckBox>
-
-                  <CheckBox x:Name="RecordCheckBox"
-                            Grid.Column="4"
-                            Content="Re̲cord"
-                            IsChecked="False"
-                            Checked="OnRecordChanged"
-                            Unchecked="OnRecordChanged"
-                            VerticalAlignment="Center"
-                            Margin="0,0,8,0"
-                            FontSize="14"
-                            MinWidth="0"
-                            MinHeight="0"
-                            RenderTransformOrigin="0.5,0.5">
-                    <CheckBox.RenderTransform>
-                      <ScaleTransform ScaleX="0.85" ScaleY="0.85" />
-                    </CheckBox.RenderTransform>
-                    <CheckBox.KeyboardAccelerators>
-                      <KeyboardAccelerator Modifiers="Control" Key="E" />
-                    </CheckBox.KeyboardAccelerators>
-                  </CheckBox>
                 </Grid>
               </CommandBar.Content>
               
