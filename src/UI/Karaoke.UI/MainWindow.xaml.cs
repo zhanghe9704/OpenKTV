@@ -22,6 +22,9 @@ public sealed partial class MainWindow : Window
     private readonly IPlaybackService _playbackService;
     private readonly ILibraryService _libraryService;
     private readonly DispatcherTimer _currentSongRefreshTimer;
+    private readonly DispatcherTimer _artistsPageSizeUpdateTimer;
+    private readonly DispatcherTimer _songsPageSizeUpdateTimer;
+    private readonly DispatcherTimer _queuePageSizeUpdateTimer;
 
     public MainWindow(MainViewModel viewModel, LibrarySettingsViewModel settingsViewModel, IPlaybackService playbackService, ILibraryService libraryService)
     {
@@ -39,6 +42,37 @@ public sealed partial class MainWindow : Window
             Interval = TimeSpan.FromSeconds(10) // Reduced frequency since we have event-driven updates
         };
         _currentSongRefreshTimer.Tick += OnCurrentSongRefreshTimer;
+
+        // Initialize page size update timers with debouncing
+        _artistsPageSizeUpdateTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(100)
+        };
+        _artistsPageSizeUpdateTimer.Tick += (s, e) =>
+        {
+            _artistsPageSizeUpdateTimer.Stop();
+            UpdateArtistsPageSize();
+        };
+
+        _songsPageSizeUpdateTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(100)
+        };
+        _songsPageSizeUpdateTimer.Tick += (s, e) =>
+        {
+            _songsPageSizeUpdateTimer.Stop();
+            UpdateSongsPageSize();
+        };
+
+        _queuePageSizeUpdateTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(100)
+        };
+        _queuePageSizeUpdateTimer.Tick += (s, e) =>
+        {
+            _queuePageSizeUpdateTimer.Stop();
+            UpdateQueuePageSize();
+        };
 
         if (Content is FrameworkElement element)
         {
@@ -687,6 +721,78 @@ public sealed partial class MainWindow : Window
         {
             System.Diagnostics.Debug.WriteLine($"Error changing volume normalization: {ex}");
         }
+    }
+
+    private void OnArtistsListViewSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // Debounce the update to avoid reentrancy issues
+        _artistsPageSizeUpdateTimer.Stop();
+        _artistsPageSizeUpdateTimer.Start();
+    }
+
+    private void OnSongsListViewSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // Debounce the update to avoid reentrancy issues
+        _songsPageSizeUpdateTimer.Stop();
+        _songsPageSizeUpdateTimer.Start();
+    }
+
+    private void OnQueueListViewSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // Debounce the update to avoid reentrancy issues
+        _queuePageSizeUpdateTimer.Stop();
+        _queuePageSizeUpdateTimer.Start();
+    }
+
+    private void UpdateArtistsPageSize()
+    {
+        if (ArtistsListView == null || _viewModel == null) return;
+
+        var availableHeight = ArtistsListView.ActualHeight;
+        if (availableHeight <= 0) return;
+
+        // Estimate item height: simple text item is approximately 40-48 pixels
+        const double estimatedItemHeight = 44.0;
+        var itemsPerPage = (int)Math.Floor(availableHeight / estimatedItemHeight);
+
+        // Ensure at least 1 item per page
+        itemsPerPage = Math.Max(1, itemsPerPage);
+
+        _viewModel.SetArtistsPageSize(itemsPerPage);
+    }
+
+    private void UpdateSongsPageSize()
+    {
+        if (SongsListView == null || _viewModel == null) return;
+
+        var availableHeight = SongsListView.ActualHeight;
+        if (availableHeight <= 0) return;
+
+        // Estimate item height: songs have 2 lines (title/details + path), approximately 70-80 pixels
+        const double estimatedItemHeight = 76.0;
+        var itemsPerPage = (int)Math.Floor(availableHeight / estimatedItemHeight);
+
+        // Ensure at least 1 item per page
+        itemsPerPage = Math.Max(1, itemsPerPage);
+
+        _viewModel.SetSongsPageSize(itemsPerPage);
+    }
+
+    private void UpdateQueuePageSize()
+    {
+        if (QueueListView == null || _viewModel == null) return;
+
+        var availableHeight = QueueListView.ActualHeight;
+        if (availableHeight <= 0) return;
+
+        // Estimate item height: queue items have 2 lines (title + artist), approximately 60-68 pixels
+        const double estimatedItemHeight = 64.0;
+        var itemsPerPage = (int)Math.Floor(availableHeight / estimatedItemHeight);
+
+        // Ensure at least 1 item per page
+        itemsPerPage = Math.Max(1, itemsPerPage);
+
+        _viewModel.SetQueuePageSize(itemsPerPage);
     }
 
 }

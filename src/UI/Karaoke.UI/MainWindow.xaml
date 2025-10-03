@@ -212,10 +212,12 @@
                     </Button>
                 </Grid>
                 <ListView
+                    x:Name="ArtistsListView"
                     Grid.Row="2"
                     ItemsSource="{x:Bind ViewModel.Artists, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedArtist, Mode=TwoWay}"
-                    SelectionMode="Single" />
+                    SelectionMode="Single"
+                    SizeChanged="OnArtistsListViewSizeChanged" />
                 <Grid Grid.Row="3" ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -264,13 +266,15 @@
                     </Button>
                 </Grid>
                 <ListView
+                    x:Name="SongsListView"
                     Grid.Row="2"
                     IsItemClickEnabled="True"
                     ItemClick="OnSongItemClick"
                     ItemsSource="{x:Bind ViewModel.FilteredSongs, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedSong, Mode=TwoWay}"
                     SelectionMode="Single"
-                    RightTapped="OnSongRightTapped">
+                    RightTapped="OnSongRightTapped"
+                    SizeChanged="OnSongsListViewSizeChanged">
                     <ListView.ContextFlyout>
                         <MenuFlyout>
                             <MenuFlyoutItem Text="View Details" Click="OnViewSongDetails">
@@ -343,7 +347,8 @@
                     SelectedItem="{x:Bind ViewModel.SelectedQueuedSong, Mode=TwoWay}"
                     SelectedIndex="{x:Bind ViewModel.SelectedQueuedSongIndex, Mode=TwoWay}"
                     SelectionMode="Single"
-                    RightTapped="OnQueueRightTapped">
+                    RightTapped="OnQueueRightTapped"
+                    SizeChanged="OnQueueListViewSizeChanged">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Spacing="4" Padding="8">
