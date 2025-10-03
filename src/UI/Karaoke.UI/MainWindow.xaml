@@ -42,7 +42,8 @@
                             TickFrequency="10"
                             TickPlacement="BottomRight"
                             ValueChanged="OnVolumeChanged"
-                            VerticalAlignment="Center" />
+                            VerticalAlignment="Center"
+                            Height="24" />
 
                     <TextBlock Grid.Column="2"
                                VerticalAlignment="Center"
@@ -55,15 +56,17 @@
 
                     <CheckBox x:Name="VolumeNormCheckBox"
                               Grid.Column="3"
-                              Content="Volume Norm (v)"
+                              Content="Volume Norm (o)"
                               IsChecked="True"
                               Checked="OnVolumeNormChanged"
                               Unchecked="OnVolumeNormChanged"
                               VerticalAlignment="Center"
                               Margin="0,0,8,0"
-                              FontSize="12">
+                              FontSize="12"
+                              MinWidth="0"
+                              MinHeight="0">
                       <CheckBox.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Control" Key="V" />
+                        <KeyboardAccelerator Modifiers="Control" Key="O" />
                       </CheckBox.KeyboardAccelerators>
                     </CheckBox>
                   </Grid>
@@ -99,9 +102,9 @@
                         <KeyboardAccelerator Modifiers="Control" Key="R" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton Icon="Volume" Label="Vocal (l)" Click="OnVocalClicked">
+                <AppBarButton Icon="Volume" Label="Vocal (v)" Click="OnVocalClicked">
                     <AppBarButton.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="Control" Key="L" />
+                        <KeyboardAccelerator Modifiers="Control" Key="V" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
                 <AppBarSeparator />
