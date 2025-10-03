@@ -57,7 +57,7 @@
 
                   <CheckBox x:Name="VolumeNormCheckBox"
                             Grid.Column="3"
-                            Content="Volume Norm (o)"
+                            Content="Vo̲lume Norm"
                             IsChecked="True"
                             Checked="OnVolumeNormChanged"
                             Unchecked="OnVolumeNormChanged"
@@ -77,13 +77,13 @@
                 </Grid>
               </CommandBar.Content>
               
-                <AppBarButton Icon="Setting" Label="Settings (s)" Click="OnSettingsClicked">
+                <AppBarButton Icon="Setting" Label="S̲ettings" Click="OnSettingsClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="S" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
                 <AppBarSeparator />
-                <AppBarButton Icon="Play" Label="Play (p)" Click="OnPlayClicked">
+                <AppBarButton Icon="Play" Label="P̲lay" Click="OnPlayClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="P" />
                     </AppBarButton.KeyboardAccelerators>
@@ -98,23 +98,23 @@
                         <KeyboardAccelerator Key="Escape" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton Icon="Next" Label="Next (n)" Click="OnNextClicked">
+                <AppBarButton Icon="Next" Label="N̲ext" Click="OnNextClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="N" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton Icon="RepeatOne" Label="Repeat (r)" Click="OnRepeatClicked">
+                <AppBarButton Icon="RepeatOne" Label="R̲epeat" Click="OnRepeatClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="R" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
-                <AppBarButton Icon="Volume" Label="Vocal (v)" Click="OnVocalClicked">
+                <AppBarButton Icon="Volume" Label="V̲ocal" Click="OnVocalClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="V" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>
                 <AppBarSeparator />
-                <AppBarButton Icon="FullScreen" Label="Full Screen (f)" Click="OnFullScreenClicked">
+                <AppBarButton Icon="FullScreen" Label="F̲ull Screen" Click="OnFullScreenClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="F" />
                     </AppBarButton.KeyboardAccelerators>
@@ -171,7 +171,7 @@
                     </AppBarButton.Icon>
                 </AppBarButton>
                 <AppBarSeparator />
-                <AppBarButton Icon="Delete" Label="Delete (d)" Click="OnDeleteClicked">
+                <AppBarButton Icon="Delete" Label="D̲elete" Click="OnDeleteClicked">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="D" />
                     </AppBarButton.KeyboardAccelerators>
