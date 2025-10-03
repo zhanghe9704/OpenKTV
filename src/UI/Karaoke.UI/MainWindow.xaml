@@ -19,7 +19,7 @@
             <CommandBar DefaultLabelPosition="Right" IsOpen="False">
                 <!-- Volume Control -->
                 <CommandBar.Content>
-                  <Grid>
+                  <Grid Margin="0,4,0,0">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="200" />
@@ -53,7 +53,7 @@
 
                     <CheckBox x:Name="VolumeNormCheckBox"
                               Grid.Column="3"
-                              Content="Volume Norm"
+                              Content="Volume Norm (v)"
                               IsChecked="True"
                               Checked="OnVolumeNormChanged"
                               Unchecked="OnVolumeNormChanged"
