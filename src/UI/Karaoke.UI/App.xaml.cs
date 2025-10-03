@@ -18,6 +18,7 @@ namespace Karaoke.UI;
 public partial class App : Application
 {
     private IHost? _host;
+    public static MainWindow? MainWindow { get; private set; }
 
     public App()
     {
@@ -37,9 +38,9 @@ public partial class App : Application
         var library = _host.Services.GetRequiredService<ILibraryRepository>();
         library.InitializeAsync(CancellationToken.None).GetAwaiter().GetResult();
 
-        var window = _host.Services.GetRequiredService<MainWindow>();
-        window.Activate();
-        window.Closed += async (_, _) => await StopHostAsync().ConfigureAwait(false);
+        MainWindow = _host.Services.GetRequiredService<MainWindow>();
+        MainWindow.Activate();
+        MainWindow.Closed += async (_, _) => await StopHostAsync().ConfigureAwait(false);
     }
 
     private static IHostBuilder CreateHostBuilder(string? launchArguments)

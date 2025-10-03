@@ -4,6 +4,8 @@ using System.IO;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Karaoke.UI.ViewModels.Settings;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
 
 namespace Karaoke.UI.Views;
 
@@ -62,7 +64,7 @@ public sealed partial class SettingsDialog : ContentDialog
     private static void HandleSaveError(Exception ex)
     {
         Debug.WriteLine($"Settings save failed: {ex}");
-        
+
         try
         {
             // Instead of showing another dialog, just close the current dialog and let the user know via debug/console
@@ -74,6 +76,31 @@ public sealed partial class SettingsDialog : ContentDialog
             // If anything goes wrong, just log it
             System.Console.WriteLine($"Save error: {ex}");
             System.Diagnostics.Debug.WriteLine($"Failed to handle error: {dialogEx}");
+        }
+    }
+
+    private async void OnBrowseFolderClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not LibraryRootItemViewModel rootViewModel)
+        {
+            return;
+        }
+
+        var folderPicker = new FolderPicker
+        {
+            SuggestedStartLocation = PickerLocationId.ComputerFolder,
+            ViewMode = PickerViewMode.List
+        };
+        folderPicker.FileTypeFilter.Add("*");
+
+        // Initialize the picker with the window handle
+        var hwnd = WindowNative.GetWindowHandle(App.MainWindow);
+        InitializeWithWindow.Initialize(folderPicker, hwnd);
+
+        var folder = await folderPicker.PickSingleFolderAsync();
+        if (folder != null)
+        {
+            rootViewModel.Path = folder.Path;
         }
     }
 }

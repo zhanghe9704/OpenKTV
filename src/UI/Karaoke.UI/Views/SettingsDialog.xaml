@@ -104,7 +104,14 @@
 
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="Path" FontWeight="SemiBold" />
-                                        <TextBox Text="{x:Bind Path, Mode=TwoWay}" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" Text="{x:Bind Path, Mode=TwoWay}" Margin="0,0,8,0" />
+                                            <Button Grid.Column="1" Content="Browse..." Click="OnBrowseFolderClick" Tag="{x:Bind}" />
+                                        </Grid>
                                     </StackPanel>
 
                                     <StackPanel Orientation="Horizontal" Spacing="12">
