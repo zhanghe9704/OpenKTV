@@ -29,6 +29,7 @@ public sealed partial class MainWindow : Window
     public MainWindow(MainViewModel viewModel, LibrarySettingsViewModel settingsViewModel, IPlaybackService playbackService, ILibraryService libraryService)
     {
         InitializeComponent();
+        Title = "OpenKTV";
         _viewModel = viewModel;
         _settingsViewModel = settingsViewModel;
         _playbackService = playbackService;

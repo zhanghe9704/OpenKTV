@@ -11,11 +11,6 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Spacing="12" Margin="16,16,16,0">
-            <TextBlock
-                Text="Karaoke shell"
-                FontSize="24"
-                HorizontalAlignment="Center" />
-
             <CommandBar DefaultLabelPosition="Right" IsOpen="False">
               <!-- Volume Control -->
               <CommandBar.Content>
