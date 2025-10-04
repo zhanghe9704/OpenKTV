@@ -1096,6 +1096,12 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 await ToggleFullScreenAsync(CancellationToken.None).ConfigureAwait(false);
                 e.Handled = true;
             }
+            // F11 - Toggle full screen
+            else if (e.KeyCode == Keys.F11)
+            {
+                await ToggleFullScreenAsync(CancellationToken.None).ConfigureAwait(false);
+                e.Handled = true;
+            }
             // Ctrl+F - Toggle full screen
             else if (e.KeyCode == Keys.F && e.Control)
             {
@@ -1113,6 +1119,40 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 {
                     await PlayAsync(CancellationToken.None).ConfigureAwait(false);
                 }
+                e.Handled = true;
+            }
+            // Ctrl+N - Next song
+            else if (e.KeyCode == Keys.N && e.Control)
+            {
+                await MoveNextAsync(CancellationToken.None).ConfigureAwait(false);
+                e.Handled = true;
+            }
+            // Ctrl+R - Repeat/Restart current song
+            else if (e.KeyCode == Keys.R && e.Control)
+            {
+                await RestartCurrentSongAsync(CancellationToken.None).ConfigureAwait(false);
+                e.Handled = true;
+            }
+            // Ctrl+V - Toggle vocal
+            else if (e.KeyCode == Keys.V && e.Control)
+            {
+                await ToggleVocalAsync(CancellationToken.None).ConfigureAwait(false);
+                e.Handled = true;
+            }
+            // Right arrow - Volume up
+            else if (e.KeyCode == Keys.Right && !e.Control)
+            {
+                var currentVolume = await GetVolumeAsync(CancellationToken.None).ConfigureAwait(false);
+                var newVolume = Math.Min(100, currentVolume + 5);
+                await SetVolumeAsync(newVolume, CancellationToken.None).ConfigureAwait(false);
+                e.Handled = true;
+            }
+            // Left arrow - Volume down
+            else if (e.KeyCode == Keys.Left && !e.Control)
+            {
+                var currentVolume = await GetVolumeAsync(CancellationToken.None).ConfigureAwait(false);
+                var newVolume = Math.Max(0, currentVolume - 5);
+                await SetVolumeAsync(newVolume, CancellationToken.None).ConfigureAwait(false);
                 e.Handled = true;
             }
         }
