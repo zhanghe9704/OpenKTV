@@ -1001,16 +1001,40 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                     _logger.LogInformation("Setting audio channel to Stereo (Instrumental={Instrumental})", instrumental);
                 }
 
-                // Apply the channel change
-                _mediaPlayer.SetChannel(targetChannel);
+                // Apply the channel change with retry mechanism for release builds
+                // In release builds, VLC may need more time to be ready for channel changes
+                bool channelSet = false;
+                int maxRetries = 5;
+                int[] delaySequence = new[] { 300, 500, 800, 1000, 2000 }; // Progressive delays in milliseconds
 
-                // Wait a moment for VLC to apply the change (critical for release builds)
-                System.Threading.Thread.Sleep(100);
+                for (int attempt = 0; attempt < maxRetries && !channelSet; attempt++)
+                {
+                    if (attempt > 0)
+                    {
+                        _logger.LogInformation("Retry attempt {Attempt} to set audio channel", attempt);
+                    }
 
-                // Verify the change was applied
-                var newChannel = _mediaPlayer.Channel;
-                _logger.LogInformation("Audio channel after SetChannel: {NewChannel} (expected: {TargetChannel})",
-                    newChannel, targetChannel);
+                    _mediaPlayer.SetChannel(targetChannel);
+                    System.Threading.Thread.Sleep(delaySequence[attempt]);
+
+                    var newChannel = _mediaPlayer.Channel;
+                    if (newChannel == targetChannel)
+                    {
+                        channelSet = true;
+                        _logger.LogInformation("Successfully set audio channel to {TargetChannel} on attempt {Attempt}",
+                            targetChannel, attempt + 1);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Channel not applied on attempt {Attempt}: expected {TargetChannel}, got {ActualChannel}",
+                            attempt + 1, targetChannel, newChannel);
+                    }
+                }
+
+                if (!channelSet)
+                {
+                    _logger.LogError("Failed to set audio channel after {MaxRetries} attempts", maxRetries);
+                }
 
                 _logger.LogInformation("=== End Audio Track Selection ===");
                 return;
