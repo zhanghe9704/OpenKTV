@@ -425,26 +425,51 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 _currentSong = _currentSong with { Instrumental = newInstrumental };
 
                 _mediaPlayer.Stop();
-                await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+
+                // Wait for VLC to fully stop (race condition fix for optimized release builds)
+                var stopWait = 0;
+                while (_mediaPlayer.State != VLCState.Stopped && stopWait < 1000)
+                {
+                    await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+                    stopWait += 50;
+                }
+
+                _logger.LogInformation("VLC stopped after {Wait}ms, current state: {State}", stopWait, _mediaPlayer.State);
 
                 await PlayCurrentSongAsync().ConfigureAwait(false);
 
                 // Wait for media to actually start playing before seeking
                 if (currentPosition > 0)
                 {
-                    // Wait up to 2 seconds for playback to start
-                    var maxWait = 2000;
+                    // Wait up to 3 seconds for playback to start (longer for release builds)
+                    var maxWait = 3000;
                     var waited = 0;
                     while (_mediaPlayer.State != VLCState.Playing && waited < maxWait)
                     {
-                        await Task.Delay(50, cancellationToken).ConfigureAwait(false);
-                        waited += 50;
+                        await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+                        waited += 100;
                     }
 
                     if (_mediaPlayer.State == VLCState.Playing)
                     {
+                        // Wait for channel to be applied (event handler sets it)
+                        await Task.Delay(200, cancellationToken).ConfigureAwait(false);
+
+                        // Verify and force channel if needed
+                        var expectedChannel = newInstrumental == 0 ? AudioOutputChannel.Left : AudioOutputChannel.Right;
+                        var currentChannel = _mediaPlayer.Channel;
+
+                        if (currentChannel != expectedChannel)
+                        {
+                            _logger.LogWarning("Channel not set correctly ({Current} != {Expected}), forcing...",
+                                currentChannel, expectedChannel);
+                            _mediaPlayer.SetChannel(expectedChannel);
+                            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+                        }
+
                         _mediaPlayer.Time = currentPosition;
-                        _logger.LogInformation("Restored playback to {Time}ms after {Wait}ms wait", currentPosition, waited);
+                        _logger.LogInformation("Restored playback to {Time}ms after {Wait}ms wait, channel: {Channel}",
+                            currentPosition, waited, _mediaPlayer.Channel);
                     }
                     else
                     {
@@ -952,24 +977,40 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             {
                 _logger.LogInformation("Single-track dual-channel detected; applying channel selection via SetChannel");
 
+                // Get current channel before changing
+                var currentChannel = _mediaPlayer.Channel;
+                _logger.LogInformation("Current audio channel: {Channel}", currentChannel);
+
+                AudioOutputChannel targetChannel;
                 if (instrumental == 0)
                 {
                     // Left channel only (instrumental)
-                    _mediaPlayer.SetChannel(AudioOutputChannel.Left);
-                    _logger.LogInformation("Set audio channel to Left (Instrumental=0)");
+                    targetChannel = AudioOutputChannel.Left;
+                    _logger.LogInformation("Setting audio channel to Left (Instrumental=0)");
                 }
                 else if (instrumental == 1)
                 {
                     // Right channel only (vocal+music)
-                    _mediaPlayer.SetChannel(AudioOutputChannel.Right);
-                    _logger.LogInformation("Set audio channel to Right (Instrumental=1)");
+                    targetChannel = AudioOutputChannel.Right;
+                    _logger.LogInformation("Setting audio channel to Right (Instrumental=1)");
                 }
                 else
                 {
                     // Normal stereo
-                    _mediaPlayer.SetChannel(AudioOutputChannel.Stereo);
-                    _logger.LogInformation("Set audio channel to Stereo (Instrumental={Instrumental})", instrumental);
+                    targetChannel = AudioOutputChannel.Stereo;
+                    _logger.LogInformation("Setting audio channel to Stereo (Instrumental={Instrumental})", instrumental);
                 }
+
+                // Apply the channel change
+                _mediaPlayer.SetChannel(targetChannel);
+
+                // Wait a moment for VLC to apply the change (critical for release builds)
+                System.Threading.Thread.Sleep(100);
+
+                // Verify the change was applied
+                var newChannel = _mediaPlayer.Channel;
+                _logger.LogInformation("Audio channel after SetChannel: {NewChannel} (expected: {TargetChannel})",
+                    newChannel, targetChannel);
 
                 _logger.LogInformation("=== End Audio Track Selection ===");
                 return;

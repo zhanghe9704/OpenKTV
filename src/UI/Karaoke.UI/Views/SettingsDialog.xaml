@@ -134,7 +134,7 @@
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Keyword Format (Root-specific)" FontWeight="SemiBold" />
+                                        <TextBlock Text="Keyword Format (Folder-specific)" FontWeight="SemiBold" />
                                         <TextBox
                                             Text="{x:Bind KeywordFormat, Mode=TwoWay}"
                                             PlaceholderText="Overrides global format if set" />
