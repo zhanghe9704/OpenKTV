@@ -182,7 +182,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
 
     private void AddRoot()
     {
-        Roots.Add(new LibraryRootItemViewModel("NewRoot", "", defaultPriority: 2, defaultChannel: "Stereo", driveOverride: null, keywordFormat: null, instrumental: 0, shouldRescan: true));
+        Roots.Add(new LibraryRootItemViewModel("New_folder", "", defaultPriority: 2, defaultChannel: "Stereo", driveOverride: null, keywordFormat: null, instrumental: 0, shouldRescan: true));
         SelectedRoot = Roots.Last();
     }
 

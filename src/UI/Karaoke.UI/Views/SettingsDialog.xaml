@@ -22,7 +22,7 @@
 
             <!-- Global Keyword Format -->
             <StackPanel Spacing="4">
-                <TextBlock Text="Global Keyword Format (Default)" FontWeight="SemiBold" />
+                <TextBlock Text="Global Keyword Format (Default: artist\song)" FontWeight="SemiBold" />
                 <TextBox
                     Text="{Binding GlobalKeywordFormat, Mode=TwoWay}"
                     PlaceholderText="e.g., artist-song-comment" />

@@ -967,8 +967,8 @@ public partial class MainViewModel : ObservableObject
 
             songs = songs.Where(song =>
             {
-                if (song.Title.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
-                    song.Artist.Contains(term, StringComparison.CurrentCultureIgnoreCase))
+                // Search only in song title, not artist
+                if (song.Title.Contains(term, StringComparison.CurrentCultureIgnoreCase))
                 {
                     return true;
                 }
@@ -978,8 +978,8 @@ public partial class MainViewModel : ObservableObject
                     return false;
                 }
 
-                return initials.TitleInitials.StartsWith(initialsQuery, StringComparison.OrdinalIgnoreCase) ||
-                       initials.ArtistInitials.StartsWith(initialsQuery, StringComparison.OrdinalIgnoreCase);
+                // Search only title initials, not artist initials
+                return initials.TitleInitials.StartsWith(initialsQuery, StringComparison.OrdinalIgnoreCase);
             });
         }
         else if (!string.IsNullOrWhiteSpace(SelectedArtist))
