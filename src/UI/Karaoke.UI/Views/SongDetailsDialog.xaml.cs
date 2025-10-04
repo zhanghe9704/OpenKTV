@@ -46,6 +46,8 @@ public sealed partial class SongDetailsDialog : ContentDialog, INotifyPropertyCh
 
     public SongDto Song { get; }
 
+    public bool HasUnsavedChanges { get; private set; }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -301,6 +303,9 @@ public sealed partial class SongDetailsDialog : ContentDialog, INotifyPropertyCh
                 await _libraryService.UpsertAsync(updatedSong, System.Threading.CancellationToken.None);
 
                 System.Diagnostics.Debug.WriteLine($"[SongDetailsDialog] Save completed successfully");
+
+                // Mark that changes were saved
+                HasUnsavedChanges = true;
 
                 // Show success message in InfoBar
                 ShowStatusInfo("Success", "Changes saved successfully!", InfoBarSeverity.Success);

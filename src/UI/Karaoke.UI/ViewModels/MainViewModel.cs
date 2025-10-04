@@ -1479,6 +1479,72 @@ public partial class MainViewModel : ObservableObject
         return await _playbackService.GetCurrentAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
+    public async Task ReloadWithStatePreservationAsync(CancellationToken cancellationToken)
+    {
+        // Preserve current UI state before reloading
+        var selectedSongId = SelectedSong?.Id;
+        var selectedArtist = SelectedArtist;
+        var artistSearch = ArtistSearchText;
+        var songSearch = SongSearchText;
+        var artistPage = _artistsPageIndex;
+        var songPage = _songsPageIndex;
+
+        // Reload the library to reflect the changes
+        await ReloadAsync(rescan: false, cancellationToken).ConfigureAwait(false);
+
+        // Restore search filters
+        ArtistSearchText = artistSearch;
+        SongSearchText = songSearch;
+
+        // Restore artist selection and page
+        if (!string.IsNullOrWhiteSpace(selectedArtist))
+        {
+            var artistToReselect = _filteredArtistsSource.FirstOrDefault(a => string.Equals(a, selectedArtist, StringComparison.OrdinalIgnoreCase));
+            if (artistToReselect != null)
+            {
+                var artistIndex = _filteredArtistsSource.IndexOf(artistToReselect);
+                var targetArtistPage = artistIndex / _artistsPageSize;
+
+                if (targetArtistPage != _artistsPageIndex)
+                {
+                    _artistsPageIndex = targetArtistPage;
+                    UpdateArtistsPage();
+                }
+
+                SelectedArtist = artistToReselect;
+            }
+        }
+        else if (artistPage >= 0 && artistPage < ArtistsTotalPages)
+        {
+            _artistsPageIndex = artistPage;
+            UpdateArtistsPage();
+        }
+
+        // Restore song selection and page
+        if (selectedSongId != null)
+        {
+            var songToReselect = _filteredSongsSource.FirstOrDefault(s => s.Id == selectedSongId);
+            if (songToReselect != null)
+            {
+                var songIndex = _filteredSongsSource.IndexOf(songToReselect);
+                var targetSongPage = songIndex / _songsPageSize;
+
+                if (targetSongPage != _songsPageIndex)
+                {
+                    _songsPageIndex = targetSongPage;
+                    UpdateSongsPage();
+                }
+
+                SelectedSong = songToReselect;
+            }
+        }
+        else if (songPage >= 0 && songPage < SongsTotalPages)
+        {
+            _songsPageIndex = songPage;
+            UpdateSongsPage();
+        }
+    }
+
     public async Task SetTrackAsDefaultAsync(SongDto queuedSong)
     {
         ArgumentNullException.ThrowIfNull(queuedSong);
@@ -1506,8 +1572,8 @@ public partial class MainViewModel : ObservableObject
         var updatedSong = queuedSong with { Instrumental = currentInstrumental };
         await _libraryService.UpsertAsync(updatedSong, CancellationToken.None).ConfigureAwait(false);
 
-        // Reload the library to reflect the changes
-        await ReloadAsync(rescan: false, CancellationToken.None).ConfigureAwait(false);
+        // Reload with state preservation
+        await ReloadWithStatePreservationAsync(CancellationToken.None).ConfigureAwait(false);
     }
 }
 

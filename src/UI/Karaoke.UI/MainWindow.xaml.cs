@@ -590,9 +590,16 @@ public sealed partial class MainWindow : Window
 
             await dialog.ShowAsync();
 
-            // Always reload the songs list from database when dialog closes
-            // User may have saved changes while in edit mode
-            await _viewModel.ReloadAsync(rescan: false, CancellationToken.None);
+            // Only reload if changes were actually saved
+            if (dialog.HasUnsavedChanges)
+            {
+                System.Diagnostics.Debug.WriteLine("[MainWindow] Song details were modified, reloading with state preservation...");
+                await _viewModel.ReloadWithStatePreservationAsync(CancellationToken.None);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[MainWindow] Song details dialog closed without changes, no reload needed");
+            }
         }
         catch (Exception ex)
         {
