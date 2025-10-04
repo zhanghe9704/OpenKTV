@@ -1003,6 +1003,14 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
                 // Apply the channel change with retry mechanism for release builds
                 // In release builds, VLC may need more time to be ready for channel changes
+                // Wait for VLC's audio output pipeline to fully initialize before attempting channel change
+                _logger.LogInformation("Waiting 500ms for VLC audio pipeline to initialize...");
+                System.Threading.Thread.Sleep(500);
+
+                // Verify audio output is actually ready by checking current channel
+                var initialChannel = _mediaPlayer.Channel;
+                _logger.LogInformation("After initial delay, current channel: {InitialChannel}", initialChannel);
+
                 bool channelSet = false;
                 int maxRetries = 5;
                 int[] delaySequence = new[] { 300, 500, 800, 1000, 2000 }; // Progressive delays in milliseconds
