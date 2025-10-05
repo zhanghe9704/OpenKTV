@@ -835,13 +835,17 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
     private async void OnMediaPlayerPlaying(object? sender, EventArgs e)
     {
-        await Task.Run(async () =>
+        try
         {
             await SetStateAsync(PlaybackState.Playing).ConfigureAwait(false);
 
             // Apply audio track selection after media is playing (tracks are now available)
-            ApplyInstrumentalAudioSelection();
-        }).ConfigureAwait(false);
+            await ApplyInstrumentalAudioSelectionAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing MediaPlayer.Playing event");
+        }
     }
 
     private async void OnMediaPlayerPaused(object? sender, EventArgs e)
@@ -928,7 +932,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
     }
 
 
-    private void ApplyInstrumentalAudioSelection()
+    private async Task ApplyInstrumentalAudioSelectionAsync()
     {
         if (_mediaPlayer == null || _currentSong == null)
         {
@@ -945,8 +949,31 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             var audioTrackCount = _mediaPlayer.AudioTrackCount;
             _logger.LogInformation("Audio track count: {TrackCount}", audioTrackCount);
 
-            // Log all available audio tracks
-            var trackDescriptions = _mediaPlayer.AudioTrackDescription;
+            const int descriptorRetryLimit = 5;
+            LibVLCSharp.Shared.Structures.TrackDescription[]? trackDescriptions = null;
+            LibVLCSharp.Shared.Structures.TrackDescription[] validTracks = Array.Empty<LibVLCSharp.Shared.Structures.TrackDescription>();
+
+            for (int attempt = 0; attempt < descriptorRetryLimit; attempt++)
+            {
+                trackDescriptions = _mediaPlayer.AudioTrackDescription;
+
+                if (trackDescriptions != null && trackDescriptions.Length > 0)
+                {
+                    validTracks = trackDescriptions.Where(t => t.Id >= 0).ToArray();
+                    if (validTracks.Length > 0)
+                    {
+                        break;
+                    }
+                }
+
+                if (attempt < descriptorRetryLimit - 1)
+                {
+                    _logger.LogInformation("Audio track descriptions not ready (attempt {Attempt}/{MaxAttempts}); waiting 200ms",
+                        attempt + 1, descriptorRetryLimit);
+                    await Task.Delay(200).ConfigureAwait(false);
+                }
+            }
+
             if (trackDescriptions != null)
             {
                 _logger.LogInformation("Total track descriptions: {Count}", trackDescriptions.Length);
@@ -959,7 +986,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             }
             else
             {
-                _logger.LogWarning("AudioTrackDescription is null");
+                _logger.LogWarning("AudioTrackDescription is null after {Attempts} attempts", descriptorRetryLimit);
             }
 
             // Get current audio track
@@ -967,10 +994,14 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             _logger.LogInformation("Current audio track ID: {CurrentTrackId}", currentTrack);
 
             // Check if we have multiple valid audio tracks (for files with separate instrumental tracks)
-            var validTracks = trackDescriptions != null
-                ? trackDescriptions.Where(t => t.Id >= 0).ToArray()
-                : Array.Empty<LibVLCSharp.Shared.Structures.TrackDescription>();
             _logger.LogInformation("Valid tracks (Id >= 0): {Count}", validTracks.Length);
+
+            if (validTracks.Length == 0)
+            {
+                _logger.LogWarning("No valid audio tracks detected; channel selection deferred");
+                _logger.LogInformation("=== End Audio Track Selection ===");
+                return;
+            }
 
             // For single-track dual-channel (stereo) files, use SetChannel at runtime
             if (validTracks.Length == 1)
@@ -1005,27 +1036,33 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
                 // In release builds, VLC may need more time to be ready for channel changes
                 // Wait for VLC's audio output pipeline to fully initialize before attempting channel change
                 _logger.LogInformation("Waiting 500ms for VLC audio pipeline to initialize...");
-                System.Threading.Thread.Sleep(500);
+                await Task.Delay(500).ConfigureAwait(false);
 
                 // Verify audio output is actually ready by checking current channel
                 var initialChannel = _mediaPlayer.Channel;
                 _logger.LogInformation("After initial delay, current channel: {InitialChannel}", initialChannel);
 
                 bool channelSet = false;
-                int maxRetries = 5;
-                int[] delaySequence = new[] { 300, 500, 800, 1000, 2000 }; // Progressive delays in milliseconds
+                int[] delaySequence = new[] { 300, 500, 800, 1000, 1500, 2000 }; // Progressive delays in milliseconds
 
-                for (int attempt = 0; attempt < maxRetries && !channelSet; attempt++)
+                for (int attempt = 0; attempt < delaySequence.Length && !channelSet; attempt++)
                 {
                     if (attempt > 0)
                     {
                         _logger.LogInformation("Retry attempt {Attempt} to set audio channel", attempt);
                     }
 
-                    _mediaPlayer.SetChannel(targetChannel);
-                    System.Threading.Thread.Sleep(delaySequence[attempt]);
+                    var player = _mediaPlayer;
+                    if (player == null)
+                    {
+                        _logger.LogWarning("Media player disposed while applying channel");
+                        break;
+                    }
 
-                    var newChannel = _mediaPlayer.Channel;
+                    player.SetChannel(targetChannel);
+                    await Task.Delay(delaySequence[attempt]).ConfigureAwait(false);
+
+                    var newChannel = player.Channel;
                     if (newChannel == targetChannel)
                     {
                         channelSet = true;
@@ -1041,7 +1078,7 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
 
                 if (!channelSet)
                 {
-                    _logger.LogError("Failed to set audio channel after {MaxRetries} attempts", maxRetries);
+                    _logger.LogError("Failed to set audio channel after {MaxAttempts} attempts", delaySequence.Length);
                 }
 
                 _logger.LogInformation("=== End Audio Track Selection ===");
@@ -1049,7 +1086,8 @@ public sealed class VlcPlaybackService : IPlaybackService, IDisposable
             }
 
             // Multi-track file: select track based on Instrumental value
-            var targetTrack = instrumental == 0 ? validTracks[0] : validTracks[1];
+            var targetTrackIndex = Math.Clamp(instrumental, 0, validTracks.Length - 1);
+            var targetTrack = validTracks[targetTrackIndex];
             _logger.LogInformation("Target track for Instrumental={Instrumental}: Id={TrackId}, Name={Name}",
                 instrumental, targetTrack.Id, targetTrack.Name);
 
