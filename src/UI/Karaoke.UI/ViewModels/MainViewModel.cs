@@ -485,21 +485,41 @@ public partial class MainViewModel : ObservableObject
         try
         {
             var songToRemove = SelectedQueuedSong;
-            
+            var removedIndex = _queueItems.IndexOf(songToRemove);
+
             // Remove from both UI queue and playback service queue
             var removedFromQueue = await _playbackService.RemoveFromQueueAsync(songToRemove, CancellationToken.None).ConfigureAwait(false);
-            
+
             // Also try to cancel if it's the current song (already dequeued but not yet played)
             var canceledCurrent = await _playbackService.CancelCurrentSongAsync(songToRemove, CancellationToken.None).ConfigureAwait(false);
-            
+
             // Always remove from UI queue regardless of playback service result
             _queueItems.Remove(songToRemove);
-            SelectedQueuedSong = null;
+
+            // Select the next song, or the last song if we deleted the last one
+            if (_queueItems.Count > 0)
+            {
+                if (removedIndex < _queueItems.Count)
+                {
+                    // Select the song that took the deleted song's position (next song)
+                    SelectedQueuedSong = _queueItems[removedIndex];
+                }
+                else
+                {
+                    // Deleted the last song, select the new last song
+                    SelectedQueuedSong = _queueItems[_queueItems.Count - 1];
+                }
+            }
+            else
+            {
+                SelectedQueuedSong = null;
+            }
+
             UpdateQueuePage();
-            
+
             // Recalculate current playing index since queue has changed
             CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
-            
+
             if (canceledCurrent)
             {
                 System.Diagnostics.Debug.WriteLine($"Canceled current song: {songToRemove.Id}");
@@ -513,10 +533,28 @@ public partial class MainViewModel : ObservableObject
         {
             // Log error but still remove from UI to keep UI in sync
             System.Diagnostics.Debug.WriteLine($"Error removing song from playback queue: {ex.Message}");
+            var removedIndex = _queueItems.IndexOf(SelectedQueuedSong);
             _queueItems.Remove(SelectedQueuedSong);
-            SelectedQueuedSong = null;
+
+            // Select the next song, or the last song if we deleted the last one
+            if (_queueItems.Count > 0)
+            {
+                if (removedIndex < _queueItems.Count)
+                {
+                    SelectedQueuedSong = _queueItems[removedIndex];
+                }
+                else
+                {
+                    SelectedQueuedSong = _queueItems[_queueItems.Count - 1];
+                }
+            }
+            else
+            {
+                SelectedQueuedSong = null;
+            }
+
             UpdateQueuePage();
-            
+
             // Recalculate current playing index since queue has changed
             CurrentPlayingQueueIndex = CalculateCurrentPlayingQueueIndex();
         }
@@ -551,7 +589,26 @@ public partial class MainViewModel : ObservableObject
 
             // Remove from UI queue
             _queueItems.RemoveAt(deleteIndex);
-            SelectedQueuedSong = null;
+
+            // Select the next song, or the last song if we deleted the last one
+            if (_queueItems.Count > 0)
+            {
+                if (deleteIndex < _queueItems.Count)
+                {
+                    // Select the song that took the deleted song's position (next song)
+                    SelectedQueuedSong = _queueItems[deleteIndex];
+                }
+                else
+                {
+                    // Deleted the last song, select the new last song
+                    SelectedQueuedSong = _queueItems[_queueItems.Count - 1];
+                }
+            }
+            else
+            {
+                SelectedQueuedSong = null;
+            }
+
             UpdateQueuePage();
 
             System.Diagnostics.Debug.WriteLine($"Successfully deleted song at index {deleteIndex}");
