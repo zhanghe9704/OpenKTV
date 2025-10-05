@@ -1,2 +1,13 @@
 .vs/
 nul
+tests
+release
+data
+bin
+assets
+src/UI/Karaoke.UI/obj
+src/UI/Karaoke.UI/bin
+src/Common/Karaoke.Common/obj/
+src/Library/Karaoke.Library/obj
+src/Player/Karaoke.Player/obj
+

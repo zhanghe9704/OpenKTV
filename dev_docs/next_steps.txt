@@ -1,0 +1,22 @@
+1. new scanning scheme: keywords-keywords-...-keywords: keywords: artist, song name, comments, 
+1.4 status bar when rescanning.
+1.5 which keywords to show, setting in config. 
+1.6 hide Rescan button. 
+2. show comments in song list
+2.1. button "Delete"
+3. vocal: switch between L (track 1) and R (track 2)
+4. steoro: turn on both channels for single track, switch track for double tracks. 
+7. playback with volume normalization.
+8. edit property of individual song
+
+
+
+5. New properties (2) for volume normalization
+6. button for volume normalization.
+
+ 
+
+
+bug: 
+1. gold symbol on first song for multiple songs.
+2. Unnecessary check/search for songs
