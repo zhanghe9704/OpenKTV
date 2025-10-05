@@ -1,3 +1,5 @@
+![OpenKTV Screenshot](Screenshot.png)
+
 **Languages / 语言选择:** [简体中文](#简体中文) | [English](#english)
 
 ---
@@ -17,6 +19,7 @@ OpenKTV 是一款基于 .NET 8 和 WinUI 3 开发的现代化卡拉OK Windows应
 - **音量标准化**：基于FFmpeg的响度分析
 - **可定制元数据**：灵活的关键词格式解析（艺术家、歌曲、语言、流派、备注）
 - **VLC驱动播放**：支持多种格式（MP3、MP4、MKV、AVI、MPG、RMVB等）
+- **独立播放窗口**：可以在主窗口以外的屏幕上播放
 
 ## 系统要求
 
@@ -157,6 +160,7 @@ OpenKTV is a modern karaoke application for Windows, built with .NET 8 and WinUI
 - **Volume Normalization**: FFmpeg-powered loudness analysis
 - **Customizable Metadata**: Flexible keyword format parsing (artist, song, language, genre, comment)
 - **VLC-Powered Playback**: Supports multiple formats (MP3, MP4, MKV, AVI, MPG, RMVB, etc.)
+- **Separate play window**: Can be put on a different screen from the one that holds the main window 
 
 ## System Requirements
 
