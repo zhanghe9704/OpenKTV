@@ -34,9 +34,11 @@ public sealed class HyphenFileNameParser : IMediaPathParser
             return false;
         }
 
-        // Support multiple artists separated by plus sign in filename
-        // e.g., "Artist1 + Artist2 - Song Title" -> "Artist1 + Artist2"
-        var artist = artistPart;
+        // Support multiple artists separated by various separators in filename
+        // Replace common separators (_, -, space, ^, VS) with + for consistency
+        // e.g., "Artist1_Artist2 - Song Title" -> "Artist1 + Artist2"
+        // e.g., "Artist1 VS Artist2 - Song Title" -> "Artist1 + Artist2"
+        var artist = NormalizeArtistSeparators(artistPart);
 
         var priority = context.RootOptions.DefaultPriority ?? context.GlobalOptions.DefaultPriority;
         var channel = context.RootOptions.DefaultChannel ?? context.GlobalOptions.DefaultChannel;
@@ -54,5 +56,32 @@ public sealed class HyphenFileNameParser : IMediaPathParser
     private static string NormalizeRelativePath(string relativePath)
     {
         return relativePath.Replace(Path.DirectorySeparatorChar, '/').Replace(Path.AltDirectorySeparatorChar, '/');
+    }
+
+    private static string NormalizeArtistSeparators(string artist)
+    {
+        // Replace common artist separators with +
+        // Handle "VS" (uppercase only, no spaces) first with a placeholder to avoid double processing
+        // e.g., "Artist1VSArtist2" -> "Artist1 + Artist2"
+        const string placeholder = "\u0001"; // Use a control character as placeholder
+        var normalized = artist.Replace("VS", placeholder);
+
+        // Replace other separators: _, -, ^, and standalone spaces between words
+        // Use regex to handle multiple consecutive separators
+        normalized = System.Text.RegularExpressions.Regex.Replace(
+            normalized,
+            @"[\s_\-\^]+",
+            " + ");
+
+        // Replace placeholder with +
+        normalized = normalized.Replace(placeholder, " + ");
+
+        // Clean up any leading/trailing + signs and extra spaces
+        normalized = normalized.Trim().Trim('+').Trim();
+
+        // Ensure consistent spacing around +
+        normalized = System.Text.RegularExpressions.Regex.Replace(normalized, @"\s*\+\s*", " + ");
+
+        return normalized;
     }
 }
