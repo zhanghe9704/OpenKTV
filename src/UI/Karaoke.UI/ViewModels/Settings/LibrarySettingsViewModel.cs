@@ -166,7 +166,8 @@ public partial class LibrarySettingsViewModel : ObservableObject
             await Task.Delay(500, CancellationToken.None).ConfigureAwait(false);
 
             // Determine what needs rescanning
-            var rootsToRescan = Roots.Where(r => r.ShouldRescan || r.AddNewSongsOnly).Select(r => r.Name).ToList();
+            // Scan folders if: ShouldRescan is checked, AddNewSongsOnly is checked, or VolumeNormalization is checked
+            var rootsToRescan = Roots.Where(r => r.ShouldRescan || r.AddNewSongsOnly || r.VolumeNormalization).Select(r => r.Name).ToList();
             var rootsAddNewOnly = Roots.Where(r => r.AddNewSongsOnly).Select(r => r.Name).ToList();
             var shouldRescanAll = RescanAfterSave;
 

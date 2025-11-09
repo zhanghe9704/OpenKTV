@@ -78,6 +78,7 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
         // Get all existing songs to check against
         var existingSongs = await _repository.GetSongsAsync(cancellationToken).ConfigureAwait(false);
         var existingSongIds = new HashSet<string>(existingSongs.Select(s => s.Id));
+        var existingSongsDict = existingSongs.ToDictionary(s => s.Id);
 
         // Determine which roots to scan
         var rootsToScan = _options.Roots.Where(r => rootNames.Contains(r.Name));
@@ -174,12 +175,18 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
     public async Task<LibraryIngestionResult> ScanSpecificRootsAsync(IEnumerable<string>? rootNames, CancellationToken cancellationToken, IProgress<ScanProgress>? progress = null)
     {
         var _options = _optionsMonitor.CurrentValue; // Get the latest configuration
-        
+
         var processed = 0;
         var skipped = 0;
 
         await _repository.InitializeAsync(cancellationToken).ConfigureAwait(false);
-        
+
+        // Get existing songs before deletion to preserve normalization data
+        var existingSongs = await _repository.GetSongsAsync(cancellationToken).ConfigureAwait(false);
+        var existingNormalizationData = existingSongs
+            .Where(s => s.LoudnessLufs.HasValue && s.GainDb.HasValue)
+            .ToDictionary(s => s.Id, s => (s.LoudnessLufs!.Value, s.GainDb!.Value));
+
         // If specific roots are specified, only delete songs from those roots
         if (rootNames != null)
         {
@@ -234,9 +241,22 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
                 }
 
                 var songDto = ToSongDto(root, resolvedRoot, parsedMetadata);
+                var songId = songDto.Id;
 
-                // Perform loudness analysis if VolumeNormalization is enabled for this root
-                if (root.VolumeNormalization)
+                // Check if this song already has normalization data from a previous scan
+                if (existingNormalizationData.TryGetValue(songId, out var normData))
+                {
+                    // Reuse existing normalization data
+                    _logger.LogInformation("[VolumeNormalization] Reusing existing normalization data for {FilePath}: {Loudness} LUFS, {Gain} dB",
+                        songDto.MediaPath, normData.Item1, normData.Item2);
+                    songDto = songDto with
+                    {
+                        LoudnessLufs = normData.Item1,
+                        GainDb = normData.Item2
+                    };
+                }
+                // Perform loudness analysis if VolumeNormalization is enabled for this root and not already normalized
+                else if (root.VolumeNormalization)
                 {
                     _logger.LogInformation("[VolumeNormalization] Analyzing: {FilePath}", songDto.MediaPath);
                     var loudnessResult = await _loudnessAnalysisService.AnalyzeLoudnessAsync(songDto.MediaPath, cancellationToken).ConfigureAwait(false);
