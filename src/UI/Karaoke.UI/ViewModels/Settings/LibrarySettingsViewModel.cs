@@ -8,16 +8,18 @@ namespace Karaoke.UI.ViewModels.Settings;
 
 public sealed class RescanRequestedEventArgs : EventArgs
 {
-    public RescanRequestedEventArgs(bool rescanAll, IReadOnlyList<string> rootsToRescan, IReadOnlyList<string> rootsAddNewOnly)
+    public RescanRequestedEventArgs(bool rescanAll, IReadOnlyList<string> rootsToRescan, IReadOnlyList<string> rootsAddNewOnly, IReadOnlyList<string> rootsNormalizeOnly)
     {
         RescanAll = rescanAll;
         RootsToRescan = rootsToRescan ?? throw new ArgumentNullException(nameof(rootsToRescan));
         RootsAddNewOnly = rootsAddNewOnly ?? throw new ArgumentNullException(nameof(rootsAddNewOnly));
+        RootsNormalizeOnly = rootsNormalizeOnly ?? throw new ArgumentNullException(nameof(rootsNormalizeOnly));
     }
 
     public bool RescanAll { get; }
     public IReadOnlyList<string> RootsToRescan { get; }
     public IReadOnlyList<string> RootsAddNewOnly { get; }
+    public IReadOnlyList<string> RootsNormalizeOnly { get; }
 }
 
 public partial class LibrarySettingsViewModel : ObservableObject
@@ -168,14 +170,15 @@ public partial class LibrarySettingsViewModel : ObservableObject
             // Determine what needs rescanning
             // Scan folders if: ShouldRescan is checked, AddNewSongsOnly is checked, or VolumeNormalization is checked
             var rootsToRescan = Roots.Where(r => r.ShouldRescan || r.AddNewSongsOnly || r.VolumeNormalization).Select(r => r.Name).ToList();
-            var rootsAddNewOnly = Roots.Where(r => r.AddNewSongsOnly).Select(r => r.Name).ToList();
+            var rootsAddNewOnly = Roots.Where(r => r.AddNewSongsOnly && !r.ShouldRescan).Select(r => r.Name).ToList();
+            var rootsNormalizeOnly = Roots.Where(r => r.VolumeNormalization && !r.ShouldRescan && !r.AddNewSongsOnly).Select(r => r.Name).ToList();
             var shouldRescanAll = RescanAfterSave;
 
             SettingsSaved?.Invoke(this, EventArgs.Empty);
 
             if (shouldRescanAll || rootsToRescan.Count > 0)
             {
-                RescanRequested?.Invoke(this, new RescanRequestedEventArgs(shouldRescanAll, rootsToRescan, rootsAddNewOnly));
+                RescanRequested?.Invoke(this, new RescanRequestedEventArgs(shouldRescanAll, rootsToRescan, rootsAddNewOnly, rootsNormalizeOnly));
             }
         }
         catch (Exception ex)

@@ -213,9 +213,17 @@ public sealed partial class MainWindow : Window
                     // Rescan all roots
                     await _viewModel.ReloadAsync(rescan: true, CancellationToken.None, progress);
                 }
-                else if (rescanArgs.RootsAddNewOnly.Count > 0 || rescanArgs.RootsToRescan.Count > 0)
+                else if (rescanArgs.RootsAddNewOnly.Count > 0 || rescanArgs.RootsNormalizeOnly.Count > 0 || rescanArgs.RootsToRescan.Count > 0)
                 {
-                    // First, handle AddNewOnly roots
+                    // First, handle NormalizeOnly roots
+                    var rootsNormalizeOnly = rescanArgs.RootsNormalizeOnly.ToList();
+                    if (rootsNormalizeOnly.Count > 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Scanning NormalizeOnly roots: {string.Join(", ", rootsNormalizeOnly)}");
+                        await _viewModel.ReloadNormalizeOnlyAsync(rootsNormalizeOnly, CancellationToken.None, progress);
+                    }
+
+                    // Second, handle AddNewOnly roots
                     var rootsAddNewOnly = rescanArgs.RootsAddNewOnly.ToList();
                     if (rootsAddNewOnly.Count > 0)
                     {
@@ -223,8 +231,8 @@ public sealed partial class MainWindow : Window
                         await _viewModel.ReloadAddNewOnlyAsync(rootsAddNewOnly, CancellationToken.None, progress);
                     }
 
-                    // Then, handle regular rescan roots (excluding AddNewOnly roots)
-                    var rootsToFullRescan = rescanArgs.RootsToRescan.Except(rootsAddNewOnly).ToList();
+                    // Finally, handle regular rescan roots (excluding AddNewOnly and NormalizeOnly roots)
+                    var rootsToFullRescan = rescanArgs.RootsToRescan.Except(rootsAddNewOnly).Except(rootsNormalizeOnly).ToList();
                     if (rootsToFullRescan.Count > 0)
                     {
                         System.Diagnostics.Debug.WriteLine($"Scanning regular roots: {string.Join(", ", rootsToFullRescan)}");

@@ -137,6 +137,25 @@ public sealed class SqliteLibraryRepository : ILibraryRepository, IDisposable
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task UpdateNormalizationDataAsync(string songId, double? loudnessLufs, double? gainDb, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(songId);
+
+        using var connection = CreateConnection();
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        using var command = connection.CreateCommand();
+        command.CommandText =
+            "UPDATE Songs SET loudness_lufs = @LoudnessLufs, gain_db = @GainDb, UpdatedAt = @UpdatedAt WHERE Id = @Id";
+
+        command.Parameters.AddWithValue("@Id", songId);
+        command.Parameters.AddWithValue("@LoudnessLufs", (object?)loudnessLufs ?? DBNull.Value);
+        command.Parameters.AddWithValue("@GainDb", (object?)gainDb ?? DBNull.Value);
+        command.Parameters.AddWithValue("@UpdatedAt", DateTimeOffset.UtcNow.ToString("O"));
+
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task DeleteAllSongsAsync(CancellationToken cancellationToken)
     {
         using var connection = CreateConnection();
