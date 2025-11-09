@@ -53,4 +53,6 @@ public sealed class LibraryRootOptions
     public int Instrumental { get; set; } = 0;
 
     public bool VolumeNormalization { get; set; } = false;
+
+    public bool AddNewSongsOnly { get; set; } = false;
 }

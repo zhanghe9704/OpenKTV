@@ -8,14 +8,16 @@ namespace Karaoke.UI.ViewModels.Settings;
 
 public sealed class RescanRequestedEventArgs : EventArgs
 {
-    public RescanRequestedEventArgs(bool rescanAll, IReadOnlyList<string> rootsToRescan)
+    public RescanRequestedEventArgs(bool rescanAll, IReadOnlyList<string> rootsToRescan, IReadOnlyList<string> rootsAddNewOnly)
     {
         RescanAll = rescanAll;
         RootsToRescan = rootsToRescan ?? throw new ArgumentNullException(nameof(rootsToRescan));
+        RootsAddNewOnly = rootsAddNewOnly ?? throw new ArgumentNullException(nameof(rootsAddNewOnly));
     }
 
     public bool RescanAll { get; }
     public IReadOnlyList<string> RootsToRescan { get; }
+    public IReadOnlyList<string> RootsAddNewOnly { get; }
 }
 
 public partial class LibrarySettingsViewModel : ObservableObject
@@ -99,7 +101,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
         Roots.Clear();
         foreach (var root in libraryOptions.Roots)
         {
-            Roots.Add(new LibraryRootItemViewModel(root.Name, root.Path, root.DefaultPriority, root.DefaultChannel, root.DriveOverride, root.KeywordFormat, root.Instrumental, shouldRescan: false, volumeNormalization: root.VolumeNormalization));
+            Roots.Add(new LibraryRootItemViewModel(root.Name, root.Path, root.DefaultPriority, root.DefaultChannel, root.DriveOverride, root.KeywordFormat, root.Instrumental, shouldRescan: false, volumeNormalization: root.VolumeNormalization, addNewSongsOnly: root.AddNewSongsOnly));
         }
         RescanAfterSave = false;
     }
@@ -139,7 +141,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
                 Roots = Roots
                     .Select(root =>
                     {
-                        System.Diagnostics.Debug.WriteLine($"SaveAsync: Root '{root.Name}' VolumeNormalization = {root.VolumeNormalization}");
+                        System.Diagnostics.Debug.WriteLine($"SaveAsync: Root '{root.Name}' VolumeNormalization = {root.VolumeNormalization}, AddNewSongsOnly = {root.AddNewSongsOnly}");
                         return new LibraryRootOptions
                         {
                             Name = root.Name,
@@ -150,6 +152,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
                             KeywordFormat = string.IsNullOrWhiteSpace(root.KeywordFormat) ? null : root.KeywordFormat,
                             Instrumental = root.GetInstrumental(),
                             VolumeNormalization = root.VolumeNormalization,
+                            AddNewSongsOnly = root.AddNewSongsOnly,
                         };
                     })
                     .ToList()
@@ -163,14 +166,15 @@ public partial class LibrarySettingsViewModel : ObservableObject
             await Task.Delay(500, CancellationToken.None).ConfigureAwait(false);
 
             // Determine what needs rescanning
-            var rootsToRescan = GetRootsToRescan().ToList();
+            var rootsToRescan = Roots.Where(r => r.ShouldRescan || r.AddNewSongsOnly).Select(r => r.Name).ToList();
+            var rootsAddNewOnly = Roots.Where(r => r.AddNewSongsOnly).Select(r => r.Name).ToList();
             var shouldRescanAll = RescanAfterSave;
 
             SettingsSaved?.Invoke(this, EventArgs.Empty);
 
             if (shouldRescanAll || rootsToRescan.Count > 0)
             {
-                RescanRequested?.Invoke(this, new RescanRequestedEventArgs(shouldRescanAll, rootsToRescan));
+                RescanRequested?.Invoke(this, new RescanRequestedEventArgs(shouldRescanAll, rootsToRescan, rootsAddNewOnly));
             }
         }
         catch (Exception ex)
@@ -182,7 +186,7 @@ public partial class LibrarySettingsViewModel : ObservableObject
 
     private void AddRoot()
     {
-        Roots.Add(new LibraryRootItemViewModel("New_folder", "", defaultPriority: 2, defaultChannel: "Stereo", driveOverride: null, keywordFormat: null, instrumental: 0, shouldRescan: true));
+        Roots.Add(new LibraryRootItemViewModel("New_folder", "", defaultPriority: 2, defaultChannel: "Stereo", driveOverride: null, keywordFormat: null, instrumental: 0, shouldRescan: true, volumeNormalization: false, addNewSongsOnly: false));
         SelectedRoot = Roots.Last();
     }
 

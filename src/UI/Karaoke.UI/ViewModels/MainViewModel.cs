@@ -458,6 +458,40 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    public async Task ReloadAddNewOnlyAsync(IEnumerable<string> rootNames, CancellationToken cancellationToken, IProgress<Karaoke.Library.Ingestion.ScanProgress>? progress = null)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"ReloadAddNewOnlyAsync: Starting, roots count={rootNames.Count()}");
+            IsLoading = true;
+            System.Diagnostics.Debug.WriteLine("ReloadAddNewOnlyAsync: IsLoading set to true");
+
+            await _ingestionService.ScanAddNewOnlyAsync(rootNames, cancellationToken, progress).ConfigureAwait(true);
+            System.Diagnostics.Debug.WriteLine("ReloadAddNewOnlyAsync: Scan completed");
+
+            var songs = await _libraryService.GetAllSongsAsync(cancellationToken).ConfigureAwait(true);
+            System.Diagnostics.Debug.WriteLine($"ReloadAddNewOnlyAsync: Retrieved {songs.Count} songs");
+
+            _allSongs = songs.ToList();
+            Songs = songs;
+
+            RebuildSongInitials();
+            UpdateArtists();
+            UpdateFilteredSongs(resetPage: true);
+            System.Diagnostics.Debug.WriteLine("ReloadAddNewOnlyAsync: Completed successfully");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ReloadAddNewOnlyAsync: EXCEPTION: {ex}");
+            throw;
+        }
+        finally
+        {
+            System.Diagnostics.Debug.WriteLine("ReloadAddNewOnlyAsync: IsLoading set to false");
+            IsLoading = false;
+        }
+    }
+
     private async Task AddToQueueAsync()
     {
         if (SelectedSong is null)

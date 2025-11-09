@@ -66,6 +66,111 @@ public sealed class LibraryIngestionService : ILibraryIngestionService
         return await ScanSpecificRootsAsync(null, cancellationToken, progress).ConfigureAwait(false);
     }
 
+    public async Task<LibraryIngestionResult> ScanAddNewOnlyAsync(IEnumerable<string> rootNames, CancellationToken cancellationToken, IProgress<ScanProgress>? progress = null)
+    {
+        var _options = _optionsMonitor.CurrentValue; // Get the latest configuration
+
+        var processed = 0;
+        var skipped = 0;
+
+        await _repository.InitializeAsync(cancellationToken).ConfigureAwait(false);
+
+        // Get all existing songs to check against
+        var existingSongs = await _repository.GetSongsAsync(cancellationToken).ConfigureAwait(false);
+        var existingSongIds = new HashSet<string>(existingSongs.Select(s => s.Id));
+
+        // Determine which roots to scan
+        var rootsToScan = _options.Roots.Where(r => rootNames.Contains(r.Name));
+
+        foreach (var root in rootsToScan)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var resolvedRoot = ResolveRootPath(root.Path, root.DriveOverride);
+            if (!Directory.Exists(resolvedRoot))
+            {
+                RootMissingLog(_logger, root.Name, null);
+                skipped++;
+                continue;
+            }
+
+            _logger.LogInformation("[AddNewSongsOnly] Root: {RootName}, scanning for new songs only", root.Name);
+
+            var rootFilesScanned = 0;
+            foreach (var file in Directory.EnumerateFiles(resolvedRoot, "*", SearchOption.AllDirectories))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (!IsSupportedMedia(file))
+                {
+                    continue;
+                }
+
+                var context = new MediaFileContext(root.Name, resolvedRoot, root, _options, file);
+
+                if (!TryParse(context, out var parsedMetadata))
+                {
+                    skipped++;
+                    FileSkippedLog(_logger, file, root.Name, null);
+                    continue;
+                }
+
+                var songId = CreateSongId(root.Name, parsedMetadata.RelativePath);
+
+                // Skip if song already exists in database
+                if (existingSongIds.Contains(songId))
+                {
+                    skipped++;
+                    continue;
+                }
+
+                var songDto = ToSongDto(root, resolvedRoot, parsedMetadata);
+
+                // Perform loudness analysis if VolumeNormalization is enabled for this root
+                if (root.VolumeNormalization)
+                {
+                    _logger.LogInformation("[VolumeNormalization] Analyzing: {FilePath}", songDto.MediaPath);
+                    var loudnessResult = await _loudnessAnalysisService.AnalyzeLoudnessAsync(songDto.MediaPath, cancellationToken).ConfigureAwait(false);
+                    if (loudnessResult.HasValue)
+                    {
+                        _logger.LogInformation("[VolumeNormalization] Result: {Loudness} LUFS, {Gain} dB gain for {FilePath}",
+                            loudnessResult.Value.loudnessLufs, loudnessResult.Value.gainDb, songDto.MediaPath);
+                        songDto = songDto with
+                        {
+                            LoudnessLufs = loudnessResult.Value.loudnessLufs,
+                            GainDb = loudnessResult.Value.gainDb
+                        };
+                    }
+                    else
+                    {
+                        _logger.LogWarning("[VolumeNormalization] Analysis failed for {FilePath}", songDto.MediaPath);
+                    }
+                }
+
+                var songRecord = ToSongRecord(songDto);
+                await _repository.UpsertSongAsync(songRecord, cancellationToken).ConfigureAwait(false);
+                processed++;
+                rootFilesScanned++;
+
+                // Report progress every 10 files or if it's a new file being scanned
+                if (rootFilesScanned % 10 == 0 || rootFilesScanned == 1)
+                {
+                    progress?.Report(new ScanProgress(root.Name, rootFilesScanned, Path.GetFileName(file)));
+                    // Yield to allow UI to process the progress update
+                    await Task.Delay(1, cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            // Report final count for this root
+            if (rootFilesScanned > 0)
+            {
+                progress?.Report(new ScanProgress(root.Name, rootFilesScanned, "Completed"));
+            }
+        }
+
+        return new LibraryIngestionResult(processed, skipped);
+    }
+
     public async Task<LibraryIngestionResult> ScanSpecificRootsAsync(IEnumerable<string>? rootNames, CancellationToken cancellationToken, IProgress<ScanProgress>? progress = null)
     {
         var _options = _optionsMonitor.CurrentValue; // Get the latest configuration

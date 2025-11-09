@@ -4,6 +4,7 @@ public interface ILibraryIngestionService
 {
     Task<LibraryIngestionResult> ScanAsync(CancellationToken cancellationToken, IProgress<ScanProgress>? progress = null);
     Task<LibraryIngestionResult> ScanSpecificRootsAsync(IEnumerable<string> rootNames, CancellationToken cancellationToken, IProgress<ScanProgress>? progress = null);
+    Task<LibraryIngestionResult> ScanAddNewOnlyAsync(IEnumerable<string> rootNames, CancellationToken cancellationToken, IProgress<ScanProgress>? progress = null);
 }
 
 public sealed record LibraryIngestionResult(int FilesProcessed, int FilesSkipped);

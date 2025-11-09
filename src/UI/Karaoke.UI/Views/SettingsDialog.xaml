@@ -93,6 +93,11 @@
                                         ToolTipService.ToolTip="Check to rescan this folder when saving changes" />
 
                                     <CheckBox
+                                        Content="Add new songs only (do not update existing songs)"
+                                        IsChecked="{x:Bind AddNewSongsOnly, Mode=TwoWay}"
+                                        ToolTipService.ToolTip="When checked, only new songs will be added to the database. Existing songs will not be updated or rescanned. This checkbox overrides 'Rescan this folder when saving'." />
+
+                                    <CheckBox
                                         Content="Volume normalization (analyze loudness with ffmpeg)"
                                         IsChecked="{x:Bind VolumeNormalization, Mode=TwoWay}"
                                         ToolTipService.ToolTip="Perform EBU R128 loudness analysis on all songs in this folder and store gain values for consistent playback volume" />
