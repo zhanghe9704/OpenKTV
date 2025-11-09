@@ -22,14 +22,18 @@ public sealed class DirectoryStructureParser : IMediaPathParser
             return false;
         }
 
-        var artist = segments[^2];
+        var artistFolder = segments[^2];
         var fileName = segments[^1];
         var title = Path.GetFileNameWithoutExtension(fileName);
 
-        if (string.IsNullOrWhiteSpace(artist) || string.IsNullOrWhiteSpace(title))
+        if (string.IsNullOrWhiteSpace(artistFolder) || string.IsNullOrWhiteSpace(title))
         {
             return false;
         }
+
+        // Support multiple artists separated by plus sign in folder name
+        // e.g., "Artist1 + Artist2" -> "Artist1 + Artist2"
+        var artist = artistFolder.Trim();
 
         var priority = context.RootOptions.DefaultPriority ?? context.GlobalOptions.DefaultPriority;
         var channel = context.RootOptions.DefaultChannel ?? context.GlobalOptions.DefaultChannel;

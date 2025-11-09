@@ -284,11 +284,15 @@ public sealed partial class SongDetailsDialog : ContentDialog, INotifyPropertyCh
                     return;
                 }
 
+                // Normalize artist input: split by plus sign, trim each, and rejoin
+                var normalizedArtist = string.Join(" + ",
+                    EditedArtist.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
                 // Create updated song DTO
                 var updatedSong = Song with
                 {
                     Title = EditedTitle.Trim(),
-                    Artist = EditedArtist.Trim(),
+                    Artist = normalizedArtist,
                     Language = string.IsNullOrWhiteSpace(EditedLanguage) ? null : EditedLanguage.Trim(),
                     Genre = string.IsNullOrWhiteSpace(EditedGenre) ? null : EditedGenre.Trim(),
                     Comment = string.IsNullOrWhiteSpace(EditedComment) ? null : EditedComment.Trim(),

@@ -53,6 +53,7 @@
                     <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind Song.Artist, Mode=OneWay}" TextWrapping="Wrap"
                                Visibility="{x:Bind IsViewMode, Mode=OneWay}" />
                     <TextBox Grid.Row="1" Grid.Column="1" x:Name="ArtistTextBox" Text="{x:Bind EditedArtist, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             PlaceholderText="e.g., Artist1 + Artist2 (use + to separate multiple artists)"
                              Visibility="{x:Bind IsEditMode, Mode=OneWay}" />
 
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Language:" FontWeight="SemiBold" />

@@ -941,8 +941,9 @@ public partial class MainViewModel : ObservableObject
 
     private void UpdateArtists()
     {
+        // Split artist strings by plus sign to support multiple artists per song
         _allArtists = _allSongs
-            .Select(song => song.Artist)
+            .SelectMany(song => song.Artist.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             .Where(artist => !string.IsNullOrWhiteSpace(artist))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(artist => artist, StringComparer.OrdinalIgnoreCase)
@@ -1041,7 +1042,10 @@ public partial class MainViewModel : ObservableObject
         }
         else if (!string.IsNullOrWhiteSpace(SelectedArtist))
         {
-            songs = songs.Where(song => string.Equals(song.Artist, SelectedArtist, StringComparison.OrdinalIgnoreCase));
+            // Match songs where any of the artists (split by plus sign) matches the selected artist
+            songs = songs.Where(song =>
+                song.Artist.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Any(artist => string.Equals(artist, SelectedArtist, StringComparison.OrdinalIgnoreCase)));
         }
 
         _filteredSongsSource = songs

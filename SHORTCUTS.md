@@ -14,6 +14,7 @@ This document lists all the keyboard shortcuts available in the Karaoke applicat
 | `Ctrl+N` | Next | Skip to the next song in queue |
 | `Ctrl+R` | Repeat | Restart the current song from the beginning |
 | `Ctrl+V` | Toggle Vocal | Switch between vocal and instrumental tracks |
+| `Ctrl+S` | Setting | Open Library Settings |
 
 ### Display Controls
 

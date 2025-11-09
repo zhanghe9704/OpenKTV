@@ -27,12 +27,16 @@ public sealed class HyphenFileNameParser : IMediaPathParser
             return false;
         }
 
-        var artist = fileName[..hyphenIndex].Trim();
+        var artistPart = fileName[..hyphenIndex].Trim();
         var title = fileName[(hyphenIndex + 1)..].Trim();
-        if (string.IsNullOrWhiteSpace(artist) || string.IsNullOrWhiteSpace(title))
+        if (string.IsNullOrWhiteSpace(artistPart) || string.IsNullOrWhiteSpace(title))
         {
             return false;
         }
+
+        // Support multiple artists separated by plus sign in filename
+        // e.g., "Artist1 + Artist2 - Song Title" -> "Artist1 + Artist2"
+        var artist = artistPart;
 
         var priority = context.RootOptions.DefaultPriority ?? context.GlobalOptions.DefaultPriority;
         var channel = context.RootOptions.DefaultChannel ?? context.GlobalOptions.DefaultChannel;
